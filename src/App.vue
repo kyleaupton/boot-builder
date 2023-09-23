@@ -1,41 +1,38 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue';
+import Sidebar from '@/components/sidebar/Sidebar.vue';
+import Titlebar from '@/components/titlebar/Titlebar.vue';
 </script>
 
 <template>
-  <div class="drag">
-    <a href="https://www.electronjs.org/" target="_blank">
-      <img
-        src="./assets/electron.svg"
-        class="logo electron"
-        alt="Electron logo"
-      />
-    </a>
-    <a href="https://vitejs.dev/" target="_blank">
-      <img src="./assets/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
+  <Sidebar />
 
-  <HelloWorld msg="Electron + Vite + Vue" />
+  <div class="main">
+    <Titlebar />
 
-  <div class="flex-center">
-    Place static files into the <code>/public</code> folder
-    <img style="width: 2.4em; margin-left: 0.4em" src="/logo.svg" alt="Logo" />
+    <div class="content">
+      <div>test</div>
+    </div>
   </div>
 </template>
 
 <style>
 :root {
+  /* Titlebar */
+  --titlebar-height: 52px;
+  --titlebar-color: #403734;
+
+  /* Sidebar */
+  --sidebar-width: 350px;
+
+  /* Content */
+  --content-color: #2f211d;
+
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -99,30 +96,20 @@ code {
   padding: 2em;
 }
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.main {
+  width: 100%;
+  height: 100vh;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
+.content {
+  background-color: var(--content-color);
+  width: 100%;
+  height: 100%;
+}
 
-  a:hover {
-    color: #747bff;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
-
-  code {
-    background-color: #f9f9f9;
-  }
+#app {
+  width: 100vw;
+  display: flex;
 }
 
 .drag {
