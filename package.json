@@ -1,18 +1,10 @@
 {
-  "name": "electron-vue-vite",
-  "version": "2.0.0",
+  "name": "windows-install-maker",
+  "version": "0.0.1",
   "main": "dist-electron/main/index.js",
-  "description": "Really simple Electron + Vue + Vite boilerplate.",
-  "author": "草鞋没号 <308487730@qq.com>",
+  "description": "App to create Windows install media on MacOS",
+  "author": "Kyle Upton <kyleaupton@gmail.com>",
   "license": "MIT",
-  "private": true,
-  "keywords": [
-    "electron",
-    "rollup",
-    "vite",
-    "vue3",
-    "vue"
-  ],
   "debug": {
     "env": {
       "VITE_DEV_SERVER_URL": "http://127.0.0.1:3344/"
