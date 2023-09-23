@@ -52,6 +52,16 @@ async function createWindow() {
       nodeIntegration: true,
       contextIsolation: false,
     },
+    titleBarStyle: 'hiddenInset',
+    frame: false,
+    height: 600,
+    width: 800,
+    minHeight: 600,
+    minWidth: 800,
+    vibrancy: 'under-window',
+    transparent: true,
+    backgroundColor: '#00000000',
+    visualEffectState: 'active',
   })
 
   if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
