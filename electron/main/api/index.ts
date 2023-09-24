@@ -1,3 +1,3 @@
-export * from './externalMedia';
+export * from './disks';
 export * from './installMedia';
 export * from './lib';

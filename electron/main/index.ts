@@ -42,6 +42,7 @@ const indexHtml = join(process.env.DIST, 'index.html');
 
 async function createWindow() {
   win = new BrowserWindow({
+    show: false, // we'll show when the 'ready-to-show' event fires
     title: 'Main window',
     icon: join(process.env.VITE_PUBLIC, 'favicon.ico'),
     webPreferences: {
@@ -59,8 +60,8 @@ async function createWindow() {
     minHeight: 600,
     minWidth: 800,
     vibrancy: 'sidebar',
-    transparent: true,
     backgroundColor: '#00000000',
+    trafficLightPosition: { x: 18, y: 18 },
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -71,6 +72,10 @@ async function createWindow() {
   } else {
     win.loadFile(indexHtml);
   }
+
+  win.once('ready-to-show', () => {
+    win.show();
+  });
 
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {

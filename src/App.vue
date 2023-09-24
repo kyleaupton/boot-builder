@@ -12,6 +12,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { mapActions } from 'pinia';
+import { useDisksStore } from '@/stores/disks';
 import Sidebar from '@/components/sidebar/Sidebar.vue';
 import Titlebar from '@/components/titlebar/Titlebar.vue';
 
@@ -24,7 +26,11 @@ export default defineComponent({
   },
 
   created() {
-    window.api.getExternalDevices();
+    this.getDisks();
+  },
+
+  methods: {
+    ...mapActions(useDisksStore, ['getDisks']),
   },
 });
 </script>
