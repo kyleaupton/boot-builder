@@ -1,8 +1,3 @@
-<script setup lang="ts">
-import Sidebar from '@/components/sidebar/Sidebar.vue';
-import Titlebar from '@/components/titlebar/Titlebar.vue';
-</script>
-
 <template>
   <Sidebar />
 
@@ -14,6 +9,25 @@ import Titlebar from '@/components/titlebar/Titlebar.vue';
     </div>
   </div>
 </template>
+
+<script lang="ts">
+import { defineComponent } from 'vue';
+import Sidebar from '@/components/sidebar/Sidebar.vue';
+import Titlebar from '@/components/titlebar/Titlebar.vue';
+
+export default defineComponent({
+  name: 'App',
+
+  components: {
+    Titlebar,
+    Sidebar,
+  },
+
+  created() {
+    window.api.getExternalDevices();
+  },
+});
+</script>
 
 <style>
 :root {
