@@ -2,6 +2,7 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { release } from 'node:os';
 import { join } from 'node:path';
 import installExtension from 'electron-devtools-installer';
+import { usb } from 'usb';
 
 // The built directory structure
 //
@@ -93,6 +94,14 @@ async function createWindow() {
 
 app.on('ready', async () => {
   await installExtension('nhdogjmejiglipccpnnnanhbledajbpd');
+
+  usb.on('attach', () => {
+    win.webContents.send('/usb/attached');
+  });
+
+  usb.on('detach', () => {
+    win.webContents.send('/usb/detached');
+  });
 
   createWindow();
 });

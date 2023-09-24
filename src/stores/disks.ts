@@ -62,5 +62,31 @@ export const useDisksStore = defineStore('disks', {
       this.loading = false;
       this.loaded = true;
     },
+
+    registerUsbEvents() {
+      window.ipc.recieve('/usb/attached', async () => {
+        const currentNum = this.items?.length || 0;
+
+        const attemptRefresh = async (attempt = 1): Promise<void> => {
+          if (attempt <= 5) {
+            await this.getDisks();
+
+            if (this.items?.length === currentNum + 1) {
+              return;
+            } else {
+              await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait one second
+              attempt++;
+              return attemptRefresh(attempt);
+            }
+          }
+        };
+
+        await attemptRefresh();
+      });
+
+      window.ipc.recieve('/usb/detached', () => {
+        this.getDisks();
+      });
+    },
   },
 });

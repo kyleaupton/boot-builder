@@ -12,7 +12,8 @@
       </div>
     </template>
     <template v-else>
-      {{ drive.serial_num }}
+      <div>{{ drive.serial_num }}</div>
+      <button @click="handleStart">start</button>
     </template>
   </div>
 </template>
@@ -34,6 +35,17 @@ export default defineComponent({
       return this.chosenDrive && this.loaded
         ? this.items?.find((x) => x.DeviceIdentifier === this.chosenDrive)
         : null;
+    },
+  },
+
+  methods: {
+    async handleStart() {
+      if (this.drive) {
+        await window.api.create({
+          isoFile: '',
+          volume: `/dev/${this.drive.DeviceIdentifier}`,
+        });
+      }
     },
   },
 });
