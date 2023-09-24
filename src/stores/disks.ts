@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia';
 import { AllDisksAndPartition, Item2 } from '../../electron/main/api';
 
+export type t_drive = AllDisksAndPartition & Item2;
+
 type t_state = {
   loading: boolean; // if we're currently grabbing
   loaded: boolean; // if items is not null
-  items: (AllDisksAndPartition & Item2)[] | null;
+  items: t_drive[] | null;
 };
 
 export const useDisksStore = defineStore('disks', {

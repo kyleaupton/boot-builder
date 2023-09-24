@@ -132,6 +132,10 @@ code {
   -webkit-app-region: drag;
 }
 
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
 .flex-center {
   display: flex;
   align-items: center;
