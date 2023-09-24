@@ -3,20 +3,20 @@
 
   <div class="main">
     <Titlebar />
-
-    <div class="content">
-      <div>test</div>
-    </div>
+    <Content />
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { mapActions } from 'pinia';
+
 import { useDisksStore } from '@/stores/disks';
 import { useLayoutStore } from '@/stores/layout';
+
 import Sidebar from '@/components/sidebar/Sidebar.vue';
 import Titlebar from '@/components/titlebar/Titlebar.vue';
+import Content from '@/components/Content.vue';
 
 export default defineComponent({
   name: 'App',
@@ -24,6 +24,7 @@ export default defineComponent({
   components: {
     Titlebar,
     Sidebar,
+    Content,
   },
 
   async created() {
@@ -31,8 +32,9 @@ export default defineComponent({
 
     const disksStore = useDisksStore();
     const layoutStore = useLayoutStore();
-    if (disksStore.items && disksStore.items[0])
-      layoutStore.chosenDrive = disksStore.items[0].DeviceIdentifier;
+
+    // if (disksStore.items && disksStore.items[0])
+    // layoutStore.chosenDrive = disksStore.items[0].DeviceIdentifier;
   },
 
   methods: {
@@ -113,12 +115,6 @@ code {
 .main {
   width: 100%;
   height: 100vh;
-}
-
-.content {
-  background-color: var(--content-color);
-  width: 100%;
-  height: 100%;
 }
 
 #app {
