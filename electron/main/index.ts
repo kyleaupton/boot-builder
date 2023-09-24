@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { release } from 'node:os';
 import { join } from 'node:path';
+import installExtension from 'electron-devtools-installer';
 
 // The built directory structure
 //
@@ -90,7 +91,11 @@ async function createWindow() {
   // win.webContents.on('will-navigate', (event, url) => { }) #344
 }
 
-app.whenReady().then(createWindow);
+app.on('ready', async () => {
+  await installExtension('nhdogjmejiglipccpnnnanhbledajbpd');
+
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   win = null;

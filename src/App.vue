@@ -14,6 +14,7 @@
 import { defineComponent } from 'vue';
 import { mapActions } from 'pinia';
 import { useDisksStore } from '@/stores/disks';
+import { useLayoutStore } from '@/stores/layout';
 import Sidebar from '@/components/sidebar/Sidebar.vue';
 import Titlebar from '@/components/titlebar/Titlebar.vue';
 
@@ -25,8 +26,13 @@ export default defineComponent({
     Sidebar,
   },
 
-  created() {
-    this.getDisks();
+  async created() {
+    await this.getDisks();
+
+    const disksStore = useDisksStore();
+    const layoutStore = useLayoutStore();
+    if (disksStore.items && disksStore.items[0])
+      layoutStore.chosenDrive = disksStore.items[0].DeviceIdentifier;
   },
 
   methods: {
@@ -47,9 +53,7 @@ export default defineComponent({
   /* Content */
   --content-color: #2f211d;
 
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
@@ -59,16 +63,6 @@ export default defineComponent({
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #535bf2;
 }
 
 body {

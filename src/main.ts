@@ -1,8 +1,14 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faUsb } from '@fortawesome/free-brands-svg-icons';
 import App from './App.vue';
 
+library.add(faUsb);
+
 createApp(App)
+  .component('font-awesome-icon', FontAwesomeIcon)
   .use(createPinia())
   .mount('#app')
   .$nextTick(() => {
