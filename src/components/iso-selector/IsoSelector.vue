@@ -1,23 +1,25 @@
 <template>
-  <!-- If path is chosen -->
+  <!-- If file is chosen -->
   <template v-if="file">
     <div class="iso-wrap iso-preview">
-      <font-awesome-icon
-        class="iso-chooser-icon"
-        :icon="['fas', 'compact-disc']"
-      />
+      <div class="iso-preview-file">
+        <font-awesome-icon
+          class="iso-chooser-icon"
+          :icon="['fas', 'compact-disc']"
+        />
+        <div class="iso-preview-path">{{ fileName }}</div>
+        <font-awesome-icon
+          class="iso-preview-close"
+          :icon="['fas', 'xmark']"
+          @click="resetFile"
+        />
+      </div>
 
-      <div class="iso-preview-path">{{ fileName }}</div>
-
-      <font-awesome-icon
-        class="iso-preview-close"
-        :icon="['fas', 'xmark']"
-        @click="resetFile"
-      />
+      <button>Start flash</button>
     </div>
   </template>
 
-  <!-- If no path is chosen -->
+  <!-- If no file is chosen -->
   <template v-else>
     <Drop @drop="handleDrop">
       <div class="iso-wrap iso-chooser">
@@ -25,11 +27,8 @@
           class="iso-chooser-icon"
           :icon="['fas', 'compact-disc']"
         />
-
         <div class="iso-chooser-title">Drag and drop .iso here</div>
-
         <div>or</div>
-
         <button>Choose File</button>
       </div>
     </Drop>
@@ -101,12 +100,21 @@ export default defineComponent({
 <style scoped>
 .iso-wrap {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 16px;
 }
 
 .iso-preview {
+  gap: 2rem;
+}
+
+.iso-preview-file {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
   text-align: center;
   margin-top: 32px;
 }
@@ -116,7 +124,6 @@ export default defineComponent({
 }
 
 .iso-chooser {
-  flex-direction: column;
   gap: 16px;
   padding: 16px;
   border: 2px dashed var(--text-1);
