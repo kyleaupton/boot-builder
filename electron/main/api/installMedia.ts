@@ -1,4 +1,19 @@
+import { spawn } from 'child_process';
 import { exec } from '../utils/child_process';
+
+const run = (cmd: string, args: string[]) => {
+  return new Promise<void>((resolve, reject) => {
+    const proc = spawn(cmd, args, { stdio: ['inherit', 'inherit', 'inherit'] });
+
+    proc.on('close', () => {
+      resolve();
+    });
+
+    proc.on('error', () => {
+      reject();
+    });
+  });
+};
 
 export const create = async ({
   isoFile,
@@ -9,29 +24,27 @@ export const create = async ({
 }) => {
   const diskName = 'WIN10';
 
-  // Erase disk - GPT
-  await exec(`diskutil eraseDisk MS-DOS "${diskName}" GPT ${volume}`);
-
-  // Erase disk - MBR
-  // await exec(`diskutil eraseDisk MS-DOS "${diskName}" MBR ${volume}`);
+  // Erase drive
+  await run('diskutil', ['eraseDisk', 'MS-DOS', diskName, 'MBR', volume]);
 
   // Mount ISO volume
-  await exec(`hdiutil mount ${isoFile}`);
-
-  // TODO: figure out what path the ISO volume is mounted to
-  const isoVolume = '';
+  const { stdout } = await exec(`hdiutil mount ${isoFile}`);
+  const isoMountedPath = stdout.trim().split(/\s+/)[1];
 
   // Copy over everything minus the big file
-  await exec(
-    `rsync -vha --exclude=sources/install.wim ${isoVolume}/* /Volumes/${diskName}`,
-  );
-
-  // Make directory for big file
-  // But is this really needed...? Should already be there
-  // await exec(`mkdir /Volumes/${diskName}/sources`);
+  await run('rsync', [
+    '--progress',
+    '-vha',
+    '--exclude=sources/install.wim',
+    `${isoMountedPath}/`,
+    `/Volumes/${diskName}/`,
+  ]);
 
   // Next copy the big file
-  await exec(
-    `wimlib-imagex split ${isoVolume}/sources/install.wim /Volumes/${diskName}/sources/install.swm 3800`,
-  );
+  await run('wimlib-imagex', [
+    'split',
+    `${isoMountedPath}/sources/install.wim`,
+    `/Volumes/${diskName}/sources/install.swm`,
+    '3800',
+  ]);
 };
