@@ -1,6 +1,13 @@
 import { ipcRenderer } from 'electron';
 
-export const send = (channel: string, data?: unknown) => {
+/**
+ * REMARKS
+ *
+ * I export this file with one default, that way I can call
+ * from the renderer with `window.api.ipc.send...`
+ */
+
+const send = (channel: string, data?: unknown) => {
   const validChannels = [];
 
   if (validChannels.includes(channel)) {
@@ -8,7 +15,7 @@ export const send = (channel: string, data?: unknown) => {
   }
 };
 
-export const recieve = (channel: string, func: (...args: any[]) => void) => { // eslint-disable-line
+const recieve = (channel: string, func: (...args: any[]) => void) => { // eslint-disable-line
   const validChannels = ['/usb/attached', '/usb/detached'];
 
   if (validChannels.includes(channel)) {
@@ -16,4 +23,7 @@ export const recieve = (channel: string, func: (...args: any[]) => void) => { //
   }
 };
 
-export default { send, recieve };
+export default {
+  send,
+  recieve,
+};

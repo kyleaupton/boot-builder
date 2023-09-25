@@ -1,6 +1,5 @@
 import { contextBridge } from 'electron';
 import * as api from '../main/api';
-import ipc from '../main/api/ipc';
 
 function domReady(
   condition: DocumentReadyState[] = ['complete', 'interactive'],
@@ -97,5 +96,4 @@ window.onmessage = (ev) => {
 
 setTimeout(removeLoading, 4999);
 
-contextBridge.exposeInMainWorld('ipc', ipc);
 contextBridge.exposeInMainWorld('api', api);

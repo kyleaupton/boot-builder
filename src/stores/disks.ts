@@ -64,7 +64,7 @@ export const useDisksStore = defineStore('disks', {
     },
 
     registerUsbEvents() {
-      window.ipc.recieve('/usb/attached', async () => {
+      window.api.ipc.recieve('/usb/attached', async () => {
         const currentNum = this.items?.length || 0;
 
         const attemptRefresh = async (attempt = 1): Promise<void> => {
@@ -84,7 +84,7 @@ export const useDisksStore = defineStore('disks', {
         await attemptRefresh();
       });
 
-      window.ipc.recieve('/usb/detached', () => {
+      window.api.ipc.recieve('/usb/detached', () => {
         this.getDisks();
       });
     },
