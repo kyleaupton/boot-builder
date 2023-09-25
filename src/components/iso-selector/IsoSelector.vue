@@ -14,8 +14,6 @@
           @click="resetFile"
         />
       </div>
-
-      <button>Start flash</button>
     </div>
   </template>
 
@@ -29,7 +27,7 @@
         />
         <div class="iso-chooser-title">Drag and drop .iso here</div>
         <div>or</div>
-        <button>Choose File</button>
+        <button @click="handleOpenFile">Choose File</button>
       </div>
     </Drop>
   </template>
@@ -46,6 +44,8 @@ export default defineComponent({
   components: {
     Drop,
   },
+
+  emits: ['fileChange'],
 
   data() {
     return {
@@ -83,6 +83,7 @@ export default defineComponent({
           }
 
           this.file = file;
+          this.$emit('fileChange', file);
         } catch (e) {
           console.error(e);
           this.error = getErrorMessage(e);
@@ -90,8 +91,16 @@ export default defineComponent({
       }
     },
 
+    async handleOpenFile() {
+      // @ts-ignore
+      await window.api.showOpenIsoDialog();
+
+      // console.log(res);
+    },
+
     resetFile() {
       this.file = null;
+      this.$emit('fileChange', null);
     },
   },
 });
@@ -104,10 +113,6 @@ export default defineComponent({
   justify-content: center;
   align-items: center;
   gap: 16px;
-}
-
-.iso-preview {
-  gap: 2rem;
 }
 
 .iso-preview-file {

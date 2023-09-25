@@ -1,5 +1,8 @@
-import { dialog, OpenDialogOptions } from 'electron';
+import { ipcRenderer } from 'electron';
 
-export const showOpenDialog = (opts: OpenDialogOptions) => {
-  return dialog.showOpenDialog(null, opts);
+export const showOpenIsoDialog = () => {
+  return ipcRenderer.invoke('/dialog/showOpenDialog', {
+    properties: ['openFile'],
+    filters: [{ name: '.iso', extensions: ['.iso'] }],
+  });
 };

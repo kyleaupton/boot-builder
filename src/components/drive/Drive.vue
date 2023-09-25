@@ -26,7 +26,17 @@
 
     <!-- Center section -->
     <div class="drive-section drive-section-center">
-      <IsoSelector />
+      <!-- Choosing file -->
+      <template v-if="!flashing">
+        <IsoSelector @file-change="handleFileChange" />
+
+        <div v-if="file" :style="{ display: 'grid', placeItems: 'center' }">
+          <button @click="handleStartFlash">Start Flash</button>
+        </div>
+      </template>
+
+      <!-- Flashing -->
+      <template v-else> flashing </template>
     </div>
 
     <!-- Footer section -->
@@ -53,6 +63,13 @@ export default defineComponent({
     },
   },
 
+  data() {
+    return {
+      file: null as File | null,
+      flashing: false,
+    };
+  },
+
   computed: {
     prettySize() {
       return prettyBytes(this.drive?.Size || 0);
@@ -60,12 +77,20 @@ export default defineComponent({
   },
 
   methods: {
-    async handleStart() {
-      if (this.drive) {
-        await window.api.create({
-          isoFile: '/Users/kyleupton/Downloads/Win10_22H2_English_x64v1.iso',
-          volume: `/dev/${this.drive.DeviceIdentifier}`,
-        });
+    handleFileChange(file: File | null) {
+      this.file = file;
+    },
+
+    async handleStartFlash() {
+      if (this.drive && this.file) {
+        // await request "are you sure????"
+
+        this.flashing = true;
+
+        // await window.api.create({
+        //   isoFile: '/Users/kyleupton/Downloads/Win10_22H2_English_x64v1.iso',
+        //   volume: `/dev/${this.drive.DeviceIdentifier}`,
+        // });
       }
     },
   },
@@ -90,6 +115,9 @@ export default defineComponent({
 
 .drive-section-center {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .drive-section-header-left {

@@ -3,6 +3,7 @@ import { release } from 'node:os';
 import { join } from 'node:path';
 import installExtension from 'electron-devtools-installer';
 import { usb } from 'usb';
+import ipc from './ipc';
 
 // The built directory structure
 //
@@ -93,6 +94,7 @@ async function createWindow() {
 }
 
 app.on('ready', async () => {
+  ipc();
   await installExtension('nhdogjmejiglipccpnnnanhbledajbpd');
 
   usb.on('attach', () => {
