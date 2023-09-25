@@ -6,11 +6,12 @@ import {
   faFloppyDisk,
   faHardDrive,
   faCompactDisc,
+  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { faUsb } from '@fortawesome/free-brands-svg-icons';
 import App from './App.vue';
 
-library.add(faUsb, faFloppyDisk, faHardDrive, faCompactDisc);
+library.add(faUsb, faFloppyDisk, faHardDrive, faCompactDisc, faXmark);
 
 createApp(App)
   .component('font-awesome-icon', FontAwesomeIcon)

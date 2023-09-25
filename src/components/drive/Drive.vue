@@ -24,12 +24,12 @@
       </div>
     </div>
 
-    <!-- Center content -->
+    <!-- Center section -->
     <div class="drive-section drive-section-center">
       <IsoSelector />
     </div>
 
-    <!-- Footer -->
+    <!-- Footer section -->
   </div>
 </template>
 
