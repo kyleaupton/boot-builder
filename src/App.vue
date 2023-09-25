@@ -51,15 +51,16 @@ export default defineComponent({
   --titlebar-color: #403734;
 
   /* Sidebar */
-  --sidebar-width: 350px;
+  --sidebar-width: 300px;
 
   /* Content */
   --content-color: #2f211d;
+  --text-1: rgba(255, 255, 255, 0.87);
 
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
+  color: var(--text-1);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -82,24 +83,16 @@ h1 {
 }
 
 button {
-  border-radius: 8px;
+  border-radius: 4px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
   font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: #665c56;
   cursor: pointer;
-  transition: border-color 0.25s;
+  padding: 4px 12px;
 }
 
-button:hover {
-  border-color: #646cff;
-}
-
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+button:active {
+  background-color: #938c88;
 }
 
 code {
@@ -114,12 +107,17 @@ code {
 }
 
 .main {
-  width: 100%;
-  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  max-height: 100dvh;
 }
 
 #app {
-  width: 100vw;
+  width: 100dvw;
+  height: 100dvh;
+  max-width: 100dvw;
+  max-height: 100dvh;
   display: flex;
 }
 

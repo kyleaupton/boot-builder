@@ -1,19 +1,22 @@
 <template>
   <div class="content">
+    <!-- Empty -->
     <template v-if="!drive">
       <div class="content-empty">
         <font-awesome-icon
           class="content-empty-icon"
           :icon="['fas', 'floppy-disk']"
         />
+
         <div class="content-empty-text">
           Insert and select a drive to get started
         </div>
       </div>
     </template>
+
+    <!-- Content -->
     <template v-else>
-      <div>{{ drive.serial_num }}</div>
-      <button @click="handleStart">start</button>
+      <Drive :drive="drive" />
     </template>
   </div>
 </template>
@@ -21,11 +24,18 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { mapState } from 'pinia';
+
 import { useDisksStore } from '@/stores/disks';
 import { useLayoutStore } from '@/stores/layout';
 
+import Drive from '@/components/drive/Drive.vue';
+
 export default defineComponent({
   name: 'Content',
+
+  components: {
+    Drive,
+  },
 
   computed: {
     ...mapState(useDisksStore, ['items', 'loaded']),
@@ -35,17 +45,6 @@ export default defineComponent({
       return this.chosenDrive && this.loaded
         ? this.items?.find((x) => x.DeviceIdentifier === this.chosenDrive)
         : null;
-    },
-  },
-
-  methods: {
-    async handleStart() {
-      if (this.drive) {
-        await window.api.create({
-          isoFile: '',
-          volume: `/dev/${this.drive.DeviceIdentifier}`,
-        });
-      }
     },
   },
 });

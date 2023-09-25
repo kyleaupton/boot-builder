@@ -33,6 +33,7 @@ export default defineComponent({
 
 <style scoped>
 .sidebar {
+  flex-shrink: 0;
   width: var(--sidebar-width);
   padding: var(--titlebar-height) 12px 12px 12px;
   height: 100vh;
@@ -41,6 +42,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 4px;
+  box-sizing: border-box;
 }
 
 .sidebar-section-title {
