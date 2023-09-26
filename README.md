@@ -2,6 +2,8 @@
 
 An Electron app to easily create Windows install media on MacOS.
 
+![](docs/screenshot_1.png)
+
 ## Wants
 
 * Ship with `wimlib` + it's deps
