@@ -1,3 +1,4 @@
+import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import Drive from '@/api/Drive';
 import { Item2 } from '../../electron/main/api';
@@ -49,7 +50,7 @@ export const useDisksStore = defineStore('disks', {
         const usbData = found.find((y) => y.key === x.DeviceIdentifier);
 
         if (usbData) {
-          return new Drive({ ...usbData, ...x });
+          return reactive(new Drive({ ...usbData, ...x }));
         }
 
         throw Error();

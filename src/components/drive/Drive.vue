@@ -27,7 +27,7 @@
     <!-- Center section -->
     <div class="drive-section drive-section-center">
       <!-- Choosing file -->
-      <template v-if="!flashing">
+      <template v-if="!drive.flashing">
         <IsoSelector @file-change="handleFileChange" />
 
         <div v-if="file" :style="{ display: 'grid', placeItems: 'center' }">
@@ -74,7 +74,6 @@ export default defineComponent({
   data() {
     return {
       file: null as t_file | null,
-      flashing: false,
     };
   },
 
@@ -92,13 +91,7 @@ export default defineComponent({
     async handleStartFlash() {
       if (this.drive && this.file) {
         // await request "are you sure????"
-
-        this.flashing = true;
-
-        // await window.api.create({
-        //   isoFile: '/Users/kyleupton/Downloads/Win10_22H2_English_x64v1.iso',
-        //   volume: `/dev/${this.drive.DeviceIdentifier}`,
-        // });
+        this.drive.startFlash();
       }
     },
   },
