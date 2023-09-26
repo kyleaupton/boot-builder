@@ -5,7 +5,7 @@
     <div class="sidebar-drives">
       <SidebarDrive
         v-for="drive of items"
-        :key="drive.DeviceIdentifier"
+        :key="drive.meta.DeviceIdentifier"
         :drive="drive"
       />
     </div>

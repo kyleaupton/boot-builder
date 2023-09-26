@@ -35,7 +35,7 @@ export default defineComponent({
     const layoutStore = useLayoutStore();
 
     if (disksStore.items && disksStore.items[0])
-      layoutStore.chosenDrive = disksStore.items[0].DeviceIdentifier;
+      layoutStore.chosenDrive = disksStore.items[0].meta.DeviceIdentifier;
   },
 
   methods: {

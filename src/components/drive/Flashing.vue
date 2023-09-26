@@ -1,6 +1,6 @@
 <template>
   <div class="flashing">
-    <div>Flashing {{ drive._name }} with {{ file.name }}</div>
+    <div>Flashing {{ drive.meta._name }} with {{ file.name }}</div>
 
     <div class="flashing-progress">
       <LoadingBar />
@@ -12,7 +12,7 @@
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
-import { t_drive } from '@/stores/disks';
+import Drive from '@/api/Drive';
 import { t_file } from '@/types/iso';
 import LoadingBar from '@/components/LoadingBar.vue';
 
@@ -25,7 +25,7 @@ export default defineComponent({
 
   props: {
     drive: {
-      type: Object as PropType<t_drive>,
+      type: Object as PropType<Drive>,
       required: true,
     },
 

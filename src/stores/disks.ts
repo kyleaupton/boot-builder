@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia';
-import { AllDisksAndPartition, Item2 } from '../../electron/main/api';
-
-export type t_drive = AllDisksAndPartition & Item2;
+import Drive from '@/api/Drive';
+import { Item2 } from '../../electron/main/api';
 
 type t_state = {
   loading: boolean; // if we're currently grabbing
   loaded: boolean; // if items is not null
-  items: t_drive[] | null;
+  items: Drive[];
 };
 
 export const useDisksStore = defineStore('disks', {
@@ -14,7 +13,7 @@ export const useDisksStore = defineStore('disks', {
     ({
       loading: false,
       loaded: false,
-      items: null,
+      items: [],
     }) as t_state,
 
   actions: {
@@ -50,10 +49,7 @@ export const useDisksStore = defineStore('disks', {
         const usbData = found.find((y) => y.key === x.DeviceIdentifier);
 
         if (usbData) {
-          return {
-            ...usbData,
-            ...x,
-          };
+          return new Drive({ ...usbData, ...x });
         }
 
         throw Error();

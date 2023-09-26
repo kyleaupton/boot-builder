@@ -7,7 +7,7 @@
     <font-awesome-icon class="sidebar-drive-icon" :icon="['fab', 'usb']" />
 
     <div class="sidebar-drive-name">
-      {{ drive.manufacturer }} {{ drive._name }}
+      {{ drive.meta.manufacturer }} {{ drive.meta._name }}
     </div>
   </div>
 </template>
@@ -15,15 +15,15 @@
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
 import { mapState } from 'pinia';
+import Drive from '@/api/Drive';
 import { useLayoutStore } from '@/stores/layout';
-import { t_drive } from '@/stores/disks';
 
 export default defineComponent({
   name: 'SidebarDrive',
 
   props: {
     drive: {
-      type: Object as PropType<t_drive>,
+      type: Object as PropType<Drive>,
       required: true,
     },
   },
@@ -32,14 +32,14 @@ export default defineComponent({
     ...mapState(useLayoutStore, ['chosenDrive']),
 
     selected() {
-      return this.chosenDrive === this.drive.DeviceIdentifier;
+      return this.chosenDrive === this.drive.meta.DeviceIdentifier;
     },
   },
 
   methods: {
     handleClick() {
       const store = useLayoutStore();
-      store.chosenDrive = this.drive.DeviceIdentifier;
+      store.chosenDrive = this.drive.meta.DeviceIdentifier;
     },
   },
 });

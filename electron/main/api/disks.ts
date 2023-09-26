@@ -1,5 +1,7 @@
 import { exec } from '../utils/child_process';
 
+export type t_drive = AllDisksAndPartition & Item2;
+
 export interface Disks {
   AllDisksAndPartitions: AllDisksAndPartition[];
   VolumesFromDisks: string[];

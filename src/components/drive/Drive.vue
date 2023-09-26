@@ -11,10 +11,10 @@
 
         <div>
           <div class="drive-section-header-title">
-            {{ drive.manufacturer }} {{ drive._name }}
+            {{ drive.meta.manufacturer }} {{ drive.meta._name }}
           </div>
 
-          <div>{{ drive.DeviceIdentifier }}</div>
+          <div>{{ drive.meta.DeviceIdentifier }}</div>
         </div>
       </div>
 
@@ -51,7 +51,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
 import prettyBytes from 'pretty-bytes';
-import { t_drive } from '@/stores/disks';
+import Drive from '@/api/Drive';
 import { t_file } from '@/types/iso';
 import IsoSelector from '@/components/iso-selector/IsoSelector.vue';
 import Flashing from '@/components/drive/Flashing.vue';
@@ -66,7 +66,7 @@ export default defineComponent({
 
   props: {
     drive: {
-      type: Object as PropType<t_drive>,
+      type: Object as PropType<Drive>,
       required: true,
     },
   },
@@ -80,7 +80,7 @@ export default defineComponent({
 
   computed: {
     prettySize() {
-      return prettyBytes(this.drive?.Size || 0);
+      return prettyBytes(this.drive?.meta.Size || 0);
     },
   },
 

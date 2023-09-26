@@ -43,7 +43,7 @@ export default defineComponent({
 
     drive() {
       return this.chosenDrive && this.loaded
-        ? this.items?.find((x) => x.DeviceIdentifier === this.chosenDrive)
+        ? this.items?.find((x) => x.meta.DeviceIdentifier === this.chosenDrive)
         : null;
     },
   },
