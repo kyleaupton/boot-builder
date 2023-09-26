@@ -1,4 +1,6 @@
 import { spawn } from 'child_process';
+import { stat } from 'fs/promises';
+import { basename } from 'path';
 import { exec } from '../utils/child_process';
 
 const run = (cmd: string, args: string[]) => {
@@ -47,4 +49,16 @@ export const create = async ({
     `/Volumes/${diskName}/sources/install.swm`,
     '3800',
   ]);
+};
+
+export const getFileFromPath = async (
+  path: string,
+): Promise<{ name: string; path: string; size: number }> => {
+  const stats = await stat(path);
+
+  return {
+    name: basename(path),
+    path,
+    size: stats.size,
+  };
 };

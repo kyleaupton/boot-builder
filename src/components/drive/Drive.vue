@@ -36,7 +36,12 @@
       </template>
 
       <!-- Flashing -->
-      <template v-else> flashing </template>
+      <Flashing
+        v-else-if="file"
+        :drive="drive"
+        :file="file"
+        status-text="Flashing"
+      />
     </div>
 
     <!-- Footer section -->
@@ -47,13 +52,16 @@
 import { defineComponent, PropType } from 'vue';
 import prettyBytes from 'pretty-bytes';
 import { t_drive } from '@/stores/disks';
+import { t_file } from '@/types/iso';
 import IsoSelector from '@/components/iso-selector/IsoSelector.vue';
+import Flashing from '@/components/drive/Flashing.vue';
 
 export default defineComponent({
   name: 'Drive',
 
   components: {
     IsoSelector,
+    Flashing,
   },
 
   props: {
@@ -65,7 +73,7 @@ export default defineComponent({
 
   data() {
     return {
-      file: null as File | null,
+      file: null as t_file | null,
       flashing: false,
     };
   },
@@ -77,7 +85,7 @@ export default defineComponent({
   },
 
   methods: {
-    handleFileChange(file: File | null) {
+    handleFileChange(file: t_file | null) {
       this.file = file;
     },
 

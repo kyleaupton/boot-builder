@@ -36,6 +36,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { getErrorMessage } from '@/utils/error';
+import { t_file } from '@/types/iso';
 import Drop from '@/components/Drop.vue';
 
 export default defineComponent({
@@ -49,7 +50,7 @@ export default defineComponent({
 
   data() {
     return {
-      file: null as File | null,
+      file: null as t_file | null,
       error: '',
     };
   },
@@ -57,6 +58,12 @@ export default defineComponent({
   computed: {
     fileName() {
       return this.file ? this.file.path.split('/').pop() : '';
+    },
+  },
+
+  watch: {
+    file() {
+      this.$emit('fileChange', this.file);
     },
   },
 
@@ -82,8 +89,11 @@ export default defineComponent({
             throw Error('Only .iso files are allowed');
           }
 
-          this.file = file;
-          this.$emit('fileChange', file);
+          this.file = {
+            name: file.name,
+            path: file.path,
+            size: file.size,
+          };
         } catch (e) {
           console.error(e);
           this.error = getErrorMessage(e);
@@ -92,15 +102,12 @@ export default defineComponent({
     },
 
     async handleOpenFile() {
-      // @ts-ignore
-      await window.api.showOpenIsoDialog();
-
-      // console.log(res);
+      const path = (await window.api.showOpenIsoDialog()).filePaths[0];
+      this.file = await window.api.getFileFromPath(path);
     },
 
     resetFile() {
       this.file = null;
-      this.$emit('fileChange', null);
     },
   },
 });
