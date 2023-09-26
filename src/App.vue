@@ -12,7 +12,7 @@ import { defineComponent } from 'vue';
 import { mapActions } from 'pinia';
 
 import { useDisksStore } from '@/stores/disks';
-// import { useLayoutStore } from '@/stores/layout';
+import { useLayoutStore } from '@/stores/layout';
 
 import Sidebar from '@/components/sidebar/Sidebar.vue';
 import Titlebar from '@/components/titlebar/Titlebar.vue';
@@ -31,11 +31,11 @@ export default defineComponent({
     this.registerUsbEvents();
     await this.getDisks();
 
-    // const disksStore = useDisksStore();
-    // const layoutStore = useLayoutStore();
+    const disksStore = useDisksStore();
+    const layoutStore = useLayoutStore();
 
-    // if (disksStore.items && disksStore.items[0])
-    // layoutStore.chosenDrive = disksStore.items[0].DeviceIdentifier;
+    if (disksStore.items && disksStore.items[0])
+      layoutStore.chosenDrive = disksStore.items[0].DeviceIdentifier;
   },
 
   methods: {
