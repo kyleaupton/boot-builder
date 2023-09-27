@@ -2,7 +2,7 @@
 
 An Electron app to easily create Windows install media on MacOS.
 
-![](docs/screenshot_1.png)
+![](https://raw.githubusercontent.com/kyleaupton/windows-install-maker/main/docs/screenshot_1.png)
 
 ## Wants
 
