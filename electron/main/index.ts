@@ -4,6 +4,9 @@ import { join } from 'node:path';
 import installExtension from 'electron-devtools-installer';
 import { usb } from 'usb';
 import ipc from './ipc';
+import { getPath } from './utils/lib';
+
+console.log(getPath('wimlib'));
 
 // The built directory structure
 //

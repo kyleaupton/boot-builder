@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import { stat } from 'fs/promises';
 import { basename } from 'path';
+import { ipcRenderer } from 'electron';
 import { exec } from '../utils/child_process';
 
 const run = (cmd: string, args: string[]) => {
@@ -11,8 +12,8 @@ const run = (cmd: string, args: string[]) => {
       resolve();
     });
 
-    proc.on('error', () => {
-      reject();
+    proc.on('error', (error) => {
+      reject(error);
     });
   });
 };
@@ -24,6 +25,7 @@ export const create = async ({
   isoFile: string;
   volume: string;
 }) => {
+  const wimlibImagex = await ipcRenderer.invoke('/utils/lib/getPath', 'wimlib');
   const diskName = 'WIN10';
 
   // Erase drive
@@ -43,7 +45,7 @@ export const create = async ({
   ]);
 
   // Next copy the big file
-  await run('wimlib-imagex', [
+  await run(wimlibImagex, [
     'split',
     `${isoMountedPath}/sources/install.wim`,
     `/Volumes/${diskName}/sources/install.swm`,

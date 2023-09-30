@@ -1,7 +1,7 @@
 import { t_drive } from '../../electron/main/api/disks';
 import { t_file } from '@/types/iso';
 
-const testing = true;
+const testing = false;
 
 export default class Drive {
   meta: t_drive;
