@@ -5,10 +5,12 @@ export default class Drive {
 
   // State
   flashing: boolean;
+  doneFlashing: boolean;
 
   constructor(meta: t_drive) {
     this.meta = meta;
     this.flashing = false;
+    this.doneFlashing = false;
   }
 
   async startFlash() {
@@ -20,5 +22,10 @@ export default class Drive {
     // });
 
     // this.flashing = false;
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    this.flashing = false;
+    this.doneFlashing = true;
   }
 }

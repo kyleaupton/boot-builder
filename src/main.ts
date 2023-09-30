@@ -7,11 +7,22 @@ import {
   faHardDrive,
   faCompactDisc,
   faXmark,
+  faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons';
-import { faUsb } from '@fortawesome/free-brands-svg-icons';
+import { faHardDrive as faRegHardDrive } from '@fortawesome/free-regular-svg-icons';
+import { faUsb, faWindows } from '@fortawesome/free-brands-svg-icons';
 import App from './App.vue';
 
-library.add(faUsb, faFloppyDisk, faHardDrive, faCompactDisc, faXmark);
+library.add(
+  faUsb,
+  faFloppyDisk,
+  faHardDrive,
+  faRegHardDrive,
+  faCompactDisc,
+  faXmark,
+  faCircleCheck,
+  faWindows,
+);
 
 createApp(App)
   .component('font-awesome-icon', FontAwesomeIcon)

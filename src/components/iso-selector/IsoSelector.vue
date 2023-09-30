@@ -5,7 +5,7 @@
       <div class="iso-preview-file">
         <font-awesome-icon
           class="iso-chooser-icon"
-          :icon="['fas', 'compact-disc']"
+          :icon="['fab', 'windows']"
         />
         <div class="iso-preview-path">{{ fileName }}</div>
         <font-awesome-icon
@@ -23,9 +23,10 @@
       <div class="iso-wrap iso-chooser">
         <font-awesome-icon
           class="iso-chooser-icon"
-          :icon="['fas', 'compact-disc']"
+          style="font-size: 48px"
+          :icon="['fab', 'windows']"
         />
-        <div class="iso-chooser-title">Drag and drop .iso here</div>
+        <div class="iso-chooser-title">Drop Windows install here</div>
         <div>or</div>
         <button @click="handleOpenFile">Choose File</button>
       </div>

@@ -56,6 +56,7 @@ export default defineComponent({
   /* Content */
   --content-color: #2f211d;
   --text-1: rgba(255, 255, 255, 0.87);
+  --text-2: rgba(255, 255, 255, 0.5);
 
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 
