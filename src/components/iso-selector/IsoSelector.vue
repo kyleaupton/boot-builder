@@ -86,12 +86,14 @@ export default defineComponent({
           /**
            * EDGE CASE: Something that is not a .iso file
            */
+          // @ts-ignore - File types are screwed up
           if (!file.path.split('/').pop()?.endsWith('.iso')) {
             throw Error('Only .iso files are allowed');
           }
 
           this.file = {
             name: file.name,
+            // @ts-ignore - File types are screwed up
             path: file.path,
             size: file.size,
           };

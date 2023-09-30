@@ -1,7 +1,7 @@
 import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import Drive from '@/api/Drive';
-import { Item2 } from '../../electron/main/api';
+import { Item2 } from '@/types/disks';
 
 type t_state = {
   loading: boolean; // if we're currently grabbing
@@ -32,7 +32,9 @@ export const useDisksStore = defineStore('disks', {
             if (hub._items) {
               for (const device of hub._items) {
                 if (device.Media) {
+                  // @ts-ignore
                   const foundItem = device.Media.find((x) =>
+                    // @ts-ignore
                     items.find((y) => y.DeviceIdentifier === x.bsd_name),
                   );
 
@@ -46,6 +48,7 @@ export const useDisksStore = defineStore('disks', {
         }
       }
 
+      // @ts-ignore
       this.items = items.map((x) => {
         const usbData = found.find((y) => y.key === x.DeviceIdentifier);
 

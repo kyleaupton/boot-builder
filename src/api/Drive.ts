@@ -1,4 +1,4 @@
-import { t_drive } from '../../electron/main/api/disks';
+import { t_drive } from '@/types/disks';
 import { t_file } from '@/types/iso';
 
 const testing = false;
