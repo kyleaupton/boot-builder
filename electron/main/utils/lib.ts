@@ -22,8 +22,8 @@ export const getPath = (program: t_program) => {
         '..',
         'electron',
         'lib',
-        arch,
         program,
+        arch,
         'bin',
         'wimlib-imagex',
       );
