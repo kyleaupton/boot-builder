@@ -51,7 +51,7 @@ export default defineComponent({
 
   data() {
     return {
-      file: null as t_file | null,
+      file: undefined as t_file | undefined,
       error: '',
     };
   },
@@ -108,7 +108,7 @@ export default defineComponent({
     },
 
     resetFile() {
-      this.file = null;
+      this.file = undefined;
     },
   },
 });

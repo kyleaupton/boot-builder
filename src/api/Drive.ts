@@ -1,9 +1,13 @@
 import { t_drive } from '../../electron/main/api/disks';
+import { t_file } from '@/types/iso';
+
+const testing = true;
 
 export default class Drive {
   meta: t_drive;
 
   // State
+  isoFile: undefined | t_file;
   flashing: boolean;
   doneFlashing: boolean;
 
@@ -14,18 +18,31 @@ export default class Drive {
   }
 
   async startFlash() {
+    if (!this.isoFile) {
+      throw Error('Must define isoPath first');
+    }
+
     this.flashing = true;
 
-    // await window.api.create({
-    //   isoFile: '/Users/kyleupton/Downloads/Win10_22H2_English_x64v1.iso',
-    //   volume: `/dev/${this.meta.DeviceIdentifier}`,
-    // });
-
-    // this.flashing = false;
-
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    if (testing) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    } else {
+      await window.api.create({
+        isoFile: this.isoFile.path,
+        volume: `/dev/${this.meta.DeviceIdentifier}`,
+      });
+    }
 
     this.flashing = false;
     this.doneFlashing = true;
+  }
+
+  /**
+   * Since we cannot modify a instance variable on
+   * a vue component prop, we need this to allow
+   * for modification of the file in such a case.
+   */
+  setIsoFile(file: t_file | undefined) {
+    this.isoFile = file;
   }
 }

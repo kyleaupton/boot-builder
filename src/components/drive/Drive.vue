@@ -32,16 +32,18 @@
       <template v-if="!drive.flashing && !drive.doneFlashing">
         <IsoSelector @file-change="handleFileChange" />
 
-        <div v-if="file" :style="{ display: 'grid', placeItems: 'center' }">
+        <div
+          v-if="drive.isoFile"
+          :style="{ display: 'grid', placeItems: 'center' }"
+        >
           <button @click="handleStartFlash">Start Flash</button>
         </div>
       </template>
 
       <!-- Flashing -->
       <Flashing
-        v-else-if="file && drive.flashing"
+        v-else-if="drive.isoFile && drive.flashing"
         :drive="drive"
-        :file="file"
         status-text="Flashing"
       />
 
@@ -53,9 +55,7 @@
           style="--fa-animation-iteration-count: 1"
           bounce
         />
-
         <div class="drive-done-title">Success</div>
-
         <div class="drive-done-extra">
           The drive is ejected and you may now remove it
         </div>
@@ -89,12 +89,6 @@ export default defineComponent({
     },
   },
 
-  data() {
-    return {
-      file: null as t_file | null,
-    };
-  },
-
   computed: {
     prettySize() {
       return prettyBytes(this.drive?.meta.Size || 0);
@@ -102,14 +96,19 @@ export default defineComponent({
   },
 
   methods: {
-    handleFileChange(file: t_file | null) {
-      this.file = file;
+    handleFileChange(file: t_file | undefined) {
+      this.drive.setIsoFile(file);
     },
 
     async handleStartFlash() {
-      if (this.drive && this.file) {
-        // await request "are you sure????"
-        this.drive.startFlash();
+      if (this.drive && this.drive.isoFile) {
+        const res = await window.api.showConfirmDialog(
+          'Are you sure? The drive will be erased.',
+        );
+
+        if (res.response === 0) {
+          this.drive.startFlash();
+        }
       }
     },
   },

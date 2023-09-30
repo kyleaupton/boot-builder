@@ -3,6 +3,7 @@ import {
   dialog,
   BrowserWindow,
   OpenDialogOptions,
+  MessageBoxOptions,
   IpcMainInvokeEvent,
 } from 'electron';
 
@@ -12,6 +13,14 @@ export default function start() {
     (event: IpcMainInvokeEvent, options: OpenDialogOptions) => {
       const sender = BrowserWindow.fromWebContents(event.sender);
       return dialog.showOpenDialog(sender, options);
+    },
+  );
+
+  ipcMain.handle(
+    '/dialog/showMessageBox',
+    (event: IpcMainInvokeEvent, options: MessageBoxOptions) => {
+      const sender = BrowserWindow.fromWebContents(event.sender);
+      return dialog.showMessageBox(sender, options);
     },
   );
 }
