@@ -2,7 +2,7 @@ import { spawn } from 'child_process';
 import { stat } from 'fs/promises';
 import { basename } from 'path';
 import { ipcRenderer } from 'electron';
-import { exec } from '../utils/child_process';
+import { exec } from '../../main/utils/child_process';
 
 const run = (cmd: string, args: string[]) => {
   return new Promise<void>((resolve, reject) => {

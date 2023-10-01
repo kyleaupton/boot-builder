@@ -1,5 +1,5 @@
-import { Disks, SystemProfiler } from '../types/disks';
-import { exec } from '../utils/child_process';
+import { Disks, SystemProfiler } from '../../main/types/disks';
+import { exec } from '../../main/utils/child_process';
 
 export const getDisks = async (): Promise<Disks> => {
   return JSON.parse(
