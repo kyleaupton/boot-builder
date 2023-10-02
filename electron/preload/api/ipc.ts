@@ -7,23 +7,51 @@ import { ipcRenderer } from 'electron';
  * from the renderer with `window.api.ipc.send...`
  */
 
-const send = (channel: string, data?: unknown) => {
-  const validChannels = [];
-
+const validateChannel = (channel: string) => {
+  // Normal channels
+  const validChannels = ['/usb/attached', '/usb/detached', '/flash'];
   if (validChannels.includes(channel)) {
-    ipcRenderer.send(channel, data);
+    return;
   }
+
+  // Starts with check
+  const validStartsWith = ['flash-'];
+  if (validStartsWith.find((x) => channel.startsWith(x))) {
+    return;
+  }
+
+  throw Error('Invalid IPC channel');
+};
+
+const invoke = (channel: string, data?: unknown) => {
+  //
+  // Validate
+  //
+  validateChannel(channel);
+
+  return ipcRenderer.invoke(channel, data);
 };
 
 const recieve = (channel: string, func: (...args: any[]) => void) => { // eslint-disable-line
-  const validChannels = ['/usb/attached', '/usb/detached'];
+  //
+  // Validate
+  //
+  validateChannel(channel);
 
-  if (validChannels.includes(channel)) {
-    ipcRenderer.on(channel, (event, ...args) => func(...args));
-  }
+  ipcRenderer.on(channel, (event, ...args) => func(...args));
+};
+
+const removeListener = (channel: string, func: (...args: any[]) => void) => { // eslint-disable-line
+  //
+  // Validate
+  //
+  validateChannel(channel);
+
+  ipcRenderer.removeListener(channel, func);
 };
 
 export default {
-  send,
+  invoke,
   recieve,
+  removeListener,
 };

@@ -41,11 +41,7 @@
       </template>
 
       <!-- Flashing -->
-      <Flashing
-        v-else-if="drive.isoFile && drive.flashing"
-        :drive="drive"
-        status-text="Flashing"
-      />
+      <Flashing v-else-if="drive.isoFile && drive.flashing" :drive="drive" />
 
       <!-- Done -->
       <template v-else-if="drive.doneFlashing">

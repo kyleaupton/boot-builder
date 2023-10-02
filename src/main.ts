@@ -8,6 +8,7 @@ import {
   faCompactDisc,
   faXmark,
   faCircleCheck,
+  faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { faHardDrive as faRegHardDrive } from '@fortawesome/free-regular-svg-icons';
 import { faUsb, faWindows } from '@fortawesome/free-brands-svg-icons';
@@ -22,6 +23,7 @@ library.add(
   faXmark,
   faCircleCheck,
   faWindows,
+  faChevronUp,
 );
 
 createApp(App)

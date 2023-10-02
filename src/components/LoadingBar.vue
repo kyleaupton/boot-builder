@@ -21,7 +21,7 @@ export default defineComponent({
 
 <style scoped>
 .loading-bar {
-  height: 6px;
+  height: 8px;
   width: 100%;
   border-radius: 8px;
   background-color: grey;
@@ -29,7 +29,7 @@ export default defineComponent({
 }
 
 .loading-bar-inner {
-  height: 100%;
+  height: 6px;
   width: 20%;
   background-color: #157ae3;
   border: 1px solid #0e559e;
