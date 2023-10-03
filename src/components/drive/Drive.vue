@@ -28,8 +28,20 @@
 
     <!-- Center section -->
     <div class="drive-section drive-section-center">
+      <!-- Error -->
+      <template v-if="drive.flashingProgress.error">
+        <font-awesome-icon
+          class="drive-warn-icon"
+          :icon="['fas', 'triangle-exclamation']"
+          style="--fa-animation-iteration-count: 1"
+          bounce
+        />
+        <div class="drive-done-title">Something went wrong...</div>
+        <div class="drive-done-extra">{{ drive.flashingProgress.error }}</div>
+      </template>
+
       <!-- Choosing file -->
-      <template v-if="!drive.flashing && !drive.doneFlashing">
+      <template v-else-if="!drive.flashing && !drive.doneFlashing">
         <IsoSelector @file-change="handleFileChange" />
 
         <div
@@ -169,6 +181,11 @@ export default defineComponent({
 .drive-done-icon {
   font-size: 58px;
   color: #4bb543;
+}
+
+.drive-warn-icon {
+  font-size: 58px;
+  color: #ff6700;
 }
 
 .drive-done-title {

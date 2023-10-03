@@ -26,6 +26,7 @@ export default class Drive {
       currentActivity: '',
       stdout: '',
       stderr: '',
+      error: '',
     });
 
     this._stdoutHandler = this._stdoutHandler.bind(this);
@@ -45,11 +46,16 @@ export default class Drive {
     if (testing) {
       await new Promise((resolve) => setTimeout(resolve, 5000));
     } else {
-      await window.api.ipc.invoke('/flash', {
-        isoFile: this.isoFile.path,
-        volume: `/dev/${this.meta.DeviceIdentifier}`,
-        id: this.id,
-      });
+      try {
+        await window.api.ipc.invoke('/flash', {
+          isoFile: this.isoFile.path,
+          volume: `/dev/${this.meta.DeviceIdentifier}`,
+          id: this.id,
+        });
+      } catch (e) {
+        this.flashingProgress.error =
+          e instanceof Error ? e.message : String(e);
+      }
     }
 
     this._removeIpcEvents();

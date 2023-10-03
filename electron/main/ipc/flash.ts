@@ -1,7 +1,18 @@
 import { ipcMain, BrowserWindow, IpcMainInvokeEvent } from 'electron';
+import { stat } from 'fs/promises';
 import { spawn } from 'child_process';
+import { resolve } from 'path';
 import { getPath } from '../utils/lib';
 import { exec } from '../utils/child_process';
+
+const exists = async (path: string) => {
+  try {
+    await stat(path);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
 const run = (
   cmd: string,
@@ -42,6 +53,21 @@ export default function start() {
       // Browser window of sender
       const sender = BrowserWindow.fromWebContents(event.sender);
 
+      // Mount ISO volume
+      sender.webContents.send(`flash-${id}-activity`, `Mounting ${isoFile}`);
+      const { stdout } = await exec(`hdiutil mount ${isoFile}`);
+      const isoMountedPath = stdout.trim().split(/\s+/)[1];
+
+      // Validate
+      const needed = ['sources/install.wim'];
+      for (const rel of needed) {
+        const abs = resolve(isoMountedPath, rel);
+
+        if (await exists(abs)) {
+          throw Error(`Validation: ${rel} not found`);
+        }
+      }
+
       const procHandlers = {
         onStdout: (data: string) => {
           sender.webContents.send(`flash-${id}-stdout`, data);
@@ -60,11 +86,6 @@ export default function start() {
         ['eraseDisk', 'MS-DOS', diskName, 'MBR', volume],
         procHandlers,
       );
-
-      // Mount ISO volume
-      sender.webContents.send(`flash-${id}-activity`, `Mounting ${isoFile}`);
-      const { stdout } = await exec(`hdiutil mount ${isoFile}`);
-      const isoMountedPath = stdout.trim().split(/\s+/)[1];
 
       // Copy over everything minus the big file
       sender.webContents.send(`flash-${id}-activity`, `Copying files`);

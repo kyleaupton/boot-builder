@@ -9,6 +9,7 @@ import {
   faXmark,
   faCircleCheck,
   faChevronUp,
+  faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import { faHardDrive as faRegHardDrive } from '@fortawesome/free-regular-svg-icons';
 import { faUsb, faWindows } from '@fortawesome/free-brands-svg-icons';
@@ -24,6 +25,7 @@ library.add(
   faCircleCheck,
   faWindows,
   faChevronUp,
+  faTriangleExclamation,
 );
 
 createApp(App)
