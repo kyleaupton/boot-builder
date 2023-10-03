@@ -22,7 +22,12 @@
       </div>
 
       <div v-if="showingDetails" class="flashing-details-text-wrap">
-        <textarea v-model="stdout" class="flashing-details-text" disabled />
+        <textarea
+          ref="textarea"
+          v-model="stdout"
+          class="flashing-details-text"
+          disabled
+        />
       </div>
     </div>
   </div>
@@ -69,6 +74,27 @@ export default defineComponent({
       return this.showingDetails ? 180 : 90;
     },
   },
+
+  watch: {
+    stdout() {
+      this.setScrollTop();
+    },
+
+    showingDetails() {
+      this.$nextTick().then(() => this.setScrollTop());
+    },
+  },
+
+  methods: {
+    setScrollTop() {
+      const { textarea } = this.$refs;
+
+      if (textarea) {
+        // @ts-ignore
+        textarea.scrollTop = textarea.scrollHeight;
+      }
+    },
+  },
 });
 </script>
 
@@ -80,6 +106,7 @@ export default defineComponent({
   justify-content: center;
   align-items: center;
   gap: 2rem;
+  flex-grow: 2;
 }
 
 .flashing-progress {
@@ -99,6 +126,7 @@ export default defineComponent({
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  flex-grow: 2;
 }
 
 .flashing-details-header {
@@ -108,9 +136,13 @@ export default defineComponent({
   cursor: default;
 }
 
+.flashing-details-text-wrap {
+  height: 100%;
+}
+
 .flashing-details-text {
   width: 100%;
-  height: calc(100vh * 0.4);
+  height: 100%;
   resize: none;
 }
 
