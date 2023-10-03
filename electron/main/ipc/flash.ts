@@ -79,7 +79,11 @@ export default function start() {
 
       // Erase drive
       sender.webContents.send(`flash-${id}-activity`, `Erasing ${volume}`);
-      const diskName = 'WIN10';
+
+      // Get disk name
+      // Windows 10: `Win10_22H2_English_x64v1.iso`
+      // Windows 11: `Win11_22H2_English_x64v2.iso`
+      const diskName = isoFile.split('/').slice(-1)[0].split('_')[0];
 
       await run(
         'diskutil',
