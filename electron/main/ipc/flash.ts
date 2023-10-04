@@ -63,16 +63,18 @@ export default function start() {
       for (const rel of needed) {
         const abs = resolve(isoMountedPath, rel);
 
-        if (await exists(abs)) {
+        if (!(await exists(abs))) {
           throw Error(`Validation: ${rel} not found`);
         }
       }
 
       const procHandlers = {
         onStdout: (data: string) => {
+          console.log(data);
           sender.webContents.send(`flash-${id}-stdout`, data);
         },
         onStderr: (data: string) => {
+          console.log(data);
           sender.webContents.send(`flash-${id}-stderr`, data);
         },
       };
@@ -83,7 +85,11 @@ export default function start() {
       // Get disk name
       // Windows 10: `Win10_22H2_English_x64v1.iso`
       // Windows 11: `Win11_22H2_English_x64v2.iso`
-      const diskName = isoFile.split('/').slice(-1)[0].split('_')[0];
+      const diskName = isoFile
+        .split('/')
+        .slice(-1)[0]
+        .split('_')[0]
+        .toUpperCase();
 
       await run(
         'diskutil',
@@ -101,6 +107,7 @@ export default function start() {
           '--exclude=sources/install.wim',
           `${isoMountedPath}/`,
           `/Volumes/${diskName}/`,
+          '--info=progress2',
         ],
         procHandlers,
       );
