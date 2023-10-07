@@ -1,5 +1,5 @@
 {
-  "name": "windows-install-maker",
+  "name": "os-install-maker",
   "version": "0.0.1",
   "main": "dist-electron/main/index.js",
   "description": "App to create Windows install media on MacOS",

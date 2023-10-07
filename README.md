@@ -1,8 +1,8 @@
-# windows-install-maker
+# os-install-maker
 
 An Electron app to easily create Windows install media on MacOS.
 
-![](https://raw.githubusercontent.com/kyleaupton/windows-install-maker/main/docs/screenshot_1.png)
+![](https://raw.githubusercontent.com/kyleaupton/os-install-maker/main/docs/screenshot_1.png)
 
 ## Wants
 
@@ -13,10 +13,10 @@ An Electron app to easily create Windows install media on MacOS.
 
 ```sh
 # clone the project
-git clone https://github.com/kyleaupton/windows-install-maker.git
+git clone https://github.com/kyleaupton/os-install-maker.git
 
 # enter the project directory
-cd windows-install-maker
+cd os-install-maker
 
 # install dependencies
 yarn
