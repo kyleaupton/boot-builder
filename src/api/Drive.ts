@@ -32,6 +32,7 @@ export default class Drive {
     this._stdoutHandler = this._stdoutHandler.bind(this);
     this._stderrHandler = this._stderrHandler.bind(this);
     this._activityHandler = this._activityHandler.bind(this);
+    this._etaHandler = this._etaHandler.bind(this);
   }
 
   async startFlash() {
@@ -77,6 +78,7 @@ export default class Drive {
     window.api.ipc.recieve(`flash-${this.id}-activity`, this._activityHandler);
     window.api.ipc.recieve(`flash-${this.id}-stdout`, this._stdoutHandler);
     window.api.ipc.recieve(`flash-${this.id}-stderr`, this._stderrHandler);
+    window.api.ipc.recieve(`flash-${this.id}-copy-eta`, this._etaHandler);
   }
 
   _removeIpcEvents() {
@@ -92,6 +94,11 @@ export default class Drive {
       `flash-${this.id}-stdout`,
       this._stdoutHandler,
     );
+
+    window.api.ipc.removeListener(
+      `flash-${this.id}-copy-eta`,
+      this._etaHandler,
+    );
   }
 
   _activityHandler(activity: string) {
@@ -104,5 +111,24 @@ export default class Drive {
 
   _stderrHandler(stderr: string) {
     this.flashingProgress.stderr += stderr;
+  }
+
+  _etaHandler(progress: any) {
+    // console.log(`ETA: ${moment()}`);
+    const time = progress.eta;
+
+    const h = Math.floor(time / 3600)
+      .toString()
+      .padStart(2, '0');
+
+    const m = Math.floor((time % 3600) / 60)
+      .toString()
+      .padStart(2, '0');
+
+    const s = Math.floor(time % 60)
+      .toString()
+      .padStart(2, '0');
+
+    console.log('ETA:', h !== '00' ? `${h}:${m}:${s}` : `${m}:${s}`);
   }
 }
