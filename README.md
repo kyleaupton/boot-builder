@@ -6,8 +6,12 @@ An Electron app to easily create Windows install media on MacOS.
 
 ## Wants
 
-* Ship with `wimlib` + it's deps
-* Ability to download `.iso` files
+- [x] Ship with `wimlib` + it's deps
+- [ ] Ship with `rsync`
+- [ ] Support macOS install creation
+- [ ] Support Linux/normal ISO flash
+- [ ] Ability to download Windows `.iso` files
+- [ ] Ability to download macOS installers (maybe not legal, we'll see)
 
 ## Quick Setup
 
@@ -23,25 +27,4 @@ yarn
 
 # develop
 yarn dev
-```
-
-## Debug
-
-(gif courtesy of the template repo!)
-
-![electron-vite-react-debug.gif](https://github.com/electron-vite/electron-vite-react/blob/main/electron-vite-react-debug.gif?raw=true)
-
-## Directory
-
-```diff
-+ ├─┬ electron
-+ │ ├─┬ main
-+ │ │ └── index.ts    entry of Electron-Main
-+ │ └─┬ preload
-+ │   └── index.ts    entry of Preload-Scripts
-  ├─┬ src
-  │ └── main.ts       entry of Electron-Renderer
-  ├── index.html
-  ├── package.json
-  └── vite.config.ts
 ```

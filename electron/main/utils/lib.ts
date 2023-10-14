@@ -2,7 +2,15 @@ import { app } from 'electron';
 import path from 'path';
 import os from 'os';
 
-type t_program = 'wimlib';
+type t_program =
+  | {
+      name: 'wimlib';
+      bin: 'wimlib-imagex';
+    }
+  | {
+      name: 'rsync';
+      bin: 'rsync';
+    };
 
 const { isPackaged } = app;
 const arch = os.arch();
@@ -17,18 +25,13 @@ export const getPath = (program: t_program) => {
     base = [__dirname, '..', '..'];
   }
 
-  switch (program) {
-    case 'wimlib':
-      return path.join(
-        ...base,
-        'electron',
-        'lib',
-        program,
-        arch,
-        'bin',
-        'wimlib-imagex',
-      );
-    default:
-      throw Error('Invalid program');
-  }
+  return path.join(
+    ...base,
+    'electron',
+    'lib',
+    program.name,
+    arch,
+    'bin',
+    program.bin,
+  );
 };

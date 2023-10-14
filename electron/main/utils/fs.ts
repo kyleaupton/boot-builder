@@ -22,3 +22,12 @@ export const dirSize = async (dir: string) => {
     .flat(Infinity)
     .reduce((i, size) => i + size, 0);
 };
+
+export const exists = async (path: string) => {
+  try {
+    await fs.stat(path);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};

@@ -5,7 +5,10 @@
     <div class="flashing-progress">
       <LoadingBar />
 
-      <div class="flashing-progress-extra">{{ statusText }}</div>
+      <div class="flashing-progress-extra-wrap">
+        <div class="flashing-progress-extra">{{ statusText }}</div>
+        <div v-show="eta" class="flashing-progress-eta">{{ eta }}</div>
+      </div>
     </div>
 
     <div class="flashing-details">
@@ -70,6 +73,10 @@ export default defineComponent({
       return this.drive.flashingProgress.currentActivity;
     },
 
+    eta() {
+      return this.drive.flashingProgress.copy?.etaHuman || '';
+    },
+
     chevronRotation() {
       return this.showingDetails ? 180 : 90;
     },
@@ -114,6 +121,11 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.flashing-progress-extra-wrap {
+  display: flex;
+  justify-content: space-between;
 }
 
 .flashing-progress-extra {
