@@ -20,7 +20,7 @@
         "x64",
         "arm64"
       ]
-    }
+    },
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
   },
   "dmg": {
