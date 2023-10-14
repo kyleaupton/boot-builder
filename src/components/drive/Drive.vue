@@ -44,6 +44,8 @@
       <template v-else-if="!drive.flashing && !drive.doneFlashing">
         <IsoSelector @file-change="handleFileChange" />
 
+        <!-- {{ drive.flashing }} -->
+
         <div
           v-if="drive.isoFile"
           :style="{ display: 'grid', placeItems: 'center' }"
@@ -53,7 +55,7 @@
       </template>
 
       <!-- Flashing -->
-      <Flashing v-else-if="drive.isoFile && drive.flashing" :drive="drive" />
+      <Flashing v-else-if="drive.flashing" :drive="drive" />
 
       <!-- Done -->
       <template v-else-if="drive.doneFlashing">

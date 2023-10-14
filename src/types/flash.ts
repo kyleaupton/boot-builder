@@ -3,4 +3,11 @@ export type t_flashing_progress = {
   stdout: string;
   stderr: string;
   error: string;
+  copy?: {
+    transferred: number;
+    speed: number;
+    percentage: number;
+    eta: number;
+    etaHuman: string;
+  };
 };

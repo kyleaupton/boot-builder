@@ -1,11 +1,9 @@
 import { reactive } from 'vue';
-import { customAlphabet } from 'nanoid';
 import { t_drive } from '@/types/disks';
 import { t_file } from '@/types/iso';
 import { t_flashing_progress } from '@/types/flash';
 
 const testing = false;
-const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz', 6);
 
 export default class Drive {
   meta: t_drive;
@@ -19,7 +17,7 @@ export default class Drive {
 
   constructor(meta: t_drive) {
     this.meta = meta;
-    this.id = nanoid();
+    this.id = meta.serial_num;
     this.flashing = false;
     this.doneFlashing = false;
     this.flashingProgress = reactive({
@@ -33,6 +31,8 @@ export default class Drive {
     this._stderrHandler = this._stderrHandler.bind(this);
     this._activityHandler = this._activityHandler.bind(this);
     this._etaHandler = this._etaHandler.bind(this);
+
+    this._registerIpcEvents();
   }
 
   async startFlash() {
@@ -41,8 +41,6 @@ export default class Drive {
     }
 
     this.flashing = true;
-
-    this._registerIpcEvents();
 
     if (testing) {
       await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -58,11 +56,10 @@ export default class Drive {
           e instanceof Error ? e.message : String(e);
       }
     }
+  }
 
+  destroy() {
     this._removeIpcEvents();
-
-    this.flashing = false;
-    this.doneFlashing = true;
   }
 
   /**
@@ -79,6 +76,7 @@ export default class Drive {
     window.api.ipc.recieve(`flash-${this.id}-stdout`, this._stdoutHandler);
     window.api.ipc.recieve(`flash-${this.id}-stderr`, this._stderrHandler);
     window.api.ipc.recieve(`flash-${this.id}-copy-eta`, this._etaHandler);
+    window.api.ipc.recieve(`flash-${this.id}-done`, this._doneHandler);
   }
 
   _removeIpcEvents() {
@@ -99,22 +97,45 @@ export default class Drive {
       `flash-${this.id}-copy-eta`,
       this._etaHandler,
     );
+
+    window.api.ipc.removeListener(`flash-${this.id}-done`, this._doneHandler);
   }
 
   _activityHandler(activity: string) {
+    if (!this.flashing) {
+      this.flashing = true;
+    }
+
     this.flashingProgress.currentActivity = activity;
   }
 
   _stdoutHandler(stdout: string) {
+    if (!this.flashing) {
+      this.flashing = true;
+    }
+
     this.flashingProgress.stdout += stdout;
   }
 
   _stderrHandler(stderr: string) {
+    if (!this.flashing) {
+      this.flashing = true;
+    }
+
     this.flashingProgress.stderr += stderr;
   }
 
-  _etaHandler(progress: any) {
-    // console.log(`ETA: ${moment()}`);
+  _etaHandler(progress: {
+    transferred: number;
+    speed: number;
+    percentage: number;
+    eta: number;
+  }) {
+    console.log('got here', progress);
+    if (!this.flashing) {
+      this.flashing = true;
+    }
+
     const time = progress.eta;
 
     const h = Math.floor(time / 3600)
@@ -129,6 +150,18 @@ export default class Drive {
       .toString()
       .padStart(2, '0');
 
-    console.log('ETA:', h !== '00' ? `${h}:${m}:${s}` : `${m}:${s}`);
+    const eta = h !== '00' ? `${h}:${m}:${s}` : `${m}:${s}`;
+
+    this.flashingProgress.copy = {
+      ...progress,
+      etaHuman: eta,
+    };
+  }
+
+  _doneHandler() {
+    console.log('got to done');
+    this.flashing = false;
+    this.doneFlashing = true;
+    this.destroy();
   }
 }
