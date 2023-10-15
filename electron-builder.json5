@@ -21,7 +21,7 @@
         "arm64"
       ]
     },
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
+    "artifactName": "${productName}-macOS-${version}-${arch}.${ext}",
   },
   "dmg": {
     "sign": false,
