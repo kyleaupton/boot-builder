@@ -31,6 +31,7 @@ export default class Drive {
     this._stderrHandler = this._stderrHandler.bind(this);
     this._activityHandler = this._activityHandler.bind(this);
     this._etaHandler = this._etaHandler.bind(this);
+    this._doneHandler = this._doneHandler.bind(this);
 
     this._registerIpcEvents();
   }
@@ -56,10 +57,6 @@ export default class Drive {
           e instanceof Error ? e.message : String(e);
       }
     }
-  }
-
-  destroy() {
-    this._removeIpcEvents();
   }
 
   /**
@@ -159,9 +156,8 @@ export default class Drive {
   }
 
   _doneHandler() {
-    console.log('got to done');
     this.flashing = false;
     this.doneFlashing = true;
-    this.destroy();
+    this._removeIpcEvents();
   }
 }

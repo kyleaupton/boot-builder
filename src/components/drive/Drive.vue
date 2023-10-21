@@ -40,18 +40,26 @@
         <div class="drive-done-extra">{{ drive.flashingProgress.error }}</div>
       </template>
 
-      <!-- Choosing file -->
+      <!-- Choosing OS / source -->
       <template v-else-if="!drive.flashing && !drive.doneFlashing">
-        <IsoSelector @file-change="handleFileChange" />
+        <template v-if="!chosenOS">
+          <DriveSelectOS @selected-os="chosenOS = $event" />
+        </template>
+        <template v-else>
+          <IsoSelector
+            v-if="chosenOS === 'Windows'"
+            @file-change="handleFileChange"
+          />
+        </template>
 
-        <!-- {{ drive.flashing }} -->
+        <!-- <IsoSelector @file-change="handleFileChange" />
 
         <div
           v-if="drive.isoFile"
           :style="{ display: 'grid', placeItems: 'center' }"
         >
           <button @click="handleStartFlash">Start Flash</button>
-        </div>
+        </div> -->
       </template>
 
       <!-- Flashing -->
@@ -81,6 +89,7 @@ import { defineComponent, PropType } from 'vue';
 import prettyBytes from 'pretty-bytes';
 import Drive from '@/api/Drive';
 import { t_file } from '@/types/iso';
+import DriveSelectOS from '@/components/drive/DriveSelectOS.vue';
 import IsoSelector from '@/components/iso-selector/IsoSelector.vue';
 import Flashing from '@/components/drive/Flashing.vue';
 
@@ -88,6 +97,7 @@ export default defineComponent({
   name: 'Drive',
 
   components: {
+    DriveSelectOS,
     IsoSelector,
     Flashing,
   },
@@ -97,6 +107,12 @@ export default defineComponent({
       type: Object as PropType<Drive>,
       required: true,
     },
+  },
+
+  data() {
+    return {
+      chosenOS: '',
+    };
   },
 
   computed: {
