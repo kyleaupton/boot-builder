@@ -1,52 +1,118 @@
 <template>
-  <!-- If file is chosen -->
-  <template v-if="file">
-    <div class="iso-wrap iso-preview">
-      <div class="iso-preview-file">
-        <font-awesome-icon
-          class="iso-chooser-icon"
-          :icon="['fab', 'windows']"
-        />
-        <div class="iso-preview-path">{{ fileName }}</div>
-        <font-awesome-icon
-          class="iso-preview-close"
-          :icon="['fas', 'xmark']"
-          @click="resetFile"
-        />
+  <!-- Select OS -->
+  <template v-if="!selectedTarget">
+    <div class="drive-os-selection">
+      <div class="drive-os-selection-title">OS Selection</div>
+      <div class="drive-os-selection-extra">
+        What are you making installation media for?
+      </div>
+
+      <div class="drive-os-selection-targets">
+        <div
+          v-for="target of mediaTargets"
+          :key="target.id"
+          class="drive-os-selection-target"
+          @click="selectedTarget = target.id"
+        >
+          <font-awesome-icon
+            class="drive-os-selection-target-icon"
+            :icon="target.icon"
+          />
+
+          <div class="drive-os-selection-target-title-wrap">
+            <div class="drive-os-selection-target-title">{{ target.id }}</div>
+          </div>
+        </div>
       </div>
     </div>
   </template>
 
-  <!-- If no file is chosen -->
-  <template v-else-if="!loading">
-    <!-- <Drop @drop="handleDrop">
-      <div class="iso-wrap iso-chooser">
+  <!-- Selected local file preview -->
+  <template v-else-if="localFile">
+    <div class="drive-source-wrap drive-source-preview">
+      <div class="drive-source-preview-file">
         <font-awesome-icon
-          class="iso-chooser-icon"
-          style="font-size: 48px"
+          class="drive-source-chooser-icon"
           :icon="['fab', 'windows']"
         />
-        <div class="iso-chooser-title">Drop Windows install here</div>
-        <div>or</div>
-        <button @click="handleOpenFile">Choose File</button>
+
+        <div class="drive-source-preview-path">{{ localFile.name }}</div>
+
+        <font-awesome-icon
+          class="drive-source-preview-close"
+          :icon="['fas', 'xmark']"
+          @click="localFile = null"
+        />
       </div>
-    </Drop> -->
-    got here
+
+      <button>Start Flash</button>
+    </div>
+  </template>
+
+  <!-- Windows -->
+  <template v-else-if="selectedTarget === 'Windows'">
+    <div v-if="!windowsState.download" class="drive-os-selection">
+      <div class="drive-os-selection-title">ISO Selection</div>
+      <div class="drive-os-selection-extra">
+        Are you bringing your own ISO file?
+      </div>
+
+      <div class="drive-os-selection-targets">
+        <div
+          class="drive-os-selection-target drive-os-selection-target-download"
+        >
+          <font-awesome-icon
+            class="drive-os-selection-target-icon"
+            :icon="['fas', 'down-long']"
+          />
+
+          <div class="drive-os-selection-target-title-wrap">
+            <div class="drive-os-selection-target-title">Download</div>
+            <div
+              style="
+                font-size: 12px;
+                text-align: center;
+                color: var(--text-2);
+                margin-top: 4px;
+              "
+            >
+              Coming soon
+            </div>
+          </div>
+        </div>
+
+        <div class="drive-os-selection-target" @click="handleSelectIso">
+          <font-awesome-icon
+            class="drive-os-selection-target-icon"
+            :icon="['fas', 'desktop']"
+          />
+
+          <div class="drive-os-selection-target-title-wrap">
+            <div class="drive-os-selection-target-title">Local File</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="">got here</div>
+  </template>
+
+  <!-- macOS -->
+  <template v-else-if="selectedTarget === 'macOS'">
+    <DriveSelectLocalSource :drive="drive" type="suggestion" />
   </template>
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { PropType, defineComponent } from 'vue';
 import Drive from '@/api/Drive';
-import { getErrorMessage } from '@/utils/error';
-import { t_file } from '@/types/iso';
-// import Drop from '@/components/Drop.vue';
+import DriveSelectLocalSource from './DriveSelectLocalSource.vue';
 
 export default defineComponent({
-  name: 'IsoSelector',
+  name: 'DriveSelectOS',
 
   components: {
-    // Drop,
+    DriveSelectLocalSource,
   },
 
   props: {
@@ -56,99 +122,47 @@ export default defineComponent({
     },
   },
 
-  emits: ['fileChange'],
+  emits: ['selectedOs'],
 
   data() {
     return {
-      file: undefined as t_file | undefined,
-      error: '',
-      loading: true,
+      mediaTargets: [
+        {
+          id: 'Windows',
+          icon: ['fab', 'windows'],
+        },
+        {
+          id: 'macOS',
+          icon: ['fab', 'apple'],
+        },
+        // {
+        //   id: 'Linux',
+        //   icon: ['fab', 'linux'],
+        // },
+      ],
+
+      selectedTarget: '',
+
+      localFile: null as { name: string; path: string; size: number } | null,
+
+      windowsState: {
+        download: false,
+      },
     };
   },
 
-  computed: {
-    fileName() {
-      return this.file ? this.file.path.split('/').pop() : '';
-    },
-  },
-
-  watch: {
-    file() {
-      this.$emit('fileChange', this.file);
-    },
-  },
-
-  created() {
-    this.getSuggestionList();
-  },
-
   methods: {
-    async getSuggestionList() {
-      let path = '';
-
-      if (this.drive.os === 'Windows' || this.drive.os === 'Linux') {
-        const homeDir = await window.api.ipc.invoke('/utils/os/home');
-        path = `${homeDir}/Downloads`;
-      } else if (this.drive.os === 'macOS') {
-        path = '/Applications';
-      }
-
-      const files = await window.api.ipc.invoke('/utils/fs/readdir', { path });
-
-      console.log(files);
-
-      this.loading = false;
-    },
-
-    handleDrop(e: DragEvent) {
-      if (e.dataTransfer) {
-        try {
-          const { files } = e.dataTransfer;
-
-          /**
-           * EDGE CASE: More than one file
-           */
-          if (files.length > 1) {
-            throw Error('Only one file is allowed');
-          }
-
-          const file = files[0];
-
-          /**
-           * EDGE CASE: Something that is not a .iso file
-           */
-          // @ts-ignore - File types are screwed up
-          if (!file.path.split('/').pop()?.endsWith('.iso')) {
-            throw Error('Only .iso files are allowed');
-          }
-
-          this.file = {
-            name: file.name,
-            // @ts-ignore - File types are screwed up
-            path: file.path,
-            size: file.size,
-          };
-        } catch (e) {
-          console.error(e);
-          this.error = getErrorMessage(e);
-        }
-      }
-    },
-
-    async handleOpenFile() {
+    async handleSelectIso() {
       const path = (await window.api.showOpenIsoDialog()).filePaths[0];
-      this.file = await window.api.getFileFromPath(path);
-    },
-
-    resetFile() {
-      this.file = undefined;
+      this.localFile = await window.api.getFileFromPath(path);
+      console.log(this.localFile);
     },
   },
 });
 </script>
 
 <style scoped>
-.iso-wrap {
+.drive-source-wrap {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -156,7 +170,7 @@ export default defineComponent({
   gap: 16px;
 }
 
-.iso-preview-file {
+.drive-source-preview-file {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -165,31 +179,74 @@ export default defineComponent({
   margin-top: 32px;
 }
 
-.iso-preview-path {
+.drive-source-preview-path {
   font-weight: 600;
 }
 
-.iso-chooser {
-  gap: 16px;
-  padding: 16px;
-  border: 2px dashed var(--text-1);
-  border-radius: 4px;
-}
-
-.iso-chooser-icon {
-  font-size: 28px;
-}
-
-.iso-chooser-title {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.iso-preview-close {
+.drive-source-preview-close {
   cursor: pointer;
 }
 
-/* .iso-preview-close:hover {
-  background-color: ;
-} */
+.drive-os-selection {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.drive-os-selection-title {
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.drive-os-selection-extra {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-2);
+  margin-bottom: 42px;
+}
+
+.drive-os-selection-targets {
+  align-self: center;
+  display: flex;
+  gap: 12px;
+}
+
+.drive-os-selection-target {
+  width: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 16px;
+  transition: background 0.1s ease;
+}
+
+.drive-os-selection-target:not(.drive-os-selection-target-download):hover {
+  background: var(--hover-1);
+}
+
+.drive-os-selection-target-icon {
+  height: 42px;
+}
+
+.drive-os-selection-target-title-wrap {
+  flex-grow: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.drive-os-selection-target-title {
+  text-align: center;
+  font-weight: 600;
+}
+
+.drive-os-selection-target-download {
+  cursor: not-allowed;
+}
 </style>

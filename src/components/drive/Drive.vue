@@ -41,21 +41,10 @@
       </template>
 
       <!-- Choosing OS / source -->
-      <template v-else-if="!drive.flashing && !drive.doneFlashing">
-        <template v-if="!drive.os">
-          <DriveSelectOS @selected-os="handleOschange" />
-        </template>
-        <template v-else>
-          <DriveSelectSource :drive="drive" @file-change="handleFileChange" />
-
-          <div
-            v-if="drive.sourcePath"
-            :style="{ display: 'grid', placeItems: 'center' }"
-          >
-            <button @click="handleStartFlash">Start Flash</button>
-          </div>
-        </template>
-      </template>
+      <DriveSelectSource
+        v-else-if="!drive.flashing && !drive.doneFlashing"
+        :drive="drive"
+      />
 
       <!-- Flashing -->
       <Flashing v-else-if="drive.flashing" :drive="drive" />
@@ -74,8 +63,6 @@
         </div>
       </template>
     </div>
-
-    <!-- Footer section -->
   </div>
 </template>
 
@@ -84,7 +71,6 @@ import { defineComponent, PropType } from 'vue';
 import prettyBytes from 'pretty-bytes';
 import Drive from '@/api/Drive';
 import { t_file } from '@/types/iso';
-import DriveSelectOS from '@/components/drive/DriveSelectOS.vue';
 import DriveSelectSource from '@/components/drive/DriveSelectSource.vue';
 import Flashing from '@/components/drive/Flashing.vue';
 
@@ -92,7 +78,6 @@ export default defineComponent({
   name: 'Drive',
 
   components: {
-    DriveSelectOS,
     DriveSelectSource,
     Flashing,
   },

@@ -15,6 +15,7 @@ const validateChannel = (channel: string) => {
     '/flash',
     '/utils/fs/readdir',
     '/utils/os/home',
+    '/utils/app/fileIcon',
   ];
   if (validChannels.includes(channel)) {
     return;
