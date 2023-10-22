@@ -42,16 +42,19 @@
 
       <!-- Choosing file -->
       <template v-else-if="!drive.flashing && !drive.doneFlashing">
-        <IsoSelector @file-change="handleFileChange" />
+        <template v-if="!drive.os">
+          <DriveSelectOS @selected-os="handleOschange" />
+        </template>
+        <template v-else>
+          <DriveSelectSource :drive="drive" @file-change="handleFileChange" />
 
-        <!-- {{ drive.flashing }} -->
-
-        <div
-          v-if="drive.isoFile"
-          :style="{ display: 'grid', placeItems: 'center' }"
-        >
-          <button @click="handleStartFlash">Start Flash</button>
-        </div>
+          <div
+            v-if="drive.sourcePath"
+            :style="{ display: 'grid', placeItems: 'center' }"
+          >
+            <button @click="handleStartFlash">Start Flash</button>
+          </div>
+        </template>
       </template>
 
       <!-- Flashing -->
@@ -81,14 +84,16 @@ import { defineComponent, PropType } from 'vue';
 import prettyBytes from 'pretty-bytes';
 import Drive from '@/api/Drive';
 import { t_file } from '@/types/iso';
-import IsoSelector from '@/components/iso-selector/IsoSelector.vue';
+import DriveSelectOS from '@/components/drive/DriveSelectOS.vue';
+import DriveSelectSource from '@/components/drive/DriveSelectSource.vue';
 import Flashing from '@/components/drive/Flashing.vue';
 
 export default defineComponent({
   name: 'Drive',
 
   components: {
-    IsoSelector,
+    DriveSelectOS,
+    DriveSelectSource,
     Flashing,
   },
 
@@ -106,12 +111,16 @@ export default defineComponent({
   },
 
   methods: {
+    handleOschange(os: typeof this.drive.os) {
+      this.drive.setOs(os);
+    },
+
     handleFileChange(file: t_file | undefined) {
-      this.drive.setIsoFile(file);
+      this.drive.setSourcePath(file);
     },
 
     async handleStartFlash() {
-      if (this.drive && this.drive.isoFile) {
+      if (this.drive && this.drive.sourcePath) {
         const res = await window.api.showConfirmDialog(
           'Are you sure? The drive will be erased.',
         );

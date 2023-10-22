@@ -1,7 +1,8 @@
 import { ipcMain, IpcMainInvokeEvent } from 'electron';
 import FlashWindows from '../flash/FlashWindows';
+import FlashMacOS from '../flash/FlashMacOS';
 
-const flashes: { [key: string]: FlashWindows } = {};
+const flashes: { [key: string]: FlashWindows | FlashMacOS } = {};
 
 export const removeFlash = (id: string) => {
   delete flashes[id];
@@ -9,15 +10,39 @@ export const removeFlash = (id: string) => {
 
 export default function start() {
   ipcMain.handle(
-    '/flash',
+    '/flash/windows',
     async (
       event: IpcMainInvokeEvent,
-      { isoFile, volume, id }: { isoFile: string; volume: string; id: string },
+      {
+        id,
+        sourcePath,
+        targetVolume,
+      }: { sourcePath: string; targetVolume: string; id: string },
     ) => {
       flashes[id] = new FlashWindows({
         id,
-        isoFile,
-        targetVolume: volume,
+        sourcePath,
+        targetVolume,
+      });
+
+      flashes[id].run();
+    },
+  );
+
+  ipcMain.handle(
+    '/flash/macOS',
+    (
+      event: IpcMainInvokeEvent,
+      {
+        id,
+        sourcePath,
+        targetVolume,
+      }: { id: string; sourcePath: string; targetVolume: string },
+    ) => {
+      flashes[id] = new FlashMacOS({
+        id,
+        sourcePath,
+        targetVolume,
       });
 
       flashes[id].run();

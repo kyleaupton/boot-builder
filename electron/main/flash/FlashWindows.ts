@@ -8,22 +8,22 @@ import { humanReadableToBytes } from '../utils/bytes';
 import { getPath } from '../utils/lib';
 
 export default class FlashWindows extends Flash {
-  isoFile: string;
+  sourcePath: string;
   targetVolume: string;
   mountedIsoPath: string;
   diskName: string;
 
   constructor({
     id,
-    isoFile,
+    sourcePath,
     targetVolume,
   }: {
     id: string;
-    isoFile: string;
+    sourcePath: string;
     targetVolume: string;
   }) {
     super({ id });
-    this.isoFile = isoFile;
+    this.sourcePath = sourcePath;
     this.targetVolume = targetVolume;
     this.mountedIsoPath = '';
     this.diskName = '';
@@ -39,13 +39,13 @@ export default class FlashWindows extends Flash {
   }
 
   async mountIsoVolume() {
-    this._sendActivity(`Mounting ${this.isoFile}`);
+    this._sendActivity(`Mounting ${this.sourcePath}`);
 
     try {
-      const { stdout } = await exec(`hdiutil mount ${this.isoFile}`);
+      const { stdout } = await exec(`hdiutil mount ${this.sourcePath}`);
       this.mountedIsoPath = stdout.trim().split(/\s+/)[1];
     } catch (e) {
-      throw Error(`Failed to mount ${this.isoFile}`);
+      throw Error(`Failed to mount ${this.sourcePath}`);
     }
   }
 
@@ -68,7 +68,7 @@ export default class FlashWindows extends Flash {
       // Get disk name
       // Windows 10: `Win10_22H2_English_x64v1.iso`
       // Windows 11: `Win11_22H2_English_x64v2.iso`
-      this.diskName = this.isoFile
+      this.diskName = this.sourcePath
         .split('/')
         .slice(-1)[0]
         .split('_')[0]

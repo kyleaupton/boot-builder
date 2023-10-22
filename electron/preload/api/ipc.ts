@@ -9,7 +9,13 @@ import { ipcRenderer } from 'electron';
 
 const validateChannel = (channel: string) => {
   // Normal channels
-  const validChannels = ['/usb/attached', '/usb/detached', '/flash'];
+  const validChannels = [
+    '/usb/attached',
+    '/usb/detached',
+    '/flash',
+    '/utils/fs/readdir',
+    '/utils/os/home',
+  ];
   if (validChannels.includes(channel)) {
     return;
   }

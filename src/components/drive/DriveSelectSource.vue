@@ -18,8 +18,8 @@
   </template>
 
   <!-- If no file is chosen -->
-  <template v-else>
-    <Drop @drop="handleDrop">
+  <template v-else-if="!loading">
+    <!-- <Drop @drop="handleDrop">
       <div class="iso-wrap iso-chooser">
         <font-awesome-icon
           class="iso-chooser-icon"
@@ -30,21 +30,30 @@
         <div>or</div>
         <button @click="handleOpenFile">Choose File</button>
       </div>
-    </Drop>
+    </Drop> -->
+    got here
   </template>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, PropType } from 'vue';
+import Drive from '@/api/Drive';
 import { getErrorMessage } from '@/utils/error';
 import { t_file } from '@/types/iso';
-import Drop from '@/components/Drop.vue';
+// import Drop from '@/components/Drop.vue';
 
 export default defineComponent({
   name: 'IsoSelector',
 
   components: {
-    Drop,
+    // Drop,
+  },
+
+  props: {
+    drive: {
+      type: Object as PropType<Drive>,
+      required: true,
+    },
   },
 
   emits: ['fileChange'],
@@ -53,6 +62,7 @@ export default defineComponent({
     return {
       file: undefined as t_file | undefined,
       error: '',
+      loading: true,
     };
   },
 
@@ -68,7 +78,28 @@ export default defineComponent({
     },
   },
 
+  created() {
+    this.getSuggestionList();
+  },
+
   methods: {
+    async getSuggestionList() {
+      let path = '';
+
+      if (this.drive.os === 'Windows' || this.drive.os === 'Linux') {
+        const homeDir = await window.api.ipc.invoke('/utils/os/home');
+        path = `${homeDir}/Downloads`;
+      } else if (this.drive.os === 'macOS') {
+        path = '/Applications';
+      }
+
+      const files = await window.api.ipc.invoke('/utils/fs/readdir', { path });
+
+      console.log(files);
+
+      this.loading = false;
+    },
+
     handleDrop(e: DragEvent) {
       if (e.dataTransfer) {
         try {

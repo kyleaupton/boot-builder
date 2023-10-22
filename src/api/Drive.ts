@@ -10,7 +10,8 @@ export default class Drive {
   id: string;
 
   // State
-  isoFile: undefined | t_file;
+  os: 'Windows' | 'macOS' | 'Linux' | undefined;
+  sourcePath: t_file | undefined;
   flashing: boolean;
   doneFlashing: boolean;
   flashingProgress: t_flashing_progress;
@@ -36,8 +37,8 @@ export default class Drive {
   }
 
   async startFlash() {
-    if (!this.isoFile) {
-      throw Error('Must define isoPath first');
+    if (!this.sourcePath || !this.os) {
+      throw Error('Must define isoPath & os first');
     }
 
     this.flashing = true;
@@ -46,8 +47,20 @@ export default class Drive {
       await new Promise((resolve) => setTimeout(resolve, 5000));
     } else {
       try {
-        await window.api.ipc.invoke('/flash', {
-          isoFile: this.isoFile.path,
+        let url: string;
+
+        if (this.os === 'Windows') {
+          url = '/flash/windows';
+        } else if (this.os === 'macOS') {
+          url = '/flash/macOS';
+        } else if (this.os === 'Linux') {
+          url = '/flash/linux';
+        } else {
+          throw Error('Invalid os chosen');
+        }
+
+        await window.api.ipc.invoke(url, {
+          sourcePath: this.sourcePath.path,
           volume: `/dev/${this.meta.DeviceIdentifier}`,
           id: this.id,
         });
@@ -67,8 +80,12 @@ export default class Drive {
    * a vue component prop, we need this to allow
    * for modification of the file in such a case.
    */
-  setIsoFile(file: t_file | undefined) {
-    this.isoFile = file;
+  setOs(os: typeof this.os) {
+    this.os = os;
+  }
+
+  setSourcePath(file: t_file | undefined) {
+    this.sourcePath = file;
   }
 
   _registerIpcEvents() {
@@ -131,7 +148,6 @@ export default class Drive {
     percentage: number;
     eta: number;
   }) {
-    console.log('got here', progress);
     if (!this.flashing) {
       this.flashing = true;
     }
