@@ -1,6 +1,6 @@
 import { stat } from 'fs/promises';
 import { basename, dirname, resolve } from 'path';
-import { copy } from '@kyleupton/node-rsync';
+import { copy } from '@kyleupton/glob-copy';
 import Flash from './Flash';
 import { exec } from '../utils/child_process';
 import { exists, dirSize } from '../utils/fs';
@@ -100,24 +100,21 @@ export default class FlashWindows extends Flash {
 
       // Copy over everything minus the big file
       await copy({
-        source: `${this.mountedIsoPath}/`,
+        source: this.mountedIsoPath,
         destination: `/Volumes/${this.diskName}`,
         options: {
-          archive: true,
-          exclude: 'sources/install.wim',
+          ignore: ['sources/install.wim'],
         },
         onProgress: (progress) => {
+          transferred = progress.transferred;
           const remaining = totalSize - progress.transferred;
-          transferred += progress.transferred;
 
-          const payload = {
+          this._sendEta({
             transferred: progress.transferred,
             speed: progress.speed,
             percentage: (progress.transferred / totalSize) * 100,
             eta: remaining / progress.speed,
-          };
-
-          this._sendEta(payload);
+          });
         },
       });
 
@@ -125,8 +122,9 @@ export default class FlashWindows extends Flash {
       const wimlibImagex = getPath({ name: 'wimlib', bin: 'wimlib-imagex' });
       const dir = dirname(wimlibImagex);
       const name = basename(wimlibImagex);
-
       const start = Date.now();
+      let secondFileTransferred = 0;
+
       await this._executeCommand(
         name,
         [
@@ -144,7 +142,9 @@ export default class FlashWindows extends Flash {
             if (match && match.groups) {
               const { part } = match.groups;
               const { bytes } = humanReadableToBytes(part);
-              transferred += bytes;
+              const delta = bytes - secondFileTransferred;
+              secondFileTransferred = bytes;
+              transferred += delta;
               const remaining = bigFileSize.size - bytes;
               const speed = bytes / ((Date.now() - start) / 1000);
 

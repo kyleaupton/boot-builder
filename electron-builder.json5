@@ -14,10 +14,14 @@
     "dist-electron"
   ],
   "mac": {
-    "target": [
-      "dmg"
-    ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}",
+    "target": {
+      "target": "default",
+      "arch": [
+        "x64",
+        "arm64"
+      ]
+    },
+    "artifactName": "${productName}-macOS-${version}-${arch}.${ext}",
   },
   "dmg": {
     "sign": false,

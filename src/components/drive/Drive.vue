@@ -40,7 +40,7 @@
         <div class="drive-done-extra">{{ drive.flashingProgress.error }}</div>
       </template>
 
-      <!-- Choosing file -->
+      <!-- Choosing OS / source -->
       <template v-else-if="!drive.flashing && !drive.doneFlashing">
         <template v-if="!drive.os">
           <DriveSelectOS @selected-os="handleOschange" />
@@ -102,6 +102,12 @@ export default defineComponent({
       type: Object as PropType<Drive>,
       required: true,
     },
+  },
+
+  data() {
+    return {
+      chosenOS: '',
+    };
   },
 
   computed: {

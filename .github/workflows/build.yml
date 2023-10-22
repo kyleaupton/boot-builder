@@ -1,27 +1,28 @@
 name: Build
 
 on:
-  workflow_dispatch:
-  # push:
-  #   branches: [main]
-  #   paths-ignore:
-  #     - "**.md"
-  #     - "**.spec.js"
-  #     - ".idea"
-  #     - ".vscode"
-  #     - ".dockerignore"
-  #     - "Dockerfile"
-  #     - ".gitignore"
-  #     - ".github/**"
-  #     - "!.github/workflows/build.yml"
+  # workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "**.spec.js"
+      - ".idea"
+      - ".vscode"
+      - ".dockerignore"
+      - "Dockerfile"
+      - ".gitignore"
+      - ".github/**"
+      - "!.github/workflows/build.yml"
+      - ".eslintrc.cjs"
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: self-hosted
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest]
 
     steps:
       - name: Checkout Code
@@ -39,10 +40,12 @@ jobs:
         run: npm run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: https://raw.githubusercontent.com/kyleaupton/storage/main/code-signing-certs/kyle-upton.p12
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: release_on_${{ matrix. os }}
+          name: release_on_${{ matrix.os }}
           path: release/
           retention-days: 5

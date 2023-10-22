@@ -54,9 +54,13 @@ export default defineComponent({
   --sidebar-width: 300px;
 
   /* Content */
-  --content-color: #2f211d;
+  /* --content-color: rgba(47, 33, 29, 1); */
+  --content-color: hsl(14, 22%, 15%);
+
   --text-1: rgba(255, 255, 255, 0.87);
   --text-2: rgba(255, 255, 255, 0.5);
+
+  --hover-1: hsl(14, 18%, 18%);
 
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 
