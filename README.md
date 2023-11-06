@@ -3,7 +3,7 @@
 [![CI](https://github.com/kyleaupton/os-install-maker/actions/workflows/ci.yml/badge.svg)](https://github.com/kyleaupton/os-install-maker/actions/workflows/ci.yml)
 
 
-An Electron app to easily create Windows install media on MacOS.
+A macOS app to easily create install media for any OS.
 
 ![](https://raw.githubusercontent.com/kyleaupton/os-install-maker/main/docs/screenshot_1.png)
 

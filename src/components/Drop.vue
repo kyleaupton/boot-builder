@@ -74,6 +74,9 @@ export default defineComponent({
 <style scoped>
 .drop {
   position: relative;
+  width: 100%;
+  display: grid;
+  place-content: center;
 }
 
 .drop-cover {

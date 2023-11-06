@@ -9,25 +9,60 @@
 
       <div class="drive-os-selection-targets">
         <div
-          v-for="target of mediaTargets"
-          :key="target.id"
+          v-for="os of operatingSystems"
+          :key="os.id"
           class="drive-os-selection-target"
-          @click="selectedTarget = target.id"
+          @click="selectedTarget = os.id"
         >
           <font-awesome-icon
             class="drive-os-selection-target-icon"
-            :icon="target.icon"
+            :icon="os.icon"
           />
 
           <div class="drive-os-selection-target-title-wrap">
-            <div class="drive-os-selection-target-title">{{ target.id }}</div>
+            <div class="drive-os-selection-target-title">{{ os.id }}</div>
           </div>
         </div>
       </div>
     </div>
   </template>
 
-  <!-- Selected local file preview -->
+  <!-- Windows source type -->
+  <template v-else-if="selectedOS && !selectedOS.sourceType">
+    <div class="drive-os-selection">
+      <div class="drive-os-selection-title">ISO Selection</div>
+      <div class="drive-os-selection-extra">
+        Are you bringing your own ISO file?
+      </div>
+
+      <div class="drive-os-selection-targets">
+        <div class="drive-os-selection-target" @click="setSourceType('remote')">
+          <font-awesome-icon
+            class="drive-os-selection-target-icon"
+            :icon="['fas', 'down-long']"
+          />
+
+          <div class="drive-os-selection-target-title-wrap">
+            <div class="drive-os-selection-target-title">Download</div>
+          </div>
+        </div>
+
+        <div class="drive-os-selection-target" @click="setSourceType('local')">
+          <font-awesome-icon
+            class="drive-os-selection-target-icon"
+            :icon="['fas', 'desktop']"
+          />
+
+          <div class="drive-os-selection-target-title-wrap">
+            <div class="drive-os-selection-target-title">Local File</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Source preview -->
+  <!-- Final screen before flash -->
   <template v-else-if="localFile">
     <div class="drive-source-wrap drive-source-preview">
       <div class="drive-source-preview-file">
@@ -49,70 +84,34 @@
     </div>
   </template>
 
-  <!-- Windows -->
-  <template v-else-if="selectedTarget === 'Windows'">
-    <div v-if="!windowsState.download" class="drive-os-selection">
-      <div class="drive-os-selection-title">ISO Selection</div>
-      <div class="drive-os-selection-extra">
-        Are you bringing your own ISO file?
-      </div>
+  <!-- Source selection -->
+  <template v-else-if="selectedOS">
+    <!-- Windows remote source selection -->
+    <DriveSelectSourceRemote v-if="selectedOS.sourceType === 'remote'" />
 
-      <div class="drive-os-selection-targets">
-        <div
-          class="drive-os-selection-target drive-os-selection-target-download"
-        >
-          <font-awesome-icon
-            class="drive-os-selection-target-icon"
-            :icon="['fas', 'down-long']"
-          />
-
-          <div class="drive-os-selection-target-title-wrap">
-            <div class="drive-os-selection-target-title">Download</div>
-            <div
-              style="
-                font-size: 12px;
-                text-align: center;
-                color: var(--text-2);
-                margin-top: 4px;
-              "
-            >
-              Coming soon
-            </div>
-          </div>
-        </div>
-
-        <div class="drive-os-selection-target" @click="handleSelectIso">
-          <font-awesome-icon
-            class="drive-os-selection-target-icon"
-            :icon="['fas', 'desktop']"
-          />
-
-          <div class="drive-os-selection-target-title-wrap">
-            <div class="drive-os-selection-target-title">Local File</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-else class="">got here</div>
-  </template>
-
-  <!-- macOS -->
-  <template v-else-if="selectedTarget === 'macOS'">
-    <DriveSelectLocalSource :drive="drive" type="suggestion" />
+    <!-- or Local selection -->
+    <DriveSelectSourceLocal
+      v-if="selectedOS.sourceType === 'local'"
+      :suggestion-options="selectedOS.suggestionOptions"
+    />
   </template>
 </template>
 
 <script lang="ts">
 import { PropType, defineComponent } from 'vue';
 import Drive from '@/api/Drive';
-import DriveSelectLocalSource from './DriveSelectLocalSource.vue';
+
+import DriveSelectSourceRemote from './DriveSelectSourceRemote.vue';
+import DriveSelectSourceLocal, {
+  t_suggestion_options,
+} from './DriveSelectSourceLocal.vue';
 
 export default defineComponent({
   name: 'DriveSelectOS',
 
   components: {
-    DriveSelectLocalSource,
+    DriveSelectSourceRemote,
+    DriveSelectSourceLocal,
   },
 
   props: {
@@ -126,32 +125,63 @@ export default defineComponent({
 
   data() {
     return {
-      mediaTargets: [
+      operatingSystems: [
         {
           id: 'Windows',
           icon: ['fab', 'windows'],
+          sourceType: '',
+          suggestionOptions: {
+            title: 'ISO Selection',
+            desc: "Drag n' drop, browse, or choose a suggested ISO",
+            path: '$downloads$',
+            regex: /.+\.iso/,
+          } as t_suggestion_options,
         },
         {
           id: 'macOS',
           icon: ['fab', 'apple'],
+          sourceType: 'local',
+          suggestionOptions: {
+            title: 'Installer Selection',
+            desc: 'Choose the desired macOS installer',
+            path: '/Applications',
+            regex: /Install macOS .+\.app/,
+          } as t_suggestion_options,
         },
         // {
         //   id: 'Linux',
         //   icon: ['fab', 'linux'],
+        //   suggestionOptions: {} as t_suggestion_options,
         // },
       ],
 
       selectedTarget: '',
 
       localFile: null as { name: string; path: string; size: number } | null,
-
-      windowsState: {
-        download: false,
-      },
     };
   },
 
+  computed: {
+    selectedOS() {
+      if (this.selectedTarget) {
+        return this.operatingSystems.find((x) => x.id === this.selectedTarget);
+      }
+
+      return undefined;
+    },
+  },
+
   methods: {
+    setSourceType(sourceType: string) {
+      const index = this.operatingSystems.findIndex(
+        (x) => x.id === this.selectedTarget,
+      );
+
+      if (index > -1) {
+        this.operatingSystems[index].sourceType = sourceType;
+      }
+    },
+
     async handleSelectIso() {
       const path = (await window.api.showOpenIsoDialog()).filePaths[0];
       this.localFile = await window.api.getFileFromPath(path);
