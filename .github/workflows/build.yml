@@ -1,20 +1,20 @@
 name: Build
 
 on:
-  # workflow_dispatch:
-  push:
-    branches: [main]
-    paths-ignore:
-      - "**.md"
-      - "**.spec.js"
-      - ".idea"
-      - ".vscode"
-      - ".dockerignore"
-      - "Dockerfile"
-      - ".gitignore"
-      - ".github/**"
-      - "!.github/workflows/build.yml"
-      - ".eslintrc.cjs"
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths-ignore:
+  #     - "**.md"
+  #     - "**.spec.js"
+  #     - ".idea"
+  #     - ".vscode"
+  #     - ".dockerignore"
+  #     - "Dockerfile"
+  #     - ".gitignore"
+  #     - ".github/**"
+  #     - "!.github/workflows/build.yml"
+  #     - ".eslintrc.cjs"
 
 jobs:
   build:
