@@ -2,7 +2,7 @@
   "name": "os-install-maker",
   "version": "0.0.1",
   "main": "dist-electron/main/index.js",
-  "description": "App to create Windows install media on MacOS",
+  "description": "An app to easily create bootable OS installers for macOS and Windows",
   "author": "Kyle Upton <kyleaupton@gmail.com>",
   "license": "GPL-3.0-or-later",
   "debug": {

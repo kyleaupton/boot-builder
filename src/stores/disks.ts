@@ -1,7 +1,7 @@
 import { reactive } from 'vue';
 import { defineStore } from 'pinia';
 import Drive from '@/api/Drive';
-import { Item2 } from '@/types/disks';
+import { Item2, SpusbdataType, Medum } from '@/types/disks';
 
 type t_state = {
   loading: boolean; // if we're currently grabbing
@@ -22,42 +22,47 @@ export const useDisksStore = defineStore('disks', {
       this.loading = true;
 
       const items = (await window.api.getDisks()).AllDisksAndPartitions;
+      const usbData = (await window.api.getUsbData()).SPUSBDataType;
+      const found: Item2[] = [];
 
-      const usbData = await window.api.getUsbData();
-      const found: (Item2 & { key: string })[] = [];
+      const isDevice = (item: any): item is Item2 => { // eslint-disable-line
+        return item._name && item.serial_num && item.bcd_device;
+      };
 
-      for (const controller of usbData.SPUSBDataType) {
+      const isController = (item: any): item is SpusbdataType => { // eslint-disable-line
+        return item.pci_device && item._items;
+      };
+
+      const checkController = (controller: SpusbdataType) => {
         if (controller._items) {
-          for (const hub of controller._items) {
-            if (hub._items) {
-              for (const device of hub._items) {
-                if (device.Media) {
-                  // @ts-ignore
-                  const foundItem = device.Media.find((x) =>
-                    // @ts-ignore
-                    items.find((y) => y.DeviceIdentifier === x.bsd_name),
-                  );
-
-                  if (foundItem) {
-                    found.push({ ...device, key: foundItem.bsd_name });
-                  }
-                }
-              }
+          for (const item of controller._items) {
+            if (isDevice(item)) {
+              found.push(item);
+            } else if (isController(item)) {
+              checkController(item);
             }
           }
         }
+      };
+
+      // I want to recurse through and find any key that is `_items` and is an array
+      for (const baseItem of usbData) {
+        checkController(baseItem);
       }
 
-      // @ts-ignore
-      this.items = items.map((x) => {
-        const usbData = found.find((y) => y.key === x.DeviceIdentifier);
+      this.items = found
+        .filter((item) => item.Media && item.Media.length === 1)
+        .map((item) => {
+          const _media = item.Media as Medum[];
+          const { bsd_name } = _media[0];
+          const usbData = items.find((x) => x.DeviceIdentifier === bsd_name);
 
-        if (usbData) {
-          return reactive(new Drive({ ...usbData, ...x }));
-        }
+          if (!usbData) {
+            throw Error();
+          }
 
-        throw Error();
-      });
+          return reactive(new Drive({ ...usbData, ...item }));
+        });
 
       this.loading = false;
       this.loaded = true;
