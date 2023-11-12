@@ -1,6 +1,6 @@
 <template>
   <div class="flashing">
-    <div>Flashing {{ drive.meta._name }} with {{ drive.isoFile?.name }}</div>
+    <div>Flashing {{ drive.meta._name }} with {{ drive.sourcePath?.name }}</div>
 
     <div class="flashing-progress">
       <LoadingBar />
