@@ -18,11 +18,11 @@ export const useDisksStore = defineStore('disks', {
       const found: Item2[] = [];
 
       const isDevice = (item: any): item is Item2 => { // eslint-disable-line
-        return item._name && item.serial_num && item.bcd_device;
+        return item._name && item.serial_num && item.Media && !item._items;
       };
 
       const isController = (item: any): item is SpusbdataType => { // eslint-disable-line
-        return item.pci_device && item._items;
+        return item._items;
       };
 
       const checkController = (controller: SpusbdataType) => {
