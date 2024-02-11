@@ -1,4 +1,4 @@
-# os-install-maker
+# Boot Builder
 
 [![CI](https://github.com/kyleaupton/os-install-maker/actions/workflows/ci.yml/badge.svg)](https://github.com/kyleaupton/os-install-maker/actions/workflows/ci.yml)
 
@@ -11,7 +11,7 @@ An app to easily create bootable USB installers for Windows, macOS, Linux, MS-DO
 
 - [x] Support Windows creation
 - [x] Ship with `wimlib` + it's deps
-- [ ] Support macOS install creation
+- [x] Support macOS install creation
 - [ ] Support Linux/normal ISO flash
 - [ ] Ability to download Windows `.iso` files
 - [ ] Ability to download macOS installers (maybe not legal, we'll see)

@@ -1,5 +1,8 @@
 <template>
-  <div class="titlebar drag"></div>
+  <div class="titlebar drag">
+    <img height="50" src="logo.svg" />
+    <p class="titlebar-text">Boot Builder</p>
+  </div>
 </template>
 
 <script lang="ts">
@@ -12,8 +15,17 @@ export default defineComponent({
 
 <style scoped>
 .titlebar {
-  height: var(--titlebar-height);
   width: 100%;
   box-sizing: border-box;
+  padding: 2rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.titlebar-text {
+  font-weight: 600;
 }
 </style>

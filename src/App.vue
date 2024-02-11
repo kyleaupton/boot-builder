@@ -64,8 +64,6 @@ export default defineComponent({
 
 <style>
 :root {
-  --titlebar-height: 52px;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
