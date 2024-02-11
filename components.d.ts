@@ -8,22 +8,10 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Button: typeof import('primevue/button')['default']
-    Content: typeof import('./src/components/Content.vue')['default']
-    Drive: typeof import('./src/components/drive/Drive.vue')['default']
     DriveSelector: typeof import('./src/components/DriveSelector.vue')['default']
-    DriveSelectSource: typeof import('./src/components/drive/DriveSelectSource.vue')['default']
-    DriveSelectSourceDrop: typeof import('./src/components/drive/DriveSelectSourceDrop.vue')['default']
-    DriveSelectSourceLocal: typeof import('./src/components/drive/DriveSelectSourceLocal.vue')['default']
-    DriveSelectSourceRemote: typeof import('./src/components/drive/DriveSelectSourceRemote.vue')['default']
-    Drop: typeof import('./src/components/Drop.vue')['default']
     Dropdown: typeof import('primevue/dropdown')['default']
-    Flashing: typeof import('./src/components/drive/Flashing.vue')['default']
-    LoadingBar: typeof import('./src/components/LoadingBar.vue')['default']
     OsSelector: typeof import('./src/components/OsSelector.vue')['default']
-    Sidebar: typeof import('./src/components/sidebar/Sidebar.vue')['default']
-    SidebarDrive: typeof import('./src/components/sidebar/SidebarDrive.vue')['default']
     SourceSelector: typeof import('./src/components/SourceSelector.vue')['default']
-    Spinner: typeof import('./src/components/Spinner.vue')['default']
     Titlebar: typeof import('./src/components/Titlebar.vue')['default']
   }
 }

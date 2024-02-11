@@ -7,14 +7,23 @@
       />
     </InputGroupAddon>
 
-    <Dropdown v-model="value" :items="disks" placeholder="Select target" />
+    <Dropdown
+      v-model="value"
+      :options="dropdownOptions"
+      option-label="label"
+      option-value="value"
+      placeholder="Select target"
+    />
   </InputGroup>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { mapState } from 'pinia';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
+import prettyBytes from 'pretty-bytes';
+import { useDisksStore } from '@/stores/disks';
 
 export default defineComponent({
   name: 'DriveSelector',
@@ -34,13 +43,10 @@ export default defineComponent({
 
   emits: ['update:modelValue'],
 
-  data() {
-    return {
-      disks: [],
-    };
-  },
-
   computed: {
+    ...mapState(useDisksStore, ['items']),
+
+    // v-model
     value: {
       get() {
         return this.modelValue;
@@ -49,15 +55,12 @@ export default defineComponent({
         this.$emit('update:modelValue', value);
       },
     },
-  },
 
-  created() {
-    console.log('DriveSelector created');
-  },
-
-  methods: {
-    async getDisks() {
-      console.log('getDisks');
+    dropdownOptions() {
+      return this.items.map((drive) => ({
+        label: `${drive.description} (${prettyBytes(drive.size ?? 0)})`,
+        value: drive.devicePath,
+      }));
     },
   },
 });
