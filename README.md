@@ -3,7 +3,7 @@
 [![CI](https://github.com/kyleaupton/os-install-maker/actions/workflows/ci.yml/badge.svg)](https://github.com/kyleaupton/os-install-maker/actions/workflows/ci.yml)
 
 
-An app to easily create bootable OS installers for macOS and Windows
+An app to easily create bootable USB installers for Windows, macOS, Linux, MS-DOS, and more
 
 ![](https://raw.githubusercontent.com/kyleaupton/os-install-maker/main/docs/screenshot_1.png)
 

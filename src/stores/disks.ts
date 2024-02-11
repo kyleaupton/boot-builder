@@ -1,26 +1,18 @@
-import { reactive } from 'vue';
 import { defineStore } from 'pinia';
-import Drive from '@/api/Drive';
-import { Item2, SpusbdataType, Medum } from '@/types/disks';
+import { Item2, SpusbdataType, Medum, t_drive } from '@/types/disks';
 
 type t_state = {
-  loading: boolean; // if we're currently grabbing
-  loaded: boolean; // if items is not null
-  items: Drive[];
+  items: Array<t_drive>;
 };
 
 export const useDisksStore = defineStore('disks', {
   state: () =>
     ({
-      loading: false,
-      loaded: false,
       items: [],
     }) as t_state,
 
   actions: {
     async getDisks() {
-      this.loading = true;
-
       const items = (await window.api.getDisks()).AllDisksAndPartitions;
       const usbData = (await window.api.getUsbData()).SPUSBDataType;
       const found: Item2[] = [];
@@ -61,11 +53,8 @@ export const useDisksStore = defineStore('disks', {
             throw Error();
           }
 
-          return reactive(new Drive({ ...usbData, ...item }));
+          return { ...usbData, ...item };
         });
-
-      this.loading = false;
-      this.loaded = true;
     },
 
     registerUsbEvents() {

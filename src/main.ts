@@ -1,5 +1,8 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import PrimeVue from 'primevue/config';
+import 'primevue/resources/themes/lara-dark-amber/theme.css';
+import 'primeicons/primeicons.css';
 
 // Icons
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -10,6 +13,7 @@ import {
   faCircleCheck,
   faCompactDisc,
   faDesktop,
+  faDisplay,
   faDownLong,
   faFloppyDisk,
   faHardDrive,
@@ -34,6 +38,7 @@ library.add(
   faCircleCheck,
   faCompactDisc,
   faDesktop,
+  faDisplay,
   faDownLong,
   faFloppyDisk,
   faHardDrive,
@@ -51,6 +56,7 @@ library.add(
 createApp(App)
   .component('font-awesome-icon', FontAwesomeIcon)
   .use(createPinia())
+  .use(PrimeVue, { inputStyle: 'filled' })
   .mount('#app')
   .$nextTick(() => {
     postMessage({ payload: 'removeLoading' }, '*');

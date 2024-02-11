@@ -1,8 +1,9 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { release } from 'node:os';
 import { join } from 'node:path';
-import installExtension from 'electron-devtools-installer';
+import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import { usb } from 'usb';
+
 import ipc from './ipc';
 
 // The built directory structure
@@ -67,16 +68,8 @@ async function createWindow() {
     trafficLightPosition: { x: 18, y: 18 },
   });
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    // electron-vite-vue#298
-    win.loadURL(url);
-    // Open devTool if the app is not packaged
-    win.webContents.openDevTools();
-  } else {
-    win.loadFile(indexHtml);
-  }
-
   win.once('ready-to-show', () => {
+    console.log('got to ready-to-show');
     win.show();
   });
 
@@ -91,11 +84,30 @@ async function createWindow() {
     return { action: 'deny' };
   });
   // win.webContents.on('will-navigate', (event, url) => { }) #344
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    // electron-vite-vue#298
+    console.log('got here 1');
+    win.loadURL(url);
+    console.log('got here 2');
+    // Open devTool if the app is not packaged
+    win.webContents.openDevTools();
+  } else {
+    win.loadFile(indexHtml);
+  }
 }
 
 app.on('ready', async () => {
+  try {
+    await installExtension(VUEJS_DEVTOOLS, {
+      forceDownload: true,
+      loadExtensionOptions: { allowFileAccess: true },
+    });
+  } catch (e) {
+    console.log(e);
+  }
+
   ipc();
-  await installExtension('nhdogjmejiglipccpnnnanhbledajbpd');
 
   usb.on('attach', () => {
     win.webContents.send('/usb/attached');

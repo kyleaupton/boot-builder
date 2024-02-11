@@ -1,9 +1,12 @@
 <template>
-  <Sidebar />
+  <Titlebar />
 
-  <div class="main">
-    <Titlebar />
-    <Content />
+  <div class="form-container">
+    <DriveSelector v-model="chosenDrive" />
+    <OsSelector v-model="chosenOs" />
+    <SourceSelector v-model="chosenSource" :chosen-os="chosenOs" />
+
+    <Button label="Flash" :disabled="flashDisabled" />
   </div>
 </template>
 
@@ -12,30 +15,39 @@ import { defineComponent } from 'vue';
 import { mapActions } from 'pinia';
 
 import { useDisksStore } from '@/stores/disks';
-import { useLayoutStore } from '@/stores/layout';
 
-import Sidebar from '@/components/sidebar/Sidebar.vue';
-import Titlebar from '@/components/titlebar/Titlebar.vue';
-import Content from '@/components/Content.vue';
+import Titlebar from './components/Titlebar.vue';
+import DriveSelector from './components/DriveSelector.vue';
+import OsSelector from './components/OsSelector.vue';
+import SourceSelector from './components/SourceSelector.vue';
 
 export default defineComponent({
   name: 'App',
 
   components: {
     Titlebar,
-    Sidebar,
-    Content,
+    DriveSelector,
+    OsSelector,
+    SourceSelector,
+  },
+
+  data() {
+    return {
+      chosenDrive: '',
+      chosenOs: '',
+      chosenSource: '',
+    };
+  },
+
+  computed: {
+    flashDisabled() {
+      return !this.chosenDrive || !this.chosenOs;
+    },
   },
 
   async created() {
     this.registerUsbEvents();
     await this.getDisks();
-
-    const disksStore = useDisksStore();
-    const layoutStore = useLayoutStore();
-
-    if (disksStore.items && disksStore.items[0])
-      layoutStore.chosenDrive = disksStore.items[0].meta.DeviceIdentifier;
   },
 
   methods: {
@@ -46,32 +58,24 @@ export default defineComponent({
 
 <style>
 :root {
-  /* Titlebar */
   --titlebar-height: 52px;
-  --titlebar-color: #403734;
-
-  /* Sidebar */
-  --sidebar-width: 300px;
-
-  /* Content */
-  /* --content-color: rgba(47, 33, 29, 1); */
-  --content-color: hsl(14, 22%, 15%);
-
-  --text-1: rgba(255, 255, 255, 0.87);
-  --text-2: rgba(255, 255, 255, 0.5);
-
-  --hover-1: hsl(14, 18%, 18%);
-
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-
-  color-scheme: light dark;
-  color: var(--text-1);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+#app {
+  width: 100dvw;
+  height: 100dvh;
+  max-width: 100dvw;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--surface-ground);
 }
 
 body {
@@ -82,48 +86,16 @@ body {
   min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+.form-container {
+  flex-grow: 2;
 
-button {
-  border-radius: 4px;
-  border: 1px solid transparent;
-  font-size: 1em;
-  background-color: #665c56;
-  cursor: pointer;
-  padding: 4px 12px;
-}
-
-button:active {
-  background-color: #938c88;
-}
-
-code {
-  background-color: #1a1a1a;
-  padding: 2px 4px;
-  margin: 0 4px;
-  border-radius: 4px;
-}
-
-.card {
-  padding: 2em;
-}
-
-.main {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
-  max-height: 100dvh;
-}
+  justify-content: center;
+  gap: 36px;
+  width: 70%;
 
-#app {
-  width: 100dvw;
-  height: 100dvh;
-  max-width: 100dvw;
-  max-height: 100dvh;
-  display: flex;
+  padding-bottom: 5em;
 }
 
 .drag {
@@ -134,30 +106,5 @@ code {
 
 .no-drag {
   -webkit-app-region: no-drag;
-}
-
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-
-.logo.electron:hover {
-  filter: drop-shadow(0 0 2em #9feaf9);
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
 }
 </style>

@@ -1,11 +1,14 @@
 import { rmSync } from 'node:fs';
 import url from 'node:url';
 import path from 'node:path';
+// Vite and vue things
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import electron from 'vite-plugin-electron';
-import renderer from 'vite-plugin-electron-renderer';
-import { notBundle } from 'vite-plugin-electron/plugin';
+import electron from 'vite-plugin-electron/simple';
+// For PrimeVue components
+import Components from 'unplugin-vue-components/vite';
+import { PrimeVueResolver } from 'unplugin-vue-components/resolvers';
+
 import pkg from './package.json';
 
 const __filename = url.fileURLToPath(import.meta.url);
@@ -27,9 +30,8 @@ export default defineConfig(({ command }) => {
     },
     plugins: [
       vue(),
-      electron([
-        {
-          // Main process entry file of the Electron App.
+      electron({
+        main: {
           entry: 'electron/main/index.ts',
           onstart({ startup }) {
             if (process.env.VSCODE_DEBUG) {
@@ -37,7 +39,12 @@ export default defineConfig(({ command }) => {
                 /* For `.vscode/.debug.script.mjs` */ '[startup] Electron App',
               );
             } else {
-              startup();
+              startup([
+                '.',
+                '--no-sandbox',
+                '--trace-warnings',
+                '--enable-logging',
+              ]);
             }
           },
           vite: {
@@ -55,20 +62,12 @@ export default defineConfig(({ command }) => {
                 ),
               },
             },
-            plugins: [
-              // This is just an option to improve build performance, it's non-deterministic!
-              // e.g. `import log from 'electron-log'` -> `const log = require('electron-log')`
-              isServe && notBundle(),
-            ],
           },
         },
-        {
-          entry: 'electron/preload/index.ts',
-          onstart({ reload }) {
-            // Notify the Renderer process to reload the page when the Preload scripts build is complete,
-            // instead of restarting the entire Electron App.
-            reload();
-          },
+        preload: {
+          // Shortcut of `build.rollupOptions.input`.
+          // Preload scripts may contain Web assets, so use the `build.rollupOptions.input` instead `build.lib.entry`.
+          input: 'electron/preload/index.ts',
           vite: {
             build: {
               sourcemap: sourcemap ? 'inline' : undefined, // #332
@@ -80,12 +79,13 @@ export default defineConfig(({ command }) => {
                 ),
               },
             },
-            plugins: [isServe && notBundle()],
           },
         },
-      ]),
-      // Use Node.js API in the Renderer process
-      renderer(),
+        renderer: {},
+      }),
+      Components({
+        resolvers: [PrimeVueResolver()],
+      }),
     ],
     server:
       process.env.VSCODE_DEBUG &&

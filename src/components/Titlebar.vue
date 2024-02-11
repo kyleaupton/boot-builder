@@ -14,8 +14,6 @@ export default defineComponent({
 .titlebar {
   height: var(--titlebar-height);
   width: 100%;
-  background-color: var(--titlebar-color);
-  border-bottom: 1px solid black;
   box-sizing: border-box;
 }
 </style>
