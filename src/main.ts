@@ -9,6 +9,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 // Solid
 import {
+  faArrowUpFromBracket,
   faChevronUp,
   faCircleCheck,
   faCompactDisc,
@@ -16,6 +17,7 @@ import {
   faDisplay,
   faDownLong,
   faFloppyDisk,
+  faFile,
   faHardDrive,
   faTriangleExclamation,
   faXmark,
@@ -34,6 +36,7 @@ import App from './App.vue';
 
 library.add(
   // Solid
+  faArrowUpFromBracket,
   faChevronUp,
   faCircleCheck,
   faCompactDisc,
@@ -41,6 +44,7 @@ library.add(
   faDisplay,
   faDownLong,
   faFloppyDisk,
+  faFile,
   faHardDrive,
   faTriangleExclamation,
   faXmark,

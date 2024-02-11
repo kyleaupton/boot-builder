@@ -1,27 +1,28 @@
 <template>
-  <!-- <FloatLabel> -->
-  <InputGroup :class="{ 'p-disabled': !chosenOs }">
-    <InputGroupAddon>
-      <font-awesome-icon
-        class="drive-section-header-icon"
-        :icon="['fas', 'hard-drive']"
-      />
-    </InputGroupAddon>
-
-    <Dropdown
-      v-model="value"
-      input-id="source-selector"
-      placeholder="Select Source"
+  <div class="source-wrapper">
+    <Button
+      v-if="!value"
+      label="Choose file"
+      icon="pi pi-upload"
+      :disabled="!chosenOs"
+      @click="showDialog"
     />
-  </InputGroup>
 
-  <!-- <label for="source-selector">Select Source</label>
-  </FloatLabel> -->
+    <InputGroup v-else>
+      <InputGroupAddon>
+        <font-awesome-icon
+          class="drive-section-header-icon"
+          :icon="['fas', 'file']"
+        />
+      </InputGroupAddon>
+      <InputText v-model="value" :disabled="true" />
+      <Button icon="pi pi-times" severity="danger" @click="value = ''" />
+    </InputGroup>
+  </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-// import FloatLabel from 'primevue/floatlabel';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
 
@@ -29,7 +30,6 @@ export default defineComponent({
   name: 'SourceSelector',
 
   components: {
-    // FloatLabel,
     InputGroup,
     InputGroupAddon,
   },
@@ -59,7 +59,35 @@ export default defineComponent({
       },
     },
   },
+
+  methods: {
+    async showDialog() {
+      const res = await window.api.showOpenIsoDialog();
+      this.value = res.filePaths[0];
+    },
+  },
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.source-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.source-selector-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.75rem;
+}
+
+.source-selector-header-button {
+  font-size: 0.5rem;
+}
+
+.source-wrapper .p-disabled,
+.p-component:disabled {
+  opacity: 1;
+}
+</style>

@@ -41,7 +41,7 @@ export default defineComponent({
 
   computed: {
     flashDisabled() {
-      return !this.chosenDrive || !this.chosenOs;
+      return !this.chosenDrive || !this.chosenOs || !this.chosenSource;
     },
   },
 
@@ -93,9 +93,7 @@ body {
   flex-direction: column;
   justify-content: center;
   gap: 36px;
-  width: 70%;
-
-  padding-bottom: 5em;
+  width: 50%;
 }
 
 .drag {
