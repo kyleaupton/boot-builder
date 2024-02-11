@@ -13,6 +13,14 @@ export const showOpenIsoDialog = () => {
   } as OpenDialogOptions) as Promise<OpenDialogReturnValue>;
 };
 
+export const showOpenAppDialog = () => {
+  return ipcRenderer.invoke('/dialog/showOpenDialog', {
+    properties: ['openFile'],
+    defaultPath: '/Applications',
+    filters: [{ name: '.app', extensions: ['.app'] }],
+  } as OpenDialogOptions) as Promise<OpenDialogReturnValue>;
+};
+
 export const showConfirmDialog = (message: string) => {
   return ipcRenderer.invoke('/dialog/showMessageBox', {
     message,

@@ -45,6 +45,12 @@ export default defineComponent({
     },
   },
 
+  watch: {
+    chosenOs() {
+      this.chosenSource = '';
+    },
+  },
+
   async created() {
     this.registerUsbEvents();
     await this.getDisks();

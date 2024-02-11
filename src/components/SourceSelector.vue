@@ -8,14 +8,14 @@
       @click="showDialog"
     />
 
-    <InputGroup v-else>
+    <InputGroup v-else class="source-preview">
       <InputGroupAddon>
         <font-awesome-icon
           class="drive-section-header-icon"
           :icon="['fas', 'file']"
         />
       </InputGroupAddon>
-      <InputText v-model="value" :disabled="true" />
+      <InputText v-model="namePreview" :disabled="true" />
       <Button icon="pi pi-times" severity="danger" @click="value = ''" />
     </InputGroup>
   </div>
@@ -58,11 +58,38 @@ export default defineComponent({
         this.$emit('update:modelValue', value);
       },
     },
+
+    namePreview: {
+      get() {
+        return window.api.path.basename(this.value);
+      },
+      set() {
+        // do nothing
+      },
+    },
   },
 
   methods: {
     async showDialog() {
-      const res = await window.api.showOpenIsoDialog();
+      type res_windows = Awaited<
+        ReturnType<typeof window.api.showOpenIsoDialog>
+      >;
+      type res_mac = Awaited<ReturnType<typeof window.api.showOpenAppDialog>>;
+
+      let res: res_windows | res_mac;
+
+      if (this.chosenOs === 'windows') {
+        res = await window.api.showOpenIsoDialog();
+      } else if (this.chosenOs === 'macos') {
+        res = await window.api.showOpenAppDialog();
+      } else {
+        throw Error('Unsupprted OS');
+      }
+
+      if (!res.filePaths[0]) {
+        throw Error('No file selected');
+      }
+
       this.value = res.filePaths[0];
     },
   },
@@ -86,8 +113,7 @@ export default defineComponent({
   font-size: 0.5rem;
 }
 
-.source-wrapper .p-disabled,
-.p-component:disabled {
+.source-preview .p-component:disabled {
   opacity: 1;
 }
 </style>
