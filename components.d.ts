@@ -10,10 +10,11 @@ declare module 'vue' {
     Button: typeof import('primevue/button')['default']
     DriveSelector: typeof import('./src/components/DriveSelector.vue')['default']
     Dropdown: typeof import('primevue/dropdown')['default']
-    FileUpload: typeof import('primevue/fileupload')['default']
+    Flashing: typeof import('./src/components/Flashing.vue')['default']
     InputText: typeof import('primevue/inputtext')['default']
     OsSelector: typeof import('./src/components/OsSelector.vue')['default']
     ProgressBar: typeof import('primevue/progressbar')['default']
+    ProgressSpinner: typeof import('primevue/progressspinner')['default']
     SourceSelector: typeof import('./src/components/SourceSelector.vue')['default']
     Titlebar: typeof import('./src/components/Titlebar.vue')['default']
   }

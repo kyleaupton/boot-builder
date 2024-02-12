@@ -2,11 +2,32 @@
   <Titlebar />
 
   <div class="form-container">
-    <DriveSelector v-model="chosenDrive" />
-    <OsSelector v-model="chosenOs" />
-    <SourceSelector v-model="chosenSource" :chosen-os="chosenOs" />
+    <DriveSelector v-model="chosenDrive" :flashing="flashing" />
+    <OsSelector v-model="chosenOs" :flashing="flashing" />
+    <SourceSelector
+      v-model="chosenSource"
+      :chosen-os="chosenOs"
+      :flashing="flashing"
+    />
 
-    <Button label="Flash" :disabled="flashDisabled" />
+    <Button
+      v-if="!flashing"
+      label="Flash"
+      :disabled="flashDisabled"
+      @click="startFlash"
+    />
+
+    <div v-else class="progress-container">
+      <div class="progress-upper">
+        <div>Flashing</div>
+        <!-- <Button class="pg-small" label="Cancel" severity="danger" text /> -->
+        <Button class="progress-cancel" label="Cancel" severity="danger" text />
+      </div>
+
+      <ProgressBar :value="progress" />
+
+      <div>eta</div>
+    </div>
   </div>
 </template>
 
@@ -36,6 +57,8 @@ export default defineComponent({
       chosenDrive: '',
       chosenOs: '',
       chosenSource: '',
+      flashing: false,
+      progress: 0,
     };
   },
 
@@ -58,6 +81,16 @@ export default defineComponent({
 
   methods: {
     ...mapActions(useDisksStore, ['getDisks', 'registerUsbEvents']),
+
+    async startFlash() {
+      this.flashing = true;
+
+      const id = setInterval(() => (this.progress += 3), 1000);
+      await new Promise((resolve) => setTimeout(resolve, 30000));
+      window.clearInterval(id);
+
+      this.flashing = false;
+    },
   },
 });
 </script>
@@ -108,5 +141,21 @@ body {
 
 .no-drag {
   -webkit-app-region: no-drag;
+}
+
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progress-upper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-cancel {
+  font-size: 12px;
 }
 </style>

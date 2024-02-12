@@ -1,5 +1,5 @@
 <template>
-  <InputGroup>
+  <InputGroup :class="{ 'p-disabled': flashing }">
     <InputGroupAddon>
       <font-awesome-icon :icon="['fas', 'display']" />
     </InputGroupAddon>
@@ -56,6 +56,10 @@ export default defineComponent({
     modelValue: {
       type: String,
       required: true,
+    },
+    flashing: {
+      type: Boolean,
+      default: false,
     },
   },
 

@@ -1,5 +1,5 @@
 <template>
-  <InputGroup>
+  <InputGroup :class="{ 'p-disabled': flashing }">
     <InputGroupAddon>
       <font-awesome-icon
         class="drive-section-header-icon"
@@ -39,6 +39,10 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    flashing: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   emits: ['update:modelValue'],
@@ -61,6 +65,17 @@ export default defineComponent({
         label: `${drive.description} (${prettyBytes(drive.size ?? 0)})`,
         value: drive.devicePath,
       }));
+    },
+  },
+
+  watch: {
+    items() {
+      if (
+        this.value &&
+        !this.items.find((drive) => drive.devicePath === this.value)
+      ) {
+        this.value = '';
+      }
     },
   },
 });
