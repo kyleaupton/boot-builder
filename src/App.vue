@@ -17,7 +17,17 @@
       @click="startFlash"
     />
 
-    <ProgressBar v-else :value="progress" />
+    <div v-else class="progress-container">
+      <div class="progress-upper">
+        <div>Flashing</div>
+        <!-- <Button class="pg-small" label="Cancel" severity="danger" text /> -->
+        <Button class="progress-cancel" label="Cancel" severity="danger" text />
+      </div>
+
+      <ProgressBar :value="progress" />
+
+      <div>eta</div>
+    </div>
   </div>
 </template>
 
@@ -131,5 +141,21 @@ body {
 
 .no-drag {
   -webkit-app-region: no-drag;
+}
+
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progress-upper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-cancel {
+  font-size: 12px;
 }
 </style>

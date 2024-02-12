@@ -67,6 +67,17 @@ export default defineComponent({
       }));
     },
   },
+
+  watch: {
+    items() {
+      if (
+        this.value &&
+        !this.items.find((drive) => drive.devicePath === this.value)
+      ) {
+        this.value = '';
+      }
+    },
+  },
 });
 </script>
 
