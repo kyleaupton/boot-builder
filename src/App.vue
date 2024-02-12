@@ -2,11 +2,22 @@
   <Titlebar />
 
   <div class="form-container">
-    <DriveSelector v-model="chosenDrive" />
-    <OsSelector v-model="chosenOs" />
-    <SourceSelector v-model="chosenSource" :chosen-os="chosenOs" />
+    <DriveSelector v-model="chosenDrive" :flashing="flashing" />
+    <OsSelector v-model="chosenOs" :flashing="flashing" />
+    <SourceSelector
+      v-model="chosenSource"
+      :chosen-os="chosenOs"
+      :flashing="flashing"
+    />
 
-    <Button label="Flash" :disabled="flashDisabled" />
+    <Button
+      v-if="!flashing"
+      label="Flash"
+      :disabled="flashDisabled"
+      @click="startFlash"
+    />
+
+    <ProgressBar v-else :value="progress" />
   </div>
 </template>
 
@@ -36,6 +47,8 @@ export default defineComponent({
       chosenDrive: '',
       chosenOs: '',
       chosenSource: '',
+      flashing: false,
+      progress: 0,
     };
   },
 
@@ -58,6 +71,16 @@ export default defineComponent({
 
   methods: {
     ...mapActions(useDisksStore, ['getDisks', 'registerUsbEvents']),
+
+    async startFlash() {
+      this.flashing = true;
+
+      const id = setInterval(() => (this.progress += 3), 1000);
+      await new Promise((resolve) => setTimeout(resolve, 30000));
+      window.clearInterval(id);
+
+      this.flashing = false;
+    },
   },
 });
 </script>

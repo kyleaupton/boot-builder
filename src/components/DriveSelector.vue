@@ -1,5 +1,5 @@
 <template>
-  <InputGroup>
+  <InputGroup :class="{ 'p-disabled': flashing }">
     <InputGroupAddon>
       <font-awesome-icon
         class="drive-section-header-icon"
@@ -38,6 +38,10 @@ export default defineComponent({
     modelValue: {
       type: String,
       required: true,
+    },
+    flashing: {
+      type: Boolean,
+      default: false,
     },
   },
 

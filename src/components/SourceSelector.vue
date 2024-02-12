@@ -8,7 +8,11 @@
       @click="showDialog"
     />
 
-    <InputGroup v-else class="source-preview">
+    <InputGroup
+      v-else
+      class="source-preview"
+      :class="{ 'p-disabled': flashing }"
+    >
       <InputGroupAddon>
         <font-awesome-icon
           class="drive-section-header-icon"
@@ -16,7 +20,12 @@
         />
       </InputGroupAddon>
       <InputText v-model="namePreview" :disabled="true" />
-      <Button icon="pi pi-times" severity="danger" @click="value = ''" />
+      <Button
+        v-if="!flashing"
+        icon="pi pi-times"
+        severity="danger"
+        @click="value = ''"
+      />
     </InputGroup>
   </div>
 </template>
@@ -40,10 +49,13 @@ export default defineComponent({
       type: String,
       required: true,
     },
-
     chosenOs: {
       type: String,
       default: '',
+    },
+    flashing: {
+      type: Boolean,
+      default: false,
     },
   },
 
