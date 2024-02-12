@@ -5,7 +5,7 @@
 
 An app to easily create bootable USB installers for Windows, macOS, Linux, MS-DOS, and more
 
-![](https://raw.githubusercontent.com/kyleaupton/os-install-maker/main/docs/screenshot_1.png)
+![](https://raw.githubusercontent.com/kyleaupton/os-install-maker/main/docs/screenshot.png)
 
 ## Todo
 
