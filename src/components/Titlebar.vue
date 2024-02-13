@@ -1,6 +1,6 @@
 <template>
   <div class="titlebar drag">
-    <img height="50" src="logo.svg" />
+    <img height="50" src="../assets/logo.svg" />
     <p class="titlebar-text">Boot Builder</p>
   </div>
 </template>
