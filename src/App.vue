@@ -19,21 +19,29 @@
 
     <div v-else class="progress-container">
       <div class="progress-upper">
-        <div>Flashing</div>
-        <!-- <Button class="pg-small" label="Cancel" severity="danger" text /> -->
-        <Button class="progress-cancel" label="Cancel" severity="danger" text />
+        <div>Flashing...</div>
+        <Button class="progress-cancel" label="Cancel" severity="danger" />
       </div>
 
-      <ProgressBar :value="progress" />
+      <ProgressBar
+        v-if="(progress?.percentage ?? -1) > -1"
+        :value="progress?.percentage ?? 0"
+      />
 
-      <div>eta</div>
+      <ProgressBar v-else mode="indeterminate" />
+
+      <div class="progress-lower">
+        <div>{{ progress?.activity || '' }}</div>
+        <div>{{ humanReadableEta }}</div>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { mapActions } from 'pinia';
+import { mapState, mapActions } from 'pinia';
+import { nanoid } from 'nanoid';
 
 import { useDisksStore } from '@/stores/disks';
 
@@ -41,6 +49,17 @@ import Titlebar from './components/Titlebar.vue';
 import DriveSelector from './components/DriveSelector.vue';
 import OsSelector from './components/OsSelector.vue';
 import SourceSelector from './components/SourceSelector.vue';
+
+interface IProgress {
+  id: string;
+  activity: string;
+  done: boolean;
+  // ETA
+  transferred: number;
+  speed: number;
+  percentage: number;
+  eta: number;
+}
 
 export default defineComponent({
   name: 'App',
@@ -58,13 +77,40 @@ export default defineComponent({
       chosenOs: '',
       chosenSource: '',
       flashing: false,
-      progress: 0,
+      progress: undefined as IProgress | undefined,
     };
   },
 
   computed: {
+    ...mapState(useDisksStore, ['items']),
+
     flashDisabled() {
       return !this.chosenDrive || !this.chosenOs || !this.chosenSource;
+    },
+
+    chosenDriveData() {
+      return this.items.find((drive) => drive.devicePath === this.chosenDrive);
+    },
+
+    humanReadableEta() {
+      if (this.progress && this.progress.eta > -1) {
+        const h = Math.floor(this.progress.eta / 3600)
+          .toString()
+          .padStart(2, '0');
+
+        const m = Math.floor((this.progress.eta % 3600) / 60)
+          .toString()
+          .padStart(2, '0');
+
+        const s = Math.floor(this.progress.eta % 60)
+          .toString()
+          .padStart(2, '0');
+
+        const eta = h !== '00' ? `${h}:${m}:${s}` : `${m}:${s}`;
+        return `ETA: ${eta}`;
+      }
+
+      return '';
     },
   },
 
@@ -83,13 +129,51 @@ export default defineComponent({
     ...mapActions(useDisksStore, ['getDisks', 'registerUsbEvents']),
 
     async startFlash() {
-      this.flashing = true;
+      if (this.chosenDriveData) {
+        this.flashing = true;
 
-      const id = setInterval(() => (this.progress += 3), 1000);
-      await new Promise((resolve) => setTimeout(resolve, 30000));
-      window.clearInterval(id);
+        const id = nanoid();
+        this.registerFlashEvents(id);
 
-      this.flashing = false;
+        // Start flashing
+        let url: string;
+        switch (this.chosenOs) {
+          case 'windows':
+            url = '/flash/windows';
+            break;
+          case 'macos':
+            url = '/flash/macOS';
+            break;
+          default:
+            throw new Error('Invalid OS');
+        }
+
+        await window.api.ipc.invoke(url, {
+          sourcePath: this.chosenSource,
+          targetVolume: this.chosenDriveData.device,
+          id,
+        });
+      }
+    },
+
+    registerFlashEvents(id: string) {
+      window.api.ipc.recieve(`flash-${id}-progress`, this.handleProgress);
+    },
+
+    removeFlashEvents(id: string) {
+      window.api.ipc.removeListener(
+        `flash-${id}-progress`,
+        this.handleProgress,
+      );
+    },
+
+    handleProgress(progress: IProgress) {
+      this.progress = progress;
+
+      if (progress.done) {
+        this.flashing = false;
+        this.removeFlashEvents(progress.id);
+      }
     },
   },
 });
@@ -146,7 +230,7 @@ body {
 .progress-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .progress-upper {
@@ -156,6 +240,14 @@ body {
 }
 
 .progress-cancel {
+  font-size: 12px;
+  padding: 0.5rem 1rem;
+}
+
+.progress-lower {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 12px;
 }
 </style>

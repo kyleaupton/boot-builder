@@ -3,6 +3,10 @@ import { BrowserWindow } from 'electron';
 import { removeFlash } from '../ipc/flash';
 
 interface IProgress {
+  id: string;
+  activity: string;
+  done: boolean;
+  // ETA
   transferred: number;
   speed: number;
   percentage: number;
@@ -55,12 +59,8 @@ export default class Flash {
     );
   }
 
-  _sendActivity(s: string) {
-    this._sendMessage(`flash-${this.id}-activity`, s);
-  }
-
-  _sendEta(payload: IProgress) {
-    this._sendMessage(`flash-${this.id}-copy-eta`, payload);
+  _sendProgress(progress: IProgress) {
+    this._sendMessage(`flash-${this.id}-progress`, progress);
   }
 
   _sendCommandOutput(s: string, type: 'stdout' | 'stderr') {
@@ -68,7 +68,16 @@ export default class Flash {
   }
 
   _sendDone() {
-    this._sendMessage(`flash-${this.id}-done`);
+    this._sendProgress({
+      id: this.id,
+      activity: '',
+      done: true,
+      transferred: -1,
+      speed: -1,
+      percentage: -1,
+      eta: -1,
+    });
+
     removeFlash(this.id);
   }
 }

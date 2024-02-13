@@ -39,7 +39,15 @@ export default class FlashWindows extends Flash {
   }
 
   async mountIsoVolume() {
-    this._sendActivity(`Mounting ${this.sourcePath}`);
+    this._sendProgress({
+      id: this.id,
+      activity: `Mounting ${this.sourcePath}`,
+      done: false,
+      transferred: -1,
+      speed: -1,
+      percentage: -1,
+      eta: -1,
+    });
 
     try {
       const { stdout } = await exec(`hdiutil mount ${this.sourcePath}`);
@@ -62,7 +70,15 @@ export default class FlashWindows extends Flash {
   }
 
   async eraseDrive() {
-    this._sendActivity(`Erasing ${this.targetVolume}`);
+    this._sendProgress({
+      id: this.id,
+      activity: `Erasing ${this.targetVolume}`,
+      done: false,
+      transferred: -1,
+      speed: -1,
+      percentage: -1,
+      eta: -1,
+    });
 
     try {
       // Get disk name
@@ -88,7 +104,17 @@ export default class FlashWindows extends Flash {
   }
 
   async copyFiles() {
-    this._sendActivity('Copying files');
+    const activity = 'Copying files';
+
+    this._sendProgress({
+      id: this.id,
+      activity,
+      done: false,
+      transferred: -1,
+      speed: -1,
+      percentage: -1,
+      eta: -1,
+    });
 
     try {
       // Get stats for progress reporting
@@ -109,7 +135,10 @@ export default class FlashWindows extends Flash {
           transferred = progress.transferred;
           const remaining = totalSize - progress.transferred;
 
-          this._sendEta({
+          this._sendProgress({
+            id: this.id,
+            activity,
+            done: false,
             transferred: progress.transferred,
             speed: progress.speed,
             percentage: (progress.transferred / totalSize) * 100,
@@ -149,13 +178,16 @@ export default class FlashWindows extends Flash {
               const speed = bytes / ((Date.now() - start) / 1000);
 
               const payload = {
+                id: this.id,
+                activity,
+                done: false,
                 transferred,
                 speed,
                 percentage: (transferred / totalSize) * 100,
                 eta: remaining / speed,
               };
 
-              this._sendEta(payload);
+              this._sendProgress(payload);
             }
           },
         },
@@ -170,7 +202,15 @@ export default class FlashWindows extends Flash {
   }
 
   async cleanUp() {
-    this._sendActivity('Cleaning up');
+    this._sendProgress({
+      id: this.id,
+      activity: 'Cleaning up',
+      done: false,
+      transferred: -1,
+      speed: -1,
+      percentage: -1,
+      eta: -1,
+    });
 
     try {
       await this._executeCommand('diskutil', ['eject', this.targetVolume]);

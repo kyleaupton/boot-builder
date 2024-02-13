@@ -12,7 +12,8 @@ const validateChannel = (channel: string) => {
   const validChannels = [
     '/usb/attached',
     '/usb/detached',
-    '/flash',
+    '/flash/windows',
+    '/flash/macOS',
     '/utils/fs/readdir',
     '/utils/macApp/getIcon',
     '/utils/app/getPath',
