@@ -73,11 +73,11 @@ export default defineComponent({
           value: 'windows',
           icon: ['fab', 'windows'],
         },
-        {
-          label: 'macOS',
-          value: 'macos',
-          icon: ['fab', 'apple'],
-        },
+        // {
+        //   label: 'macOS',
+        //   value: 'macos',
+        //   icon: ['fab', 'apple'],
+        // },
       ],
     };
   },

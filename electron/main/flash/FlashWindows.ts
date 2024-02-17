@@ -84,11 +84,15 @@ export default class FlashWindows extends Flash {
       // Get disk name
       // Windows 10: `Win10_22H2_English_x64v1.iso`
       // Windows 11: `Win11_22H2_English_x64v2.iso`
-      this.diskName = this.sourcePath
-        .split('/')
-        .slice(-1)[0]
-        .split('_')[0]
-        .toUpperCase();
+      if (this.diskName.includes('Win10') || this.diskName.includes('Win11')) {
+        this.diskName = this.sourcePath
+          .split('/')
+          .slice(-1)[0]
+          .split('_')[0]
+          .toUpperCase();
+      } else {
+        this.diskName = 'WINDOWS';
+      }
 
       // Erase disk
       await this._executeCommand('diskutil', [

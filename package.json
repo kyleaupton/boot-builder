@@ -51,6 +51,7 @@
     "pretty-bytes": "^6.1.1",
     "primeicons": "^6.0.1",
     "primevue": "^3.48.1",
+    "threads": "^1.7.0",
     "tiny-typed-emitter": "^2.1.0",
     "usb": "^2.10.0"
   }

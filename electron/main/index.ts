@@ -69,7 +69,6 @@ async function createWindow() {
   });
 
   win.once('ready-to-show', () => {
-    console.log('got to ready-to-show');
     win.show();
   });
 
@@ -87,9 +86,7 @@ async function createWindow() {
 
   if (process.env.VITE_DEV_SERVER_URL) {
     // electron-vite-vue#298
-    console.log('got here 1');
     win.loadURL(url);
-    console.log('got here 2');
     // Open devTool if the app is not packaged
     win.webContents.openDevTools();
   } else {
@@ -100,7 +97,6 @@ async function createWindow() {
 app.on('ready', async () => {
   try {
     await installExtension(VUEJS_DEVTOOLS, {
-      forceDownload: true,
       loadExtensionOptions: { allowFileAccess: true },
     });
   } catch (e) {

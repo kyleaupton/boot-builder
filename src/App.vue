@@ -1,7 +1,7 @@
 <template>
   <Titlebar />
 
-  <div class="form-container">
+  <div v-if="!progress?.done" class="form-container">
     <DriveSelector v-model="chosenDrive" :flashing="flashing" />
     <OsSelector v-model="chosenOs" :flashing="flashing" />
     <SourceSelector
@@ -19,22 +19,42 @@
 
     <div v-else class="progress-container">
       <div class="progress-upper">
-        <div>Flashing...</div>
+        <div class="progress-flashing">Flashing...</div>
         <Button class="progress-cancel" label="Cancel" severity="danger" />
       </div>
 
       <ProgressBar
         v-if="(progress?.percentage ?? -1) > -1"
         :value="progress?.percentage ?? 0"
+        :style="{ height: '8px' }"
+        :show-value="false"
       />
 
-      <ProgressBar v-else mode="indeterminate" />
+      <ProgressBar v-else mode="indeterminate" :style="{ height: '8px' }" />
 
       <div class="progress-lower">
         <div>{{ progress?.activity || '' }}</div>
-        <div>{{ humanReadableEta }}</div>
+        <div :style="{ display: 'flex', gap: '8px' }">
+          <div v-if="progress?.eta != null">{{ humanReadableEta }}</div>
+          <div v-if="progress?.percentage != null && progress.percentage > -1">
+            {{ Math.floor(progress.percentage) }}%
+          </div>
+        </div>
       </div>
     </div>
+  </div>
+
+  <div v-else class="flash-done-container">
+    <font-awesome-icon
+      class="flash-done-icon"
+      :icon="['fas', 'circle-check']"
+      style="--fa-animation-iteration-count: 1"
+      bounce
+    />
+
+    <div class="flash-done-text">Flash done!</div>
+
+    <Button label="Flash another" @click="reset" />
   </div>
 </template>
 
@@ -130,29 +150,38 @@ export default defineComponent({
 
     async startFlash() {
       if (this.chosenDriveData) {
-        this.flashing = true;
+        const res = await window.api.showConfirmDialog(
+          `Are you sure you want to flash ${this.chosenDriveData.description}?`,
+        );
 
-        const id = nanoid();
-        this.registerFlashEvents(id);
+        // response == 0 means "Yes"
+        // response == 1 means "No"
 
-        // Start flashing
-        let url: string;
-        switch (this.chosenOs) {
-          case 'windows':
-            url = '/flash/windows';
-            break;
-          case 'macos':
-            url = '/flash/macOS';
-            break;
-          default:
-            throw new Error('Invalid OS');
+        if (res.response === 0) {
+          this.flashing = true;
+
+          const id = nanoid();
+          this.registerFlashEvents(id);
+
+          // Start flashing
+          let url: string;
+          switch (this.chosenOs) {
+            case 'windows':
+              url = '/flash/windows';
+              break;
+            case 'macos':
+              url = '/flash/macOS';
+              break;
+            default:
+              throw new Error('Invalid OS');
+          }
+
+          await window.api.ipc.invoke(url, {
+            sourcePath: this.chosenSource,
+            targetVolume: this.chosenDriveData.device,
+            id,
+          });
         }
-
-        await window.api.ipc.invoke(url, {
-          sourcePath: this.chosenSource,
-          targetVolume: this.chosenDriveData.device,
-          id,
-        });
       }
     },
 
@@ -174,6 +203,14 @@ export default defineComponent({
         this.flashing = false;
         this.removeFlashEvents(progress.id);
       }
+    },
+
+    reset() {
+      this.chosenDrive = '';
+      this.chosenOs = '';
+      this.chosenSource = '';
+      this.flashing = false;
+      this.progress = undefined;
     },
   },
 });
@@ -236,12 +273,12 @@ body {
 .progress-upper {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .progress-cancel {
   font-size: 12px;
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.5rem;
 }
 
 .progress-lower {
@@ -249,5 +286,32 @@ body {
   justify-content: space-between;
   align-items: center;
   font-size: 12px;
+}
+
+.progress-flashing {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.flash-done-container {
+  flex-grow: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+  height: 100%;
+  padding: 15% 0;
+  /* margin: auto 0; */
+}
+
+.flash-done-icon {
+  font-size: 58px;
+  color: #4bb543;
+}
+
+.flash-done-text {
+  font-size: 24px;
+  font-weight: 500;
 }
 </style>

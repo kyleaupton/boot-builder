@@ -1,5 +1,5 @@
 import { spawn, SpawnOptions } from 'child_process';
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, Notification } from 'electron';
 import { removeFlash } from '../ipc/flash';
 
 interface IProgress {
@@ -79,5 +79,11 @@ export default class Flash {
     });
 
     removeFlash(this.id);
+
+    // Fire off notification
+    new Notification({
+      title: 'Flash Complete',
+      body: 'Your flash is complete!',
+    });
   }
 }
