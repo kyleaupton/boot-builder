@@ -154,6 +154,20 @@ export default class FlashWindows extends Flash {
       const start = Date.now();
       let secondFileTransferred = 0;
 
+      let progress = {
+        id: this.id,
+        activity,
+        done: false,
+        transferred: 0,
+        speed: 0,
+        percentage: 0,
+        eta: 0,
+      };
+
+      const id = setInterval(() => {
+        this._sendProgress(progress);
+      }, 1000);
+
       await this._executeCommand(
         name,
         [
@@ -177,7 +191,7 @@ export default class FlashWindows extends Flash {
               const remaining = bigFileSize.size - bytes;
               const speed = bytes / ((Date.now() - start) / 1000);
 
-              const payload = {
+              progress = {
                 id: this.id,
                 activity,
                 done: false,
@@ -186,8 +200,6 @@ export default class FlashWindows extends Flash {
                 percentage: (transferred / totalSize) * 100,
                 eta: remaining / speed,
               };
-
-              this._sendProgress(payload);
             }
           },
         },
@@ -195,6 +207,8 @@ export default class FlashWindows extends Flash {
           cwd: dir,
         },
       );
+
+      clearInterval(id);
     } catch (e) {
       console.log(e);
       throw Error('Failed to copy files');
