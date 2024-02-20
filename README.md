@@ -1,6 +1,6 @@
 # Boot Builder
 
-[![CI](https://github.com/kyleaupton/os-install-maker/actions/workflows/ci.yml/badge.svg)](https://github.com/kyleaupton/os-install-maker/actions/workflows/ci.yml)
+[![CI](https://github.com/kyleaupton/boot-builder/actions/workflows/ci.yml/badge.svg)](https://github.com/kyleaupton/boot-builder/actions/workflows/ci.yml)
 
 
 An app to easily create bootable USB installers for Windows, macOS, Linux, MS-DOS, and more
@@ -21,7 +21,7 @@ An app to easily create bootable USB installers for Windows, macOS, Linux, MS-DO
 
 ```sh
 # clone the project
-git clone https://github.com/kyleaupton/os-install-maker.git
+git clone https://github.com/kyleaupton/boot-builder.git
 
 # enter the project directory
 cd os-install-maker
