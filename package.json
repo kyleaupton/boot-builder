@@ -12,7 +12,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build && electron-builder",
+    "build": "export DEBUG=electron-builder && node scripts/build.mjs --targets mac --notarize=false",
+    "build:tsc": "vue-tsc --noEmit",
     "preview": "vite preview"
   },
   "devDependencies": {
@@ -22,6 +23,7 @@
     "electron": "27.3.1",
     "electron-builder": "^24.6.3",
     "electron-devtools-installer": "^3.2.0",
+    "electron-notarize": "^1.2.2",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",

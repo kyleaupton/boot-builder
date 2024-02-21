@@ -1,13 +1,9 @@
 import { rmSync } from 'node:fs';
 import url from 'node:url';
 import path from 'node:path';
-// Vite and vue things
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import electron from 'vite-plugin-electron/simple';
-// For PrimeVue components
-import Components from 'unplugin-vue-components/vite';
-import { PrimeVueResolver } from 'unplugin-vue-components/resolvers';
 
 import pkg from './package.json';
 
@@ -82,9 +78,6 @@ export default defineConfig(({ command }) => {
           },
         },
         renderer: {},
-      }),
-      Components({
-        resolvers: [PrimeVueResolver()],
       }),
     ],
     server:

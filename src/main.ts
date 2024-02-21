@@ -1,6 +1,14 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+
 import PrimeVue from 'primevue/config';
+// Components
+import Button from 'primevue/button';
+import Dropdown from 'primevue/dropdown';
+import InputGroup from 'primevue/inputgroup';
+import InputGroupAddon from 'primevue/inputgroupaddon';
+import InputText from 'primevue/inputtext';
+import ProgressBar from 'primevue/progressbar';
 import 'primevue/resources/themes/lara-dark-amber/theme.css';
 import 'primeicons/primeicons.css';
 
@@ -9,56 +17,39 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 // Solid
 import {
-  faArrowUpFromBracket,
-  faChevronUp,
   faCircleCheck,
-  faCompactDisc,
-  faDesktop,
   faDisplay,
-  faDownLong,
-  faFloppyDisk,
   faFile,
   faHardDrive,
-  faTriangleExclamation,
-  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 // Regular
-import { faHardDrive as faRegHardDrive } from '@fortawesome/free-regular-svg-icons';
 // Brands
-import {
-  faApple,
-  faLinux,
-  faUsb,
-  faWindows,
-} from '@fortawesome/free-brands-svg-icons';
+import { faApple, faWindows } from '@fortawesome/free-brands-svg-icons';
 
 import App from './App.vue';
 
 library.add(
   // Solid
-  faArrowUpFromBracket,
-  faChevronUp,
   faCircleCheck,
-  faCompactDisc,
-  faDesktop,
   faDisplay,
-  faDownLong,
-  faFloppyDisk,
   faFile,
   faHardDrive,
-  faTriangleExclamation,
-  faXmark,
   // Regular
-  faRegHardDrive,
   // Brands
   faApple,
-  faLinux,
-  faUsb,
   faWindows,
 );
 
 createApp(App)
+  // Font Awesome
   .component('font-awesome-icon', FontAwesomeIcon)
+  // PrimeVue
+  .component('Button', Button)
+  .component('Dropdown', Dropdown)
+  .component('InputGroup', InputGroup)
+  .component('InputGroupAddon', InputGroupAddon)
+  .component('InputText', InputText)
+  .component('ProgressBar', ProgressBar)
   .use(createPinia())
   .use(PrimeVue, { inputStyle: 'filled' })
   .mount('#app')
