@@ -4,7 +4,10 @@ go 1.21
 
 toolchain go1.22.0
 
-require github.com/wailsapp/wails/v2 v2.8.0
+require (
+	github.com/deepakjois/gousbdrivedetector v0.0.0-20220514003247-ea439de1c459
+	github.com/wailsapp/wails/v2 v2.8.0
+)
 
 require (
 	github.com/bep/debounce v1.2.1 // indirect

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+
+	usbdrivedetector "github.com/deepakjois/gousbdrivedetector"
 )
 
 // App struct
@@ -24,4 +26,14 @@ func (a *App) startup(ctx context.Context) {
 // Greet returns a greeting for the given name
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
+}
+
+func (a *App) getUsbDrives() string {
+	drives, _ := usbdrivedetector.Detect()
+
+	for _, drive := range drives {
+		fmt.Println(drive)
+	}
+
+	return ""
 }

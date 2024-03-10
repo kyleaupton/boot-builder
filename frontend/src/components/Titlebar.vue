@@ -1,5 +1,5 @@
 <template>
-  <div class="titlebar drag">
+  <div class="titlebar" style="--wails-draggable:drag">
     <img height="50" src="../assets/logo.svg" />
     <p class="titlebar-text">Boot Builder</p>
   </div>
