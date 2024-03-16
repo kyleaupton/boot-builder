@@ -1,11 +1,12 @@
 import { ipcMain, IpcMainInvokeEvent } from 'electron';
+import Flash from '../flash/Flash';
 import FlashWindows from '../flash/FlashWindows';
 import FlashMacOS from '../flash/FlashMacOS';
 
-const flashes: { [key: string]: FlashWindows | FlashMacOS } = {};
+const flashes = new Map<string, Flash<unknown>>();
 
 export const removeFlash = (id: string) => {
-  delete flashes[id];
+  flashes.delete(id);
 };
 
 export default function start() {
@@ -19,13 +20,14 @@ export default function start() {
         targetVolume,
       }: { sourcePath: string; targetVolume: string; id: string },
     ) => {
-      flashes[id] = new FlashWindows({
+      const flash = new FlashWindows({
         id,
         sourcePath,
         targetVolume,
       });
 
-      flashes[id].run();
+      flashes.set(id, flash);
+      flash.start();
     },
   );
 
@@ -39,13 +41,25 @@ export default function start() {
         targetVolume,
       }: { id: string; sourcePath: string; targetVolume: string },
     ) => {
-      flashes[id] = new FlashMacOS({
+      const flash = new FlashMacOS({
         id,
         sourcePath,
         targetVolume,
       });
 
-      flashes[id].run();
+      flashes.set(id, flash);
+      flash.run();
+    },
+  );
+
+  ipcMain.handle(
+    '/flash/cancel',
+    (event: IpcMainInvokeEvent, { id }: { id: string }) => {
+      const flash = flashes.get(id);
+
+      if (flash) {
+        flash.cancel();
+      }
     },
   );
 }

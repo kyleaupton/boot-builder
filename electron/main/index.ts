@@ -3,6 +3,7 @@ import { release } from 'node:os';
 import { join } from 'node:path';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import { usb } from 'usb';
+import { pathToFileURL } from 'url';
 
 import ipc from './ipc';
 
@@ -21,6 +22,12 @@ process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
 process.env.VITE_PUBLIC = process.env.VITE_DEV_SERVER_URL
   ? join(process.env.DIST_ELECTRON, '../public')
   : process.env.DIST;
+
+console.log(pathToFileURL(process.env.DIST_ELECTRON));
+
+console.log(
+  new URL('windows.js', pathToFileURL(join(process.env.DIST_ELECTRON, 'main'))),
+);
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration();

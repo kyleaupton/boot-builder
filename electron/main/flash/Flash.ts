@@ -1,74 +1,69 @@
-import { spawn, SpawnOptions } from 'child_process';
-import { BrowserWindow, Notification } from 'electron';
+import { app, BrowserWindow, Notification } from 'electron';
+import { Worker } from 'worker_threads';
+import { pathToFileURL } from 'url';
+import { join } from 'path';
+import { Progress } from './types';
 import { removeFlash } from '../ipc/flash';
 
-interface IProgress {
+export default class Flash<WorkerData> {
   id: string;
-  activity: string;
-  done: boolean;
-  // ETA
-  transferred: number;
-  speed: number;
-  percentage: number;
-  eta: number;
-}
+  file: string;
+  worker: Worker | undefined;
+  workerData: WorkerData;
 
-export default class Flash {
-  id: string;
-
-  constructor({ id }: { id: string }) {
+  constructor({
+    id,
+    file,
+    workerData,
+  }: {
+    id: string;
+    file: string;
+    workerData: WorkerData;
+  }) {
     this.id = id;
+    this.file = file;
+    this.workerData = workerData;
   }
 
-  async _executeCommand(
-    cmd: string,
-    args?: string[],
-    events?: { onOut?: (data: string) => void, onErr?: (data: string) => void }, // eslint-disable-line
-    options?: SpawnOptions,
-  ) {
-    return new Promise<void>((resolve, reject) => {
-      const proc = spawn(cmd, args, options);
+  start() {
+    this.worker = new Worker(
+      join(process.env.DIST_ELECTRON, 'main', this.file),
+      {
+        workerData: this.workerData,
+      },
+    );
 
-      proc.stdout.on('data', (data) => {
-        const string = data.toString();
-        this._sendCommandOutput(string, 'stdout');
-        if (events && events.onOut) events.onOut(string);
-      });
+    this.registerEvents();
+  }
 
-      proc.stderr.on('data', (data) => {
-        const string = data.toString();
-        console.log(string);
-        this._sendCommandOutput(string, 'stderr');
-        if (events && events.onErr) events.onErr(string);
-      });
+  async cancel() {
+    if (this.worker) {
+      await this.worker.terminate();
+    }
 
-      proc.on('close', () => {
-        resolve();
-      });
+    removeFlash(this.id);
+  }
 
-      proc.on('error', (error) => {
-        console.log(error);
-        reject(error);
-      });
+  registerEvents() {
+    if (!this.worker) {
+      return;
+    }
+
+    this.worker.on('message', (message) => {
+      if (message.type === 'progress') {
+        this.sendProgress(message.data);
+      } else if (message.type === 'result') {
+        this.finish();
+      }
+    });
+
+    this.worker.on('error', (error) => {
+      console.log(error);
     });
   }
 
-  _sendMessage(channel: string, s?: unknown) {
-    BrowserWindow.getAllWindows().forEach((window) =>
-      window.webContents.send(channel, s),
-    );
-  }
-
-  _sendProgress(progress: IProgress) {
-    this._sendMessage(`flash-${this.id}-progress`, progress);
-  }
-
-  _sendCommandOutput(s: string, type: 'stdout' | 'stderr') {
-    this._sendMessage(`flash-${this.id}-${type}`, s);
-  }
-
-  _sendDone() {
-    this._sendProgress({
+  finish() {
+    this.sendProgress({
       id: this.id,
       activity: '',
       done: true,
@@ -85,5 +80,15 @@ export default class Flash {
       title: 'Flash Complete',
       body: 'Your flash is complete!',
     });
+  }
+
+  sendProgress(progress: Progress) {
+    this.sendMessage(`flash-${this.id}-progress`, progress);
+  }
+
+  sendMessage(channel: string, s?: unknown) {
+    BrowserWindow.getAllWindows().forEach((window) =>
+      window.webContents.send(channel, s),
+    );
   }
 }

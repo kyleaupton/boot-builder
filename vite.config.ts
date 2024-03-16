@@ -4,15 +4,24 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import electron from 'vite-plugin-electron/simple';
+import { globSync } from 'glob';
 
 import pkg from './package.json';
 
 const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const globImport = (g: string) => {
+  // return glob.map((item) => url.fileURLToPath(new URL(item, import.meta.url)));
+  return globSync(g).map((item) =>
+    url.fileURLToPath(new URL(item, import.meta.url)),
+  );
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   rmSync('dist-electron', { recursive: true, force: true });
+  // mkdirSync('dist-electron/main/test', { recursive: true });
 
   const isServe = command === 'serve';
   const isBuild = command === 'build';
@@ -56,6 +65,10 @@ export default defineConfig(({ command }) => {
                 external: Object.keys(
                   'dependencies' in pkg ? pkg.dependencies : {},
                 ),
+                input: [
+                  'electron/main/index.ts',
+                  ...globImport('electron/main/flash/workers/*.ts'),
+                ],
               },
             },
           },

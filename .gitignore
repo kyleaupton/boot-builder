@@ -31,3 +31,4 @@ yarn.lock
 
 *.env
 release
+build/bin
