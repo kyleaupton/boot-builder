@@ -4,6 +4,7 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import electron from 'vite-plugin-electron/simple';
+import alias from '@rollup/plugin-alias';
 import { globSync } from 'glob';
 
 import pkg from './package.json';
@@ -12,7 +13,6 @@ const __filename = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const globImport = (g: string) => {
-  // return glob.map((item) => url.fileURLToPath(new URL(item, import.meta.url)));
   return globSync(g).map((item) =>
     url.fileURLToPath(new URL(item, import.meta.url)),
   );
@@ -21,7 +21,6 @@ const globImport = (g: string) => {
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   rmSync('dist-electron', { recursive: true, force: true });
-  // mkdirSync('dist-electron/main/test', { recursive: true });
 
   const isServe = command === 'serve';
   const isBuild = command === 'build';
@@ -29,6 +28,7 @@ export default defineConfig(({ command }) => {
 
   return {
     resolve: {
+      // Aliases for the renderer process are defined here
       alias: {
         '@': path.resolve(__dirname, './src'),
       },
@@ -58,6 +58,17 @@ export default defineConfig(({ command }) => {
               minify: isBuild,
               outDir: 'dist-electron/main',
               rollupOptions: {
+                plugins: [
+                  // Aliases for the main process are defined here
+                  alias({
+                    entries: [
+                      {
+                        find: '@electron',
+                        replacement: path.resolve(__dirname, './electron'),
+                      },
+                    ],
+                  }),
+                ],
                 // Some third-party Node.js libraries may not be built correctly by Vite, especially `C/C++` addons,
                 // we can use `external` to exclude them to ensure they work correctly.
                 // Others need to put them in `dependencies` to ensure they are collected into `app.asar` after the app is built.

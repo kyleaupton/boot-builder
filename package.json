@@ -17,6 +17,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.0",
     "@types/node": "^20.6.4",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/eslint-config-typescript": "^12.0.0",

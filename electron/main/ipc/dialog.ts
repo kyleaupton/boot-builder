@@ -12,7 +12,10 @@ export default function start() {
     '/dialog/showOpenDialog',
     (event: IpcMainInvokeEvent, options: OpenDialogOptions) => {
       const sender = BrowserWindow.fromWebContents(event.sender);
-      return dialog.showOpenDialog(sender, options);
+
+      if (sender) {
+        return dialog.showOpenDialog(sender, options);
+      }
     },
   );
 
@@ -20,7 +23,10 @@ export default function start() {
     '/dialog/showMessageBox',
     (event: IpcMainInvokeEvent, options: MessageBoxOptions) => {
       const sender = BrowserWindow.fromWebContents(event.sender);
-      return dialog.showMessageBox(sender, options);
+
+      if (sender) {
+        return dialog.showMessageBox(sender, options);
+      }
     },
   );
 }

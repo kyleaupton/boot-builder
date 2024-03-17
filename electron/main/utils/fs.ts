@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import { join } from 'path';
 
-export const dirSize = async (dir: string) => {
+export const dirSize = async (dir: string): Promise<number> => {
   const files = await fs.readdir(dir, { withFileTypes: true });
 
   const paths = files.map(async (file) => {

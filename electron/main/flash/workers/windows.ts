@@ -2,10 +2,10 @@
 import { stat } from 'fs/promises';
 import { resolve, dirname, basename } from 'path';
 import { copy } from '@kyleupton/glob-copy';
-import { exec } from '../../utils/child_process';
-import { exists, dirSize } from '../../utils/fs';
-import { getPath } from '../../utils/lib';
-import { humanReadableToBytes } from '../../utils/bytes';
+import { exec } from '@electron/main/utils/child_process';
+import { exists, dirSize } from '@electron/main/utils/fs';
+import { getPath } from '@electron/main/utils/lib';
+import { humanReadableToBytes } from '@electron/main/utils/bytes';
 import { expose, sendProgress, executeCommand } from '.';
 
 const mountIsoVolume = async ({
@@ -74,13 +74,11 @@ const eraseDrive = async ({
     }
 
     // Erase disk
-    await executeCommand('diskutil', [
-      'eraseDisk',
-      'MS-DOS',
-      diskName,
-      'MBR',
-      targetVolume,
-    ]);
+    await executeCommand(
+      'diskutil',
+      ['eraseDisk', 'MS-DOS', diskName, 'MBR', targetVolume],
+      {},
+    );
 
     return diskName;
   } catch (e) {
@@ -92,10 +90,12 @@ const copyFiles = async ({
   id,
   mountedIsoPath,
   diskName,
+  isPackaged,
 }: {
   id: string;
   mountedIsoPath: string;
   diskName: string;
+  isPackaged: boolean;
 }) => {
   const activity = 'Copying files';
 
@@ -139,7 +139,10 @@ const copyFiles = async ({
     });
 
     // Next copy the big file
-    const wimlibImagex = getPath({ name: 'wimlib', bin: 'wimlib-imagex' });
+    const wimlibImagex = getPath(
+      { name: 'wimlib', bin: 'wimlib-imagex' },
+      { isPackaged },
+    );
     const dir = dirname(wimlibImagex);
     const name = basename(wimlibImagex);
     const start = Date.now();
@@ -168,6 +171,9 @@ const copyFiles = async ({
         '3800',
       ],
       {
+        cwd: dir,
+      },
+      {
         onOut: (data) => {
           const match = data.match(
             /(?<part>\d{1,7}\s\w{2,4}) of (?<whole>\d{1,7}\s\w{2,4})/,
@@ -193,9 +199,6 @@ const copyFiles = async ({
             };
           }
         },
-      },
-      {
-        cwd: dir,
       },
     );
 
@@ -226,8 +229,8 @@ const cleanUp = async ({
   });
 
   try {
-    await executeCommand('diskutil', ['eject', targetVolume]);
-    await executeCommand('umount', [mountedIsoPath]);
+    await executeCommand('diskutil', ['eject', targetVolume], {});
+    await executeCommand('umount', [mountedIsoPath], {});
   } catch (e) {
     throw Error('Failed to clean up');
   }
@@ -239,8 +242,18 @@ export interface FlashWindowsWorkerOptions {
   targetVolume: string;
 }
 
-expose({
-  fn: async ({ id, sourcePath, targetVolume }: FlashWindowsWorkerOptions) => {
+export interface FlashWindowsWorkerOptionsFinal
+  extends FlashWindowsWorkerOptions {
+  isPackaged: boolean;
+}
+
+expose<FlashWindowsWorkerOptionsFinal, void>({
+  fn: async ({
+    id,
+    sourcePath,
+    targetVolume,
+    isPackaged,
+  }: FlashWindowsWorkerOptionsFinal) => {
     // Mount target ISO
     const mountedIsoPath = await mountIsoVolume({ id, sourcePath });
     // Validate ISO
@@ -248,7 +261,7 @@ expose({
     // Erase drive
     const diskName = await eraseDrive({ id, targetVolume, sourcePath });
     // Copy files
-    await copyFiles({ id, mountedIsoPath, diskName });
+    await copyFiles({ id, mountedIsoPath, diskName, isPackaged });
     // Clean up
     await cleanUp({ id, targetVolume, mountedIsoPath });
   },

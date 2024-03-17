@@ -1,9 +1,8 @@
-import { app, BrowserWindow, Notification } from 'electron';
+import { BrowserWindow, Notification } from 'electron';
 import { Worker } from 'worker_threads';
-import { pathToFileURL } from 'url';
 import { join } from 'path';
+import { removeFlash } from '@electron/main/ipc/flash';
 import { Progress } from './types';
-import { removeFlash } from '../ipc/flash';
 
 export default class Flash<WorkerData> {
   id: string;

@@ -3,7 +3,6 @@ import { release } from 'node:os';
 import { join } from 'node:path';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import { usb } from 'usb';
-import { pathToFileURL } from 'url';
 
 import ipc from './ipc';
 
@@ -22,12 +21,6 @@ process.env.DIST = join(process.env.DIST_ELECTRON, '../dist');
 process.env.VITE_PUBLIC = process.env.VITE_DEV_SERVER_URL
   ? join(process.env.DIST_ELECTRON, '../public')
   : process.env.DIST;
-
-console.log(pathToFileURL(process.env.DIST_ELECTRON));
-
-console.log(
-  new URL('windows.js', pathToFileURL(join(process.env.DIST_ELECTRON, 'main'))),
-);
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration();
@@ -76,7 +69,7 @@ async function createWindow() {
   });
 
   win.once('ready-to-show', () => {
-    win.show();
+    win?.show();
   });
 
   // Test actively push message to the Electron-Renderer
@@ -113,11 +106,11 @@ app.on('ready', async () => {
   ipc();
 
   usb.on('attach', () => {
-    win.webContents.send('/usb/attached');
+    win?.webContents.send('/usb/attached');
   });
 
   usb.on('detach', () => {
-    win.webContents.send('/usb/detached');
+    win?.webContents.send('/usb/detached');
   });
 
   createWindow();

@@ -18,11 +18,15 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@electron/*": [
+        "./electron/*"
       ]
     }
   },
   "include": [
-    "src"
+    "src",
+    "electron"
   ],
   "references": [
     {

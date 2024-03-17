@@ -1,9 +1,10 @@
 import { ipcMain, IpcMainInvokeEvent } from 'electron';
-import Flash from '../flash/Flash';
 import FlashWindows from '../flash/FlashWindows';
 import FlashMacOS from '../flash/FlashMacOS';
 
-const flashes = new Map<string, Flash<unknown>>();
+type _Flash = FlashWindows | FlashMacOS;
+
+const flashes = new Map<string, _Flash>();
 
 export const removeFlash = (id: string) => {
   flashes.delete(id);
@@ -48,7 +49,7 @@ export default function start() {
       });
 
       flashes.set(id, flash);
-      flash.run();
+      flash.start();
     },
   );
 
