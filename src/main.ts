@@ -17,6 +17,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 // Solid
 import {
+  faBan,
   faCircleCheck,
   faDisplay,
   faFile,
@@ -30,6 +31,7 @@ import App from './App.vue';
 
 library.add(
   // Solid
+  faBan,
   faCircleCheck,
   faDisplay,
   faFile,

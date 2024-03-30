@@ -21,10 +21,15 @@ export const showOpenAppDialog = () => {
   } as OpenDialogOptions) as Promise<OpenDialogReturnValue>;
 };
 
-export const showConfirmDialog = (message: string) => {
-  return ipcRenderer.invoke('/dialog/showMessageBox', {
+export const showConfirmDialog = async (message: string): Promise<boolean> => {
+  const { response } = (await ipcRenderer.invoke('/dialog/showMessageBox', {
     message,
     type: 'question',
     buttons: ['Yes', 'Cancel'],
-  } as MessageBoxOptions) as Promise<MessageBoxReturnValue>;
+  } as MessageBoxOptions)) as MessageBoxReturnValue;
+
+  // response == 0 means "Yes"
+  // response == 1 means "No"
+
+  return response === 0;
 };

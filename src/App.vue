@@ -1,7 +1,7 @@
 <template>
   <Titlebar />
 
-  <div v-if="!progress?.done" class="form-container">
+  <div v-if="!finished" class="form-container">
     <DriveSelector v-model="chosenDrive" :flashing="flashing" />
     <OsSelector v-model="chosenOs" :flashing="flashing" />
     <SourceSelector
@@ -20,7 +20,12 @@
     <div v-else class="progress-container">
       <div class="progress-upper">
         <div class="progress-flashing">Flashing...</div>
-        <Button class="progress-cancel" label="Cancel" severity="danger" />
+        <Button
+          class="progress-cancel"
+          label="Cancel"
+          severity="danger"
+          @click="cancel"
+        />
       </div>
 
       <ProgressBar
@@ -46,14 +51,12 @@
 
   <div v-else class="flash-done-container">
     <font-awesome-icon
-      class="flash-done-icon"
-      :icon="['fas', 'circle-check']"
+      :style="finished.style"
+      :icon="finished.icon"
       style="--fa-animation-iteration-count: 1"
       bounce
     />
-
-    <div class="flash-done-text">Flash done!</div>
-
+    <div class="flash-done-text">{{ finished.text }}</div>
     <Button label="Flash another" @click="reset" />
   </div>
 </template>
@@ -74,6 +77,7 @@ interface IProgress {
   id: string;
   activity: string;
   done: boolean;
+  canceled?: boolean;
   // ETA
   transferred: number;
   speed: number;
@@ -98,6 +102,16 @@ export default defineComponent({
       chosenSource: '',
       flashing: false,
       progress: undefined as IProgress | undefined,
+      // progress: {
+      //   id: 'FAXuK8yKE1MTjWS8jSxn-',
+      //   activity: '',
+      //   done: false,
+      //   canceled: true,
+      //   transferred: -1,
+      //   speed: -1,
+      //   percentage: -1,
+      //   eta: -1,
+      // },
     };
   },
 
@@ -132,6 +146,24 @@ export default defineComponent({
 
       return '';
     },
+
+    finished() {
+      if (this.progress?.done) {
+        return {
+          icon: ['fas', 'circle-check'],
+          text: 'Flash done!',
+          style: { fontSize: '58px', color: '#4bb543' },
+        };
+      } else if (this.progress?.canceled) {
+        return {
+          icon: ['fas', 'ban'],
+          text: 'Flash canceled',
+          style: { fontSize: '58px', color: '#ff0000' },
+        };
+      }
+
+      return undefined;
+    },
   },
 
   watch: {
@@ -150,14 +182,11 @@ export default defineComponent({
 
     async startFlash() {
       if (this.chosenDriveData) {
-        const res = await window.api.showConfirmDialog(
+        const accepted = await window.api.showConfirmDialog(
           `Are you sure you want to flash ${this.chosenDriveData.description}?`,
         );
 
-        // response == 0 means "Yes"
-        // response == 1 means "No"
-
-        if (res.response === 0) {
+        if (accepted) {
           this.flashing = true;
 
           const id = nanoid();
@@ -211,6 +240,20 @@ export default defineComponent({
       this.chosenSource = '';
       this.flashing = false;
       this.progress = undefined;
+    },
+
+    async cancel() {
+      if (this.progress) {
+        const accepted = await window.api.showConfirmDialog(
+          'Are you sure you want to cancel the flashing process?',
+        );
+
+        if (accepted) {
+          await window.api.ipc.invoke('/flash/cancel', {
+            id: this.progress.id,
+          });
+        }
+      }
     },
   },
 });
@@ -303,11 +346,6 @@ body {
   height: 100%;
   padding: 15% 0;
   /* margin: auto 0; */
-}
-
-.flash-done-icon {
-  font-size: 58px;
-  color: #4bb543;
 }
 
 .flash-done-text {

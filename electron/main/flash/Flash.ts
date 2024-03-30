@@ -41,6 +41,17 @@ export default class Flash<WorkerData> {
     }
 
     removeFlash(this.id);
+
+    this.sendProgress({
+      id: this.id,
+      activity: '',
+      done: false,
+      canceled: true,
+      transferred: -1,
+      speed: -1,
+      percentage: -1,
+      eta: -1,
+    });
   }
 
   registerEvents() {

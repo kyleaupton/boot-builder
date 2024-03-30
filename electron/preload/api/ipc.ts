@@ -14,6 +14,7 @@ const validateChannel = (channel: string) => {
     '/usb/detached',
     '/flash/windows',
     '/flash/macOS',
+    '/flash/cancel',
     '/utils/fs/readdir',
     '/utils/macApp/getIcon',
     '/utils/app/getPath',
