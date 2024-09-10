@@ -1,5 +1,5 @@
-import FlashMacOS from './FlashMacOS';
-import FlashWindows from './FlashWindows';
+import FlashMacOS from './macos/FlashMacOS';
+import FlashWindows from './windows/FlashWindows';
 
 type Flash = FlashMacOS | FlashWindows;
 const flashes = new Map<string, Flash>();

@@ -1,5 +1,5 @@
-import Flash from './Flash';
-import { FlashMacOSWorkerOptions } from './workers/macOS';
+import Flash from '../Flash';
+import { FlashMacOSWorkerOptions } from './macos-worker';
 
 export default class FlashMacOS extends Flash<FlashMacOSWorkerOptions> {
   sourcePath: string;

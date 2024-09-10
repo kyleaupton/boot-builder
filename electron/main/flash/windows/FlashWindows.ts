@@ -1,9 +1,9 @@
 import { app } from 'electron';
-import Flash from './Flash';
+import Flash from '../Flash';
 import {
   FlashWindowsWorkerOptions,
   FlashWindowsWorkerOptionsFinal,
-} from './workers/windows';
+} from './WorkerWindows';
 
 export default class FlashWindows extends Flash<FlashWindowsWorkerOptionsFinal> {
   constructor({ id, sourcePath, targetVolume }: FlashWindowsWorkerOptions) {
