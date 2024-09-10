@@ -1,8 +1,8 @@
 import { BrowserWindow, Notification } from 'electron';
 import { Worker } from 'worker_threads';
 import { join } from 'path';
-import { removeFlash } from '@main/ipc/flash';
-import { Progress } from './types';
+import { removeFlash } from '@main/flash';
+import { SerializedFlash } from '@shared/flash';
 
 export default class Flash<WorkerData> {
   id: string;
@@ -77,6 +77,7 @@ export default class Flash<WorkerData> {
       id: this.id,
       activity: '',
       done: true,
+      canceled: false,
       transferred: -1,
       speed: -1,
       percentage: -1,
@@ -92,7 +93,7 @@ export default class Flash<WorkerData> {
     });
   }
 
-  sendProgress(progress: Progress) {
+  sendProgress(progress: SerializedFlash) {
     this.sendMessage(`flash-${this.id}-progress`, progress);
   }
 

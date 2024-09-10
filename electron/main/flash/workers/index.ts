@@ -1,6 +1,6 @@
 import { spawn, SpawnOptions } from 'child_process';
 import { parentPort, workerData } from 'worker_threads';
-import { Progress } from '@main/flash/types';
+import { SerializedFlash } from '@shared/flash';
 
 export const expose = async <T, V>({
   fn,
@@ -17,7 +17,7 @@ export const expose = async <T, V>({
   }
 };
 
-export const sendProgress = (p: Progress) => {
+export const sendProgress = (p: SerializedFlash) => {
   if (parentPort) {
     parentPort.postMessage({
       type: 'progress',

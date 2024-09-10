@@ -1,14 +1,7 @@
 import { createIpcHandlers } from 'typed-electron-ipc';
-import FlashWindows from '../flash/FlashWindows';
-import FlashMacOS from '../flash/FlashMacOS';
-
-type _Flash = FlashWindows | FlashMacOS;
-
-const flashes = new Map<string, _Flash>();
-
-export const removeFlash = (id: string) => {
-  flashes.delete(id);
-};
+import { addFlash, getFlash } from '@main/flash';
+import FlashWindows from '@main/flash/FlashWindows';
+import FlashMacOS from '@main/flash/FlashMacOS';
 
 export const flashIpc = () =>
   createIpcHandlers({
@@ -26,7 +19,7 @@ export const flashIpc = () =>
         targetVolume,
       });
 
-      flashes.set(id, flash);
+      addFlash(flash);
       flash.start();
     },
 
@@ -44,12 +37,12 @@ export const flashIpc = () =>
         targetVolume,
       });
 
-      flashes.set(id, flash);
+      addFlash(flash);
       flash.start();
     },
 
     '/flash/cancel': async (event, id: string) => {
-      const flash = flashes.get(id);
+      const flash = getFlash(id);
 
       if (flash) {
         flash.cancel();
