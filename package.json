@@ -14,7 +14,9 @@
     "dev": "vite",
     "build": "export DEBUG=electron-builder && node scripts/build.mjs --targets mac --notarize=false",
     "build:tsc": "vue-tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.0",
