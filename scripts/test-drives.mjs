@@ -14,9 +14,21 @@ const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const __project = path.join(__dirname, '..');
 const __testDrives = path.join(__project, TEST_DRIVE_DIR);
 
+/**
+ * @returns {Promise<string[]>}
+ */
 const getDrives = async () => {
-  const drives = await fs.readdir(__testDrives);
-  return drives;
+  return new Promise((resolve, reject) => {
+    fs.readdir(__testDrives)
+      .then(resolve)
+      .catch((error) => {
+        if (error instanceof Error && error.code === 'ENOENT') {
+          resolve([]);
+        } else {
+          reject(error);
+        }
+      });
+  });
 };
 
 program
@@ -66,8 +78,14 @@ program
       `Creating a test drive called ${_name} with ${size_GB}G of storage`,
     ).start();
 
+    // Ensure the test drives directory exists
+    await fs.mkdir(__testDrives, { recursive: true });
+
     await exec(
-      `hdiutil create -size ${size_MB}m -fs MS-DOS -volname "name" ${path.join(__testDrives, _name)}`,
+      `hdiutil create -size ${size_MB}m -fs MS-DOS -volname "name" ${path.join(
+        __testDrives,
+        _name,
+      )}`,
     );
 
     spinner.succeed('Test drive created');
