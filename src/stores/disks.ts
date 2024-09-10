@@ -13,8 +13,10 @@ export const useDisksStore = defineStore('disks', {
 
   actions: {
     async getDisks() {
-      // @ts-ignore
-      this.items = (await window.api.getDisks()).filter((drive) => drive.isUSB);
+      // this.items = (await window.api.getDisks()).filter((drive) => drive.isUSB);
+      this.items = (await window.api.getDisks()).filter(
+        (drive) => drive.isRemovable && drive.mountpoints.length > 0,
+      );
     },
 
     registerUsbEvents() {

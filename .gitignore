@@ -32,3 +32,6 @@ yarn.lock
 *.env
 release
 build/bin
+
+# Test USBs
+*.dmg
