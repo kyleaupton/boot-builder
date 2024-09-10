@@ -1,6 +1,6 @@
 import { spawn, SpawnOptions } from 'child_process';
 import { parentPort, workerData } from 'worker_threads';
-import { Progress } from '@electron/main/flash/types';
+import { Progress } from '@main/flash/types';
 
 export const expose = async <T, V>({
   fn,

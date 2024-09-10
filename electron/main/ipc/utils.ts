@@ -1,35 +1,21 @@
-import { app, ipcMain, IpcMainInvokeEvent, nativeImage } from 'electron';
+import { app, nativeImage } from 'electron';
 import fs from 'fs/promises';
 import { join } from 'path';
 import crypto from 'crypto';
 import glob from 'fast-glob';
+import { createIpcHandlers } from 'typed-electron-ipc';
 import { exec } from '../utils/child_process';
 
-export default function start() {
-  ipcMain.handle(
-    '/utils/fs/readdir',
-    (event: IpcMainInvokeEvent, { path }: { path: string }) => {
-      return fs.readdir(path);
-    },
-  );
+export const utilsIpc = () =>
+  createIpcHandlers({
+    '/utils/fs/readdir': async (event, path) => fs.readdir(path),
 
-  ipcMain.handle(
-    '/utils/app/getFileIcon',
-    async (event: IpcMainInvokeEvent, { path }: { path: string }) => {
-      return (await app.getFileIcon(path)).toDataURL();
-    },
-  );
+    '/utils/app/getFileIcon': async (event, path) =>
+      (await app.getFileIcon(path)).toDataURL(),
 
-  ipcMain.handle(
-    '/utils/app/getPath',
-    async (event: IpcMainInvokeEvent, { name }: { name: 'downloads' }) => {
-      return app.getPath(name);
-    },
-  );
+    '/utils/app/getPath': async (event, name) => app.getPath(name),
 
-  ipcMain.handle(
-    '/utils/macApp/getIcon',
-    async (event: IpcMainInvokeEvent, { path }: { path: string }) => {
+    '/utils/macApp/getIcon': async (event, path: string) => {
       // Ensure path is macOS App
       // - Path ends with .app
       // - path/Resources/*.icns must exist
@@ -65,5 +51,4 @@ export default function start() {
 
       return base64;
     },
-  );
-}
+  });

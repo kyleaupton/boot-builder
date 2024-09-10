@@ -19,8 +19,14 @@
       "@/*": [
         "./src/*"
       ],
-      "@electron/*": [
-        "./electron/*"
+      "@main/*": [
+        "./electron/main/*"
+      ],
+      "@preload/*": [
+        "./electron/preload/*"
+      ],
+      "@shared/*": [
+        "./electron/shared/*"
       ]
     }
   },

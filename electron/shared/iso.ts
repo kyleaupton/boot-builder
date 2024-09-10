@@ -1,4 +1,4 @@
-export type t_file = {
+export type File = {
   name: string;
   path: string;
   size: number;

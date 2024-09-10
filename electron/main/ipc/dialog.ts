@@ -1,32 +1,30 @@
 import {
-  ipcMain,
   dialog,
   BrowserWindow,
   OpenDialogOptions,
   MessageBoxOptions,
-  IpcMainInvokeEvent,
 } from 'electron';
+import { createIpcHandlers } from 'typed-electron-ipc';
 
-export default function start() {
-  ipcMain.handle(
-    '/dialog/showOpenDialog',
-    (event: IpcMainInvokeEvent, options: OpenDialogOptions) => {
+export const dialogIpc = () =>
+  createIpcHandlers({
+    '/dialog/showOpenDialog': async (event, options: OpenDialogOptions) => {
       const sender = BrowserWindow.fromWebContents(event.sender);
 
-      if (sender) {
-        return dialog.showOpenDialog(sender, options);
+      if (!sender) {
+        throw new Error('No sender found');
       }
-    },
-  );
 
-  ipcMain.handle(
-    '/dialog/showMessageBox',
-    (event: IpcMainInvokeEvent, options: MessageBoxOptions) => {
+      return dialog.showOpenDialog(sender, options);
+    },
+
+    '/dialog/showMessageBox': async (event, options: MessageBoxOptions) => {
       const sender = BrowserWindow.fromWebContents(event.sender);
 
-      if (sender) {
-        return dialog.showMessageBox(sender, options);
+      if (!sender) {
+        throw new Error('No sender found');
       }
+
+      return dialog.showMessageBox(sender, options);
     },
-  );
-}
+  });

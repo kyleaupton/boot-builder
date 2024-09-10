@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import { usb } from 'usb';
 
-import ipc from './ipc';
+import './ipc';
 
 // The built directory structure
 //
@@ -102,8 +102,6 @@ app.on('ready', async () => {
   } catch (e) {
     console.log(e);
   }
-
-  ipc();
 
   usb.on('attach', () => {
     win?.webContents.send('/usb/attached');

@@ -1,9 +1,16 @@
-import dialog from './dialog';
-import flash from './flash';
-import utils from './utils';
+import { ipcRouter } from 'typed-electron-ipc';
+import { dialogIpc } from './dialog';
+import { disksIpc } from './disks';
+import { flashIpc } from './flash';
+import { pathIpc } from './path';
+import { utilsIpc } from './utils';
 
-export default function ipc() {
-  dialog();
-  flash();
-  utils();
-}
+const router = ipcRouter({
+  ...dialogIpc(),
+  ...disksIpc(),
+  ...flashIpc(),
+  ...pathIpc(),
+  ...utilsIpc(),
+});
+
+export type Router = typeof router;

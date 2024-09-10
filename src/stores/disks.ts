@@ -1,26 +1,25 @@
 import { defineStore } from 'pinia';
-import drives from 'drivelist';
+import { getDisks } from '@/api/disks';
 
-type t_state = {
-  items: Array<drives.Drive>;
-};
+interface State {
+  items: Awaited<ReturnType<typeof getDisks>>;
+}
 
 export const useDisksStore = defineStore('disks', {
-  state: () =>
-    ({
-      items: [],
-    }) as t_state,
+  state: (): State => ({
+    items: [],
+  }),
 
   actions: {
     async getDisks() {
-      // this.items = (await window.api.getDisks()).filter((drive) => drive.isUSB);
-      this.items = (await window.api.getDisks()).filter(
+      // this.items = (await getDisks()).filter((drive) => drive.isUSB);
+      this.items = (await getDisks()).filter(
         (drive) => drive.isRemovable && drive.mountpoints.length > 0,
       );
     },
 
     registerUsbEvents() {
-      window.api.ipc.recieve('/usb/attached', async () => {
+      window.onUsbAttached(async () => {
         const currentNum = this.items.length || 0;
 
         const attemptRefresh = async (attempt = 1): Promise<void> => {
@@ -40,7 +39,7 @@ export const useDisksStore = defineStore('disks', {
         await attemptRefresh();
       });
 
-      window.api.ipc.recieve('/usb/detached', () => {
+      window.onUsbDetached(() => {
         this.getDisks();
       });
     },

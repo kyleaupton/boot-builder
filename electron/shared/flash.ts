@@ -1,0 +1,10 @@
+export interface SerializedFlash {
+  id: string;
+  activity: string;
+  done: boolean;
+  canceled: boolean;
+  transferred: number;
+  speed: number;
+  percentage: number;
+  eta: number;
+}

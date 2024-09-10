@@ -1,4 +1,4 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron';
+import { createIpcHandlers } from 'typed-electron-ipc';
 import FlashWindows from '../flash/FlashWindows';
 import FlashMacOS from '../flash/FlashMacOS';
 
@@ -10,11 +10,10 @@ export const removeFlash = (id: string) => {
   flashes.delete(id);
 };
 
-export default function start() {
-  ipcMain.handle(
-    '/flash/windows',
-    async (
-      event: IpcMainInvokeEvent,
+export const flashIpc = () =>
+  createIpcHandlers({
+    '/flash/windows': async (
+      event,
       {
         id,
         sourcePath,
@@ -30,12 +29,9 @@ export default function start() {
       flashes.set(id, flash);
       flash.start();
     },
-  );
 
-  ipcMain.handle(
-    '/flash/macOS',
-    (
-      event: IpcMainInvokeEvent,
+    '/flash/macOS': async (
+      event,
       {
         id,
         sourcePath,
@@ -51,16 +47,12 @@ export default function start() {
       flashes.set(id, flash);
       flash.start();
     },
-  );
 
-  ipcMain.handle(
-    '/flash/cancel',
-    (event: IpcMainInvokeEvent, { id }: { id: string }) => {
+    '/flash/cancel': async (event, id: string) => {
       const flash = flashes.get(id);
 
       if (flash) {
         flash.cancel();
       }
     },
-  );
-}
+  });

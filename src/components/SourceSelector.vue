@@ -34,6 +34,7 @@
 import { defineComponent } from 'vue';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
+import { showOpenIsoDialog, showOpenAppDialog } from '@/api/dialog';
 
 export default defineComponent({
   name: 'SourceSelector',
@@ -61,6 +62,12 @@ export default defineComponent({
 
   emits: ['update:modelValue'],
 
+  data() {
+    return {
+      namePreview: '',
+    };
+  },
+
   computed: {
     value: {
       get() {
@@ -70,30 +77,25 @@ export default defineComponent({
         this.$emit('update:modelValue', value);
       },
     },
+  },
 
-    namePreview: {
-      get() {
-        return window.api.path.basename(this.value);
-      },
-      set() {
-        // do nothing
-      },
-    },
+  mounted() {
+    window
+      .ipcInvoke('/path/basename', this.value)
+      .then((basename) => (this.namePreview = basename));
   },
 
   methods: {
     async showDialog() {
-      type res_windows = Awaited<
-        ReturnType<typeof window.api.showOpenIsoDialog>
-      >;
-      type res_mac = Awaited<ReturnType<typeof window.api.showOpenAppDialog>>;
+      type res_windows = Awaited<ReturnType<typeof showOpenIsoDialog>>;
+      type res_mac = Awaited<ReturnType<typeof showOpenAppDialog>>;
 
       let res: res_windows | res_mac;
 
       if (this.chosenOs === 'windows') {
-        res = await window.api.showOpenIsoDialog();
+        res = await showOpenIsoDialog();
       } else if (this.chosenOs === 'macos') {
-        res = await window.api.showOpenAppDialog();
+        res = await showOpenAppDialog();
       } else {
         throw Error('Unsupprted OS');
       }

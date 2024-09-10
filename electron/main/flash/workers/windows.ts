@@ -2,10 +2,10 @@
 import { stat } from 'fs/promises';
 import { resolve, dirname, basename } from 'path';
 import { copy } from '@kyleupton/glob-copy';
-import { exec } from '@electron/main/utils/child_process';
-import { exists, dirSize } from '@electron/main/utils/fs';
-import { getPath } from '@electron/main/utils/lib';
-import { humanReadableToBytes } from '@electron/main/utils/bytes';
+import { exec } from '@main/utils/child_process';
+import { exists, dirSize } from '@main/utils/fs';
+import { getPath } from '@main/utils/lib';
+import { humanReadableToBytes } from '@main/utils/bytes';
 import { expose, sendProgress, executeCommand } from '.';
 
 const mountIsoVolume = async ({

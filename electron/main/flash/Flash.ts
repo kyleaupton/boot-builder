@@ -1,7 +1,7 @@
 import { BrowserWindow, Notification } from 'electron';
 import { Worker } from 'worker_threads';
 import { join } from 'path';
-import { removeFlash } from '@electron/main/ipc/flash';
+import { removeFlash } from '@main/ipc/flash';
 import { Progress } from './types';
 
 export default class Flash<WorkerData> {

@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { exists } from '@electron/main/utils/fs';
+import { exists } from '@main/utils/fs';
 import { expose, sendProgress, executeCommand } from '.';
 
 const validate = async ({ sourcePath }: { sourcePath: string }) => {

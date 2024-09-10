@@ -18,6 +18,23 @@ const globImport = (g: string) => {
   );
 };
 
+const _alias = alias({
+  entries: [
+    {
+      find: '@main',
+      replacement: path.resolve(__dirname, './electron/main'),
+    },
+    {
+      find: '@preload',
+      replacement: path.resolve(__dirname, './electron/preload'),
+    },
+    {
+      find: '@shared',
+      replacement: path.resolve(__dirname, './electron/shared'),
+    },
+  ],
+});
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   rmSync('dist-electron', { recursive: true, force: true });
@@ -31,6 +48,9 @@ export default defineConfig(({ command }) => {
       // Aliases for the renderer process are defined here
       alias: {
         '@': path.resolve(__dirname, './src'),
+        '@main': path.resolve(__dirname, './electron/main'),
+        '@preload': path.resolve(__dirname, './electron/preload'),
+        '@shared': path.resolve(__dirname, './electron/shared'),
       },
     },
     plugins: [
@@ -60,14 +80,7 @@ export default defineConfig(({ command }) => {
               rollupOptions: {
                 plugins: [
                   // Aliases for the main process are defined here
-                  alias({
-                    entries: [
-                      {
-                        find: '@electron',
-                        replacement: path.resolve(__dirname, './electron'),
-                      },
-                    ],
-                  }),
+                  _alias,
                 ],
                 // Some third-party Node.js libraries may not be built correctly by Vite, especially `C/C++` addons,
                 // we can use `external` to exclude them to ensure they work correctly.

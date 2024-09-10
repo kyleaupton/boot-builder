@@ -29,8 +29,8 @@
       </div>
 
       <ProgressBar
-        v-if="(progress?.percentage ?? -1) > -1"
-        :value="progress?.percentage ?? 0"
+        v-if="(flash?.percentage ?? -1) > -1"
+        :value="flash?.percentage ?? 0"
         :style="{ height: '8px' }"
         :show-value="false"
       />
@@ -38,11 +38,11 @@
       <ProgressBar v-else mode="indeterminate" :style="{ height: '8px' }" />
 
       <div class="progress-lower">
-        <div>{{ progress?.activity || '' }}</div>
+        <div>{{ flash?.activity || '' }}</div>
         <div :style="{ display: 'flex', gap: '8px' }">
-          <div v-if="progress?.eta != null">{{ humanReadableEta }}</div>
-          <div v-if="progress?.percentage != null && progress.percentage > -1">
-            {{ Math.floor(progress.percentage) }}%
+          <div v-if="flash?.eta != null">{{ humanReadableEta }}</div>
+          <div v-if="flash?.percentage != null && flash.percentage > -1">
+            {{ Math.floor(flash.percentage) }}%
           </div>
         </div>
       </div>
@@ -66,24 +66,13 @@ import { defineComponent } from 'vue';
 import { mapState, mapActions } from 'pinia';
 import { nanoid } from 'nanoid';
 
-import { useDisksStore } from '@/stores/disks';
+import { useDisksStore, useFlashStore } from '@/stores';
+import { showConfirmDialog } from '@/api/dialog';
 
 import Titlebar from './components/Titlebar.vue';
 import DriveSelector from './components/DriveSelector.vue';
 import OsSelector from './components/OsSelector.vue';
 import SourceSelector from './components/SourceSelector.vue';
-
-interface IProgress {
-  id: string;
-  activity: string;
-  done: boolean;
-  canceled?: boolean;
-  // ETA
-  transferred: number;
-  speed: number;
-  percentage: number;
-  eta: number;
-}
 
 export default defineComponent({
   name: 'App',
@@ -100,23 +89,16 @@ export default defineComponent({
       chosenDrive: '',
       chosenOs: '',
       chosenSource: '',
-      flashing: false,
-      progress: undefined as IProgress | undefined,
-      // progress: {
-      //   id: 'FAXuK8yKE1MTjWS8jSxn-',
-      //   activity: '',
-      //   done: false,
-      //   canceled: true,
-      //   transferred: -1,
-      //   speed: -1,
-      //   percentage: -1,
-      //   eta: -1,
-      // },
     };
   },
 
   computed: {
     ...mapState(useDisksStore, ['items']),
+    ...mapState(useFlashStore, ['flash']),
+
+    flashing() {
+      return !!this.flash;
+    },
 
     flashDisabled() {
       return !this.chosenDrive || !this.chosenOs || !this.chosenSource;
@@ -127,16 +109,16 @@ export default defineComponent({
     },
 
     humanReadableEta() {
-      if (this.progress && this.progress.eta > -1) {
-        const h = Math.floor(this.progress.eta / 3600)
+      if (this.flash && this.flash.eta > -1) {
+        const h = Math.floor(this.flash.eta / 3600)
           .toString()
           .padStart(2, '0');
 
-        const m = Math.floor((this.progress.eta % 3600) / 60)
+        const m = Math.floor((this.flash.eta % 3600) / 60)
           .toString()
           .padStart(2, '0');
 
-        const s = Math.floor(this.progress.eta % 60)
+        const s = Math.floor(this.flash.eta % 60)
           .toString()
           .padStart(2, '0');
 
@@ -148,13 +130,13 @@ export default defineComponent({
     },
 
     finished() {
-      if (this.progress?.done) {
+      if (this.flash?.done) {
         return {
           icon: ['fas', 'circle-check'],
           text: 'Flash done!',
           style: { fontSize: '58px', color: '#4bb543' },
         };
-      } else if (this.progress?.canceled) {
+      } else if (this.flash?.canceled) {
         return {
           icon: ['fas', 'ban'],
           text: 'Flash canceled',
@@ -174,15 +156,17 @@ export default defineComponent({
 
   async created() {
     this.registerUsbEvents();
+    this.registerFlashEvents();
     await this.getDisks();
   },
 
   methods: {
     ...mapActions(useDisksStore, ['getDisks', 'registerUsbEvents']),
+    ...mapActions(useFlashStore, ['registerFlashEvents']),
 
     async startFlash() {
       if (this.chosenDriveData) {
-        const accepted = await window.api.showConfirmDialog(
+        const accepted = await showConfirmDialog(
           `Are you sure you want to flash ${this.chosenDriveData.description}?`,
         );
 
@@ -190,10 +174,9 @@ export default defineComponent({
           this.flashing = true;
 
           const id = nanoid();
-          this.registerFlashEvents(id);
 
           // Start flashing
-          let url: string;
+          let url: Parameters<typeof window.ipcInvoke>['0'];
           switch (this.chosenOs) {
             case 'windows':
               url = '/flash/windows';
@@ -205,7 +188,7 @@ export default defineComponent({
               throw new Error('Invalid OS');
           }
 
-          await window.api.ipc.invoke(url, {
+          await window.ipcInvoke(url, {
             sourcePath: this.chosenSource,
             targetVolume: this.chosenDriveData.device,
             id,
@@ -214,44 +197,20 @@ export default defineComponent({
       }
     },
 
-    registerFlashEvents(id: string) {
-      window.api.ipc.recieve(`flash-${id}-progress`, this.handleProgress);
-    },
-
-    removeFlashEvents(id: string) {
-      window.api.ipc.removeListener(
-        `flash-${id}-progress`,
-        this.handleProgress,
-      );
-    },
-
-    handleProgress(progress: IProgress) {
-      this.progress = progress;
-
-      if (progress.done) {
-        this.flashing = false;
-        this.removeFlashEvents(progress.id);
-      }
-    },
-
     reset() {
       this.chosenDrive = '';
       this.chosenOs = '';
       this.chosenSource = '';
-      this.flashing = false;
-      this.progress = undefined;
     },
 
     async cancel() {
-      if (this.progress) {
-        const accepted = await window.api.showConfirmDialog(
+      if (this.flash) {
+        const accepted = await showConfirmDialog(
           'Are you sure you want to cancel the flashing process?',
         );
 
         if (accepted) {
-          await window.api.ipc.invoke('/flash/cancel', {
-            id: this.progress.id,
-          });
+          await window.ipcInvoke('/flash/cancel', this.flash.id);
         }
       }
     },

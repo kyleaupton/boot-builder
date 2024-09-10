@@ -1,7 +1,15 @@
-import * as api from '../electron/preload/api';
+import {
+  ipcInvoke,
+  onUsbAttached,
+  onUsbDetached,
+  onFlashUpdate,
+} from '@preload/index';
 
 declare global {
   interface Window {
-    api: typeof api;
+    ipcInvoke: typeof ipcInvoke;
+    onUsbAttached: typeof onUsbAttached;
+    onUsbDetached: typeof onUsbDetached;
+    onFlashUpdate: typeof onFlashUpdate;
   }
 }
