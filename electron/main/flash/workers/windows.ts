@@ -6,9 +6,7 @@ import { exec } from '@main/utils/child_process';
 import { exists, dirSize } from '@main/utils/fs';
 import { getPath } from '@main/utils/lib';
 import { humanReadableToBytes } from '@main/utils/bytes';
-import { createWorker } from '.';
-import Worker, { IWorker } from './Worker';
-import { SerializedFlash } from '@shared/flash';
+import { createWorker } from './utils';
 
 const mountIsoVolume = async ({
   id,
@@ -286,15 +284,18 @@ export default createWorker(
   ) => {
     console.log('FlashWindowsWorker', sourcePath, targetVolume);
     for (let i = 0; i < 100; i++) {
-      state.progress = {
-        activity: 'Copying files',
-        transferred: i * 100,
-        speed: i * 100,
-        percentage: i,
-        eta: i * 100,
-      };
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      state.set({
+        progress: {
+          activity: 'Copying files',
+          transferred: i * 100,
+          speed: i * 100,
+          percentage: i,
+          eta: i * 100,
+        },
+      });
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
+    console.log('done');
     return;
   },
 );

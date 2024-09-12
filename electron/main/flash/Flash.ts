@@ -3,7 +3,7 @@ import { Worker } from 'node:worker_threads';
 import { join } from 'node:path';
 import { SerializedFlash } from '@shared/flash';
 
-import { _Workers } from './workers';
+import { type _Workers } from './workers/workers';
 
 export default class Flash<
   T extends keyof _Workers,

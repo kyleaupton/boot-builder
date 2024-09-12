@@ -176,8 +176,6 @@ export default defineComponent({
         );
 
         if (accepted) {
-          this.flashing = true;
-
           await window.ipcInvoke('/flash/new', nanoid(), 'windows', {
             sourcePath: this.chosenSource,
             targetVolume: this.chosenDriveData.device,

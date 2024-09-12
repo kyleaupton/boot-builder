@@ -1,6 +1,7 @@
 import { parentPort, workerData } from 'worker_threads';
-import { workers } from '.';
+import { workers } from './workers';
 import { SerializedFlash } from '@shared/flash';
+import { signal } from '@main/signal';
 
 if (parentPort && workerData) {
   try {
@@ -24,12 +25,14 @@ if (parentPort && workerData) {
       throw new Error(`Worker type ${type} not found`);
     }
 
-    const state = { ...workerData.state } as SerializedFlash;
+    const state = signal({
+      value: workerData.state as SerializedFlash,
+    });
 
     const id = setInterval(() => {
       parentPort!.postMessage({
         type: 'state',
-        data: state,
+        data: state.get(),
       });
     }, 500);
 
@@ -42,9 +45,10 @@ if (parentPort && workerData) {
       })
       .catch((error) => {
         throw error;
+      })
+      .finally(() => {
+        clearInterval(id);
       });
-
-    clearInterval(id);
   } catch (error) {
     console.error(error);
     parentPort.postMessage({
