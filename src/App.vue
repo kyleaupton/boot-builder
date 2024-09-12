@@ -29,8 +29,8 @@
       </div>
 
       <ProgressBar
-        v-if="(flash?.percentage ?? -1) > -1"
-        :value="flash?.percentage ?? 0"
+        v-if="(flash?.progress.percentage ?? -1) > -1"
+        :value="flash?.progress.percentage ?? 0"
         :style="{ height: '8px' }"
         :show-value="false"
       />
@@ -38,11 +38,16 @@
       <ProgressBar v-else mode="indeterminate" :style="{ height: '8px' }" />
 
       <div class="progress-lower">
-        <div>{{ flash?.activity || '' }}</div>
+        <div>{{ flash?.progress.activity || '' }}</div>
         <div :style="{ display: 'flex', gap: '8px' }">
-          <div v-if="flash?.eta != null">{{ humanReadableEta }}</div>
-          <div v-if="flash?.percentage != null && flash.percentage > -1">
-            {{ Math.floor(flash.percentage) }}%
+          <div v-if="flash?.progress.eta != null">{{ humanReadableEta }}</div>
+          <div
+            v-if="
+              flash?.progress.percentage != null &&
+              flash.progress.percentage > -1
+            "
+          >
+            {{ Math.floor(flash.progress.percentage) }}%
           </div>
         </div>
       </div>
@@ -109,16 +114,16 @@ export default defineComponent({
     },
 
     humanReadableEta() {
-      if (this.flash && this.flash.eta > -1) {
-        const h = Math.floor(this.flash.eta / 3600)
+      if (this.flash && this.flash.progress.eta > -1) {
+        const h = Math.floor(this.flash.progress.eta / 3600)
           .toString()
           .padStart(2, '0');
 
-        const m = Math.floor((this.flash.eta % 3600) / 60)
+        const m = Math.floor((this.flash.progress.eta % 3600) / 60)
           .toString()
           .padStart(2, '0');
 
-        const s = Math.floor(this.flash.eta % 60)
+        const s = Math.floor(this.flash.progress.eta % 60)
           .toString()
           .padStart(2, '0');
 
@@ -173,25 +178,9 @@ export default defineComponent({
         if (accepted) {
           this.flashing = true;
 
-          const id = nanoid();
-
-          // Start flashing
-          let url: Parameters<typeof window.ipcInvoke>['0'];
-          switch (this.chosenOs) {
-            case 'windows':
-              url = '/flash/windows';
-              break;
-            case 'macos':
-              url = '/flash/macOS';
-              break;
-            default:
-              throw new Error('Invalid OS');
-          }
-
-          await window.ipcInvoke(url, {
+          await window.ipcInvoke('/flash/new', nanoid(), 'windows', {
             sourcePath: this.chosenSource,
             targetVolume: this.chosenDriveData.device,
-            id,
           });
         }
       }

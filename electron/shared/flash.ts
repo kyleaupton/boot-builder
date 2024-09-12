@@ -1,10 +1,19 @@
-export interface SerializedFlash {
-  id: string;
+export interface Progress {
   activity: string;
-  done: boolean;
-  canceled: boolean;
   transferred: number;
   speed: number;
   percentage: number;
   eta: number;
+}
+
+export interface SerializedFlash {
+  id: string;
+  status: string;
+  done: boolean;
+  canceled: boolean;
+  progress: Progress;
+}
+
+export interface Flash extends SerializedFlash {
+  flash: () => Promise<void>;
 }

@@ -1,6 +1,5 @@
 import { randomBytes } from 'crypto';
 import { exists } from '@main/utils/fs';
-import { expose, sendProgress, executeCommand } from '.';
 
 const validate = async ({ sourcePath }: { sourcePath: string }) => {
   // USB must be at least 14GB in size
@@ -95,10 +94,10 @@ export interface FlashMacOSWorkerOptions {
   targetVolume: string;
 }
 
-expose<FlashMacOSWorkerOptions, void>({
-  fn: async ({ id, sourcePath, targetVolume }: FlashMacOSWorkerOptions) => {
-    await validate({ sourcePath });
-    await eraseDrive({ id, targetVolume });
-    await executeInstallerScript({ id, targetVolume, sourcePath });
-  },
-});
+// expose<FlashMacOSWorkerOptions, void>({
+//   fn: async ({ id, sourcePath, targetVolume }: FlashMacOSWorkerOptions) => {
+//     await validate({ sourcePath });
+//     await eraseDrive({ id, targetVolume });
+//     await executeInstallerScript({ id, targetVolume, sourcePath });
+//   },
+// });

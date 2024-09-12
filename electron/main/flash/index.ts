@@ -1,10 +1,11 @@
-import FlashMacOS from './macos/FlashMacOS';
-import FlashWindows from './windows/FlashWindows';
+import Flash from './Flash';
 
-type Flash = FlashMacOS | FlashWindows;
-const flashes = new Map<string, Flash>();
+/**
+ * Map of flashes by id. This is used to keep track of flashes that are in progress.
+ */
+const flashes = new Map<string, Flash<any, any>>();
 
-export const addFlash = (flash: Flash) => {
+export const addFlash = (flash: Flash<any, any>) => {
   flashes.set(flash.id, flash);
 };
 
@@ -15,3 +16,5 @@ export const getFlash = (id: string) => {
 export const removeFlash = (id: string) => {
   flashes.delete(id);
 };
+
+export { Flash };

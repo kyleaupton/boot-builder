@@ -1,62 +1,25 @@
-import { spawn, SpawnOptions } from 'child_process';
-import { parentPort, workerData } from 'worker_threads';
 import { SerializedFlash } from '@shared/flash';
 
-export const expose = async <T, V>({
-  fn,
-}: {
-  fn: (param: T) => Promise<V>; // eslint-disable-line
-}) => {
-  if (parentPort) {
-    const result = await fn(workerData);
+import windows from './windows';
 
-    parentPort?.postMessage({
-      type: 'result',
-      data: result,
-    });
-  }
-};
+/* eslint-disable-next-line */
+export type WorkerHandler = (...args: any[]) => Promise<any>;
 
-export const sendProgress = (p: SerializedFlash) => {
-  if (parentPort) {
-    parentPort.postMessage({
-      type: 'progress',
-      data: p,
-    });
-  }
-};
+export type Workers = Record<string, WorkerHandler>;
 
-export const executeCommand = async (
-  cmd: string,
-  args: string[],
-  options: SpawnOptions,
-  events?: { onOut?: (data: string) => void, onErr?: (data: string) => void }, // eslint-disable-line
+export const createWorker = <T, V>(
+  /* eslint-disable-next-line */
+  fun: (state: SerializedFlash, options: T) => V,
 ) => {
-  return new Promise<void>((resolve, reject) => {
-    const proc = spawn(cmd, args);
-
-    if (proc.stdout) {
-      proc.stdout.on('data', (data) => {
-        const string = data.toString();
-        // this._sendCommandOutput(string, 'stdout');
-        if (events && events.onOut) events.onOut(string);
-      });
-
-      proc.stderr.on('data', (data) => {
-        const string = data.toString();
-        console.log(string);
-        // this._sendCommandOutput(string, 'stderr');
-        if (events && events.onErr) events.onErr(string);
-      });
-    }
-
-    proc.on('close', () => {
-      resolve();
-    });
-
-    proc.on('error', (error) => {
-      console.log(error);
-      reject(error);
-    });
-  });
+  return fun;
 };
+
+const createWorkers = <T extends Workers>(workers: T) => {
+  return workers;
+};
+
+export const workers = createWorkers({
+  windows,
+});
+
+export type _Workers = typeof workers;

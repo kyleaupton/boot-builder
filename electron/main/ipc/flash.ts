@@ -1,42 +1,22 @@
 import { createIpcHandlers } from 'typed-electron-ipc';
-import { addFlash, getFlash } from '@main/flash';
-import FlashWindows from '@main/flash/FlashWindows';
-import FlashMacOS from '@main/flash/FlashMacOS';
+import { addFlash, getFlash, Flash } from '@main/flash';
+import { _Workers } from '@main/flash/workers';
+
+// {
+//   id,
+//   sourcePath,
+//   targetVolume,
+// }: { sourcePath: string; targetVolume: string; id: string },
 
 export const flashIpc = () =>
   createIpcHandlers({
-    '/flash/windows': async (
+    '/flash/new': async (
       event,
-      {
-        id,
-        sourcePath,
-        targetVolume,
-      }: { sourcePath: string; targetVolume: string; id: string },
+      id: string,
+      type: keyof _Workers,
+      options: Parameters<_Workers[keyof _Workers]>[1],
     ) => {
-      const flash = new FlashWindows({
-        id,
-        sourcePath,
-        targetVolume,
-      });
-
-      addFlash(flash);
-      flash.start();
-    },
-
-    '/flash/macOS': async (
-      event,
-      {
-        id,
-        sourcePath,
-        targetVolume,
-      }: { id: string; sourcePath: string; targetVolume: string },
-    ) => {
-      const flash = new FlashMacOS({
-        id,
-        sourcePath,
-        targetVolume,
-      });
-
+      const flash = new Flash(id, type, options);
       addFlash(flash);
       flash.start();
     },
