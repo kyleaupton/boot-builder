@@ -25,6 +25,15 @@ if (parentPort && workerData) {
       throw new Error(`Worker type ${type} not found`);
     }
 
+    // State signal for the flash job,
+    // this is used for UI updates.
+    // There are two different things
+    // we can do here: we can either send
+    // updates to the frontend every 0.5s
+    // or we can send updates immediately
+    // when the state changes. The former
+    // is more efficient and looks better,
+    // but the latter is cooler.
     const state = signal({
       value: workerData.state as SerializedFlash,
     });
