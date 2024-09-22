@@ -22,6 +22,7 @@ import {
   faDisplay,
   faFile,
   faHardDrive,
+  faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 // Regular
 // Brands
@@ -36,6 +37,7 @@ library.add(
   faDisplay,
   faFile,
   faHardDrive,
+  faTriangleExclamation,
   // Regular
   // Brands
   faApple,

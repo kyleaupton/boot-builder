@@ -1,5 +1,6 @@
 {
-  "name": "os-install-maker",
+  "name": "boot-builder",
+  "productName": "Boot Builder",
   "version": "0.0.1",
   "main": "dist-electron/main/index.js",
   "description": "An app to easily create bootable USB installers",

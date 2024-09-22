@@ -1,68 +1,80 @@
 <template>
   <Titlebar />
 
-  <div v-if="!finished" class="form-container">
-    <DriveSelector v-model="chosenDrive" :flashing="flashing" />
-    <OsSelector v-model="chosenOs" :flashing="flashing" />
-    <SourceSelector
-      v-model="chosenSource"
-      :chosen-os="chosenOs"
-      :flashing="flashing"
-    />
-
-    <Button
-      v-if="!flashing"
-      label="Flash"
-      :disabled="flashDisabled"
-      @click="startFlash"
-    />
-
-    <div v-else class="progress-container">
-      <div class="progress-upper">
-        <div class="progress-flashing">Flashing...</div>
-        <Button
-          class="progress-cancel"
-          label="Cancel"
-          severity="danger"
-          @click="cancel"
-        />
-      </div>
-
-      <ProgressBar
-        v-if="(flash?.progress.percentage ?? -1) > -1"
-        :value="flash?.progress.percentage ?? 0"
-        :style="{ height: '8px' }"
-        :show-value="false"
+  <div class="content">
+    <div v-if="!finished" class="form-container">
+      <DriveSelector v-model="chosenDrive" :flashing="flashing" />
+      <OsSelector v-model="chosenOs" :flashing="flashing" />
+      <SourceSelector
+        v-model="chosenSource"
+        :chosen-os="chosenOs"
+        :flashing="flashing"
       />
 
-      <ProgressBar v-else mode="indeterminate" :style="{ height: '8px' }" />
+      <Button
+        v-if="!flashing"
+        label="Flash"
+        :disabled="flashDisabled"
+        @click="startFlash"
+      />
 
-      <div class="progress-lower">
-        <div>{{ flash?.progress.activity || '' }}</div>
-        <div :style="{ display: 'flex', gap: '8px' }">
-          <div v-if="flash?.progress.eta != null">{{ humanReadableEta }}</div>
-          <div
-            v-if="
-              flash?.progress.percentage != null &&
-              flash.progress.percentage > -1
-            "
-          >
-            {{ Math.floor(flash.progress.percentage) }}%
+      <div v-else class="progress-container">
+        <div class="progress-upper">
+          <div class="progress-flashing">Flashing...</div>
+          <Button
+            class="progress-cancel"
+            label="Cancel"
+            severity="danger"
+            @click="cancel"
+          />
+        </div>
+
+        <ProgressBar
+          v-if="(flash?.progress.percentage ?? -1) > -1"
+          :value="flash?.progress.percentage ?? 0"
+          :style="{ height: '8px' }"
+          :show-value="false"
+        />
+
+        <ProgressBar v-else mode="indeterminate" :style="{ height: '8px' }" />
+
+        <div class="progress-lower">
+          <div>{{ flash?.progress.activity || '' }}</div>
+          <div :style="{ display: 'flex', gap: '8px' }">
+            <div v-if="flash?.progress.eta != null">{{ humanReadableEta }}</div>
+            <div
+              v-if="
+                flash?.progress.percentage != null &&
+                flash.progress.percentage > -1
+              "
+            >
+              {{ Math.floor(flash.progress.percentage) }}%
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div v-else class="flash-done-container">
-    <font-awesome-icon
-      :style="finished.style"
-      :icon="finished.icon"
-      style="--fa-animation-iteration-count: 1"
-      bounce
-    />
-    <div class="flash-done-text">{{ finished.text }}</div>
-    <Button label="Flash another" @click="reset" />
+    <div v-else class="flash-done-container">
+      <font-awesome-icon
+        :style="finished.style"
+        :icon="finished.icon"
+        style="--fa-animation-iteration-count: 1"
+        bounce
+      />
+      <div class="flash-done-text">{{ finished.text }}</div>
+
+      <div v-if="flash?.error" class="error-message">
+        {{
+          flash.error ||
+          'An unknown error occurred while flashing the drive. Please try again.'
+        }}
+      </div>
+
+      <div class="flash-done-actions">
+        <Button label="Flash another" @click="reset" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -147,6 +159,12 @@ export default defineComponent({
           text: 'Flash canceled',
           style: { fontSize: '58px', color: '#ff0000' },
         };
+      } else if (this.flash?.error) {
+        return {
+          icon: ['fas', 'triangle-exclamation'],
+          text: 'Flash failed',
+          style: { fontSize: '58px', color: 'var(--color-destructive)' },
+        };
       }
 
       return undefined;
@@ -212,6 +230,9 @@ export default defineComponent({
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  /* Colors */
+  --color-destructive: hsl(0 84.2% 60.2%);
 }
 
 #app {
@@ -231,6 +252,16 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+}
+
+.content {
+  padding: 0 4em;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .form-container {
@@ -290,12 +321,26 @@ body {
   gap: 2rem;
   width: 100%;
   height: 100%;
-  padding: 15% 0;
+  padding: 10% 0;
   /* margin: auto 0; */
 }
 
 .flash-done-text {
   font-size: 24px;
   font-weight: 500;
+}
+
+.error-message {
+  border-radius: 6px;
+  text-align: center;
+  background-color: var(--surface-card);
+  padding: 24px 12px;
+  font-family: monospace;
+
+  overflow: auto;
+}
+
+.flash-done-actions {
+  flex-shrink: 0;
 }
 </style>

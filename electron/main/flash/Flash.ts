@@ -23,9 +23,9 @@ export default class Flash<
 
     this.state = {
       id,
-      status: '',
       done: false,
       canceled: false,
+      error: undefined,
       progress: {
         activity: '',
         transferred: -1,
@@ -59,7 +59,7 @@ export default class Flash<
         // Since we're done, remove flash from main process memory
         removeFlash(this.id);
       } else if (message.type === 'error') {
-        this.state.status = message.data;
+        this.state.error = message.data;
         this.sendState();
 
         // Since we're done, remove flash from main process memory
@@ -67,6 +67,7 @@ export default class Flash<
       }
     });
 
+    // TODO: Handle this. What even could make the worker emit an error?
     this.worker.on('error', (error) => {
       console.log(error);
     });

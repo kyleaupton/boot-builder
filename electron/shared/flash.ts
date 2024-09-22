@@ -8,9 +8,9 @@ export interface Progress {
 
 export interface SerializedFlash {
   id: string;
-  status: string;
   done: boolean;
   canceled: boolean;
+  error?: string;
   progress: Progress;
 }
 

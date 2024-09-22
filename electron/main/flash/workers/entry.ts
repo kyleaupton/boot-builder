@@ -53,13 +53,15 @@ if (parentPort && workerData) {
         });
       })
       .catch((error) => {
-        throw error;
+        parentPort!.postMessage({
+          type: 'error',
+          data: error,
+        });
       })
       .finally(() => {
         clearInterval(id);
       });
   } catch (error) {
-    console.error(error);
     parentPort.postMessage({
       type: 'error',
       data: error,
