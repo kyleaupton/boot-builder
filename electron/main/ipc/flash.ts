@@ -1,5 +1,5 @@
 import { createIpcHandlers } from 'typed-electron-ipc';
-import { addFlash, getFlash, Flash } from '@main/flash';
+import { addFlash, getFlash, removeFlash, Flash } from '@main/flash';
 import { _Workers } from '@main/flash/workers/workers';
 
 export const flashIpc = () =>
@@ -20,6 +20,7 @@ export const flashIpc = () =>
 
       if (flash) {
         flash.cancel();
+        removeFlash(id);
       }
     },
   });

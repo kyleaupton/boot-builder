@@ -68,6 +68,8 @@ export default class Flash<
   async cancel() {
     if (this.worker) {
       await this.worker.terminate();
+      this.state.canceled = true;
+      this.sendState();
     }
   }
 
