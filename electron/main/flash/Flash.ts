@@ -12,14 +12,15 @@ export default class Flash<
   id: string;
   type: T;
   options: V;
-  #state: SerializedFlash;
+  state: SerializedFlash;
   worker: Worker | undefined;
 
   constructor(id: string, type: T, options: NoInfer<V>) {
     this.id = id;
     this.type = type;
     this.options = options;
-    this.#state = {
+
+    this.state = {
       id,
       status: '',
       done: false,
@@ -32,15 +33,6 @@ export default class Flash<
         eta: -1,
       },
     };
-  }
-
-  get state() {
-    return this.#state;
-  }
-
-  set state(state: Partial<SerializedFlash>) {
-    this.#state = { ...this.#state, ...state };
-    this.sendState();
   }
 
   start() {
@@ -58,10 +50,13 @@ export default class Flash<
     this.worker.on('message', (message) => {
       if (message.type === 'state') {
         this.state = message.data;
+        this.sendState();
       } else if (message.type === 'result') {
         this.state.done = true;
+        this.sendState();
       } else if (message.type === 'error') {
         this.state.status = message.data;
+        this.sendState();
       }
     });
 

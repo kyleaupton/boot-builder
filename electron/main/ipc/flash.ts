@@ -1,12 +1,6 @@
 import { createIpcHandlers } from 'typed-electron-ipc';
 import { addFlash, getFlash, Flash } from '@main/flash';
-import { _Workers } from '@main/flash/workers';
-
-// {
-//   id,
-//   sourcePath,
-//   targetVolume,
-// }: { sourcePath: string; targetVolume: string; id: string },
+import { _Workers } from '@main/flash/workers/workers';
 
 export const flashIpc = () =>
   createIpcHandlers({

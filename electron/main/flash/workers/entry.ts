@@ -1,7 +1,7 @@
 import { parentPort, workerData } from 'worker_threads';
 import { workers } from './workers';
 import { SerializedFlash } from '@shared/flash';
-import { signal } from '@main/signal';
+import { signal } from '@main/utils/signal';
 
 if (parentPort && workerData) {
   try {

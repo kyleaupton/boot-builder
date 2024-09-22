@@ -1,28 +1,49 @@
-// Worker thread for windows flash
-import { stat } from 'fs/promises';
-import { resolve, dirname, basename } from 'path';
+import { stat } from 'node:fs/promises';
+import { resolve, dirname, basename } from 'node:path';
+import { spawn } from 'node:child_process';
 import { copy } from '@kyleupton/glob-copy';
+import { SerializedFlash } from '@shared/flash';
 import { exec } from '@main/utils/child_process';
 import { exists, dirSize } from '@main/utils/fs';
 import { getPath } from '@main/utils/lib';
 import { humanReadableToBytes } from '@main/utils/bytes';
+import { Signal } from '@main/utils/signal';
 import { createWorker } from './utils';
 
+type State = Signal<SerializedFlash>;
+
+//
+// Windows flash worker
+//
+export default createWorker(
+  async (
+    state,
+    { sourcePath, targetVolume }: { sourcePath: string; targetVolume: string },
+  ) => {
+    // Mount target ISO
+    const mountedIsoPath = await mountIsoVolume({ state, sourcePath });
+    // Validate ISO
+    await validateIso({ mountedIsoPath });
+    // Erase drive
+    const diskName = await eraseDrive({ state, targetVolume, sourcePath });
+    // Copy files
+    await copyFiles({ state, mountedIsoPath, diskName });
+    // Clean up
+    await cleanUp({ state, targetVolume, mountedIsoPath });
+  },
+);
+
 const mountIsoVolume = async ({
-  id,
+  state,
   sourcePath,
 }: {
-  id: string;
+  state: State;
   sourcePath: string;
 }): Promise<string> => {
-  sendProgress({
-    id,
-    activity: `Mounting ${sourcePath}`,
-    done: false,
-    transferred: -1,
-    speed: -1,
-    percentage: -1,
-    eta: -1,
+  state.set({
+    progress: {
+      activity: `Mounting ${sourcePath}`,
+    },
   });
 
   try {
@@ -46,22 +67,18 @@ const validateIso = async ({ mountedIsoPath }: { mountedIsoPath: string }) => {
 };
 
 const eraseDrive = async ({
-  id,
+  state,
   targetVolume,
   sourcePath,
 }: {
-  id: string;
+  state: State;
   targetVolume: string;
   sourcePath: string;
 }): Promise<string> => {
-  sendProgress({
-    id,
-    activity: `Erasing ${targetVolume}`,
-    done: false,
-    transferred: -1,
-    speed: -1,
-    percentage: -1,
-    eta: -1,
+  state.set({
+    progress: {
+      activity: `Erasing ${targetVolume}`,
+    },
   });
 
   let diskName = 'WINDOWS';
@@ -74,11 +91,7 @@ const eraseDrive = async ({
     }
 
     // Erase disk
-    await executeCommand(
-      'diskutil',
-      ['eraseDisk', 'MS-DOS', diskName, 'MBR', targetVolume],
-      {},
-    );
+    await exec(`diskutil eraseDisk MS-DOS ${diskName} MBR ${targetVolume}`);
 
     return diskName;
   } catch (e) {
@@ -87,26 +100,18 @@ const eraseDrive = async ({
 };
 
 const copyFiles = async ({
-  id,
+  state,
   mountedIsoPath,
   diskName,
-  isPackaged,
 }: {
-  id: string;
+  state: State;
   mountedIsoPath: string;
   diskName: string;
-  isPackaged: boolean;
 }) => {
-  const activity = 'Copying files';
-
-  sendProgress({
-    id,
-    activity,
-    done: false,
-    transferred: -1,
-    speed: -1,
-    percentage: -1,
-    eta: -1,
+  state.set({
+    progress: {
+      activity: 'Copying files',
+    },
   });
 
   try {
@@ -126,83 +131,70 @@ const copyFiles = async ({
         transferred = progress.transferred;
         const remaining = totalSize - progress.transferred;
 
-        sendProgress({
-          id,
-          activity,
-          done: false,
-          transferred: progress.transferred,
-          speed: progress.speed,
-          percentage: (progress.transferred / totalSize) * 100,
-          eta: remaining / progress.speed,
+        state.set({
+          progress: {
+            transferred: progress.transferred,
+            speed: progress.speed,
+            percentage: (progress.transferred / totalSize) * 100,
+            eta: remaining / progress.speed,
+          },
         });
       },
     });
 
     // Next copy the big file
-    const wimlibImagex = getPath(
-      { name: 'wimlib', bin: 'wimlib-imagex' },
-      { isPackaged },
-    );
+    const wimlibImagex = getPath({ name: 'wimlib', bin: 'wimlib-imagex' });
     const dir = dirname(wimlibImagex);
     const name = basename(wimlibImagex);
     const start = Date.now();
     let secondFileTransferred = 0;
 
-    let progress = {
-      id,
-      activity,
-      done: false,
-      transferred: 0,
-      speed: 0,
-      percentage: 0,
-      eta: 0,
-    };
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawn(
+        name,
+        [
+          'split',
+          `${mountedIsoPath}/sources/install.wim`,
+          `/Volumes/${diskName}/sources/install.swm`,
+          '3800',
+        ],
+        { cwd: dir },
+      );
 
-    const intervalId = setInterval(() => {
-      sendProgress(progress);
-    }, 1000);
+      proc.stdout.on('data', (buff) => {
+        const data = buff.toString();
+        const match = data.match(
+          /(?<part>\d{1,7}\s\w{2,4}) of (?<whole>\d{1,7}\s\w{2,4})/,
+        );
 
-    await executeCommand(
-      name,
-      [
-        'split',
-        `${mountedIsoPath}/sources/install.wim`,
-        `/Volumes/${diskName}/sources/install.swm`,
-        '3800',
-      ],
-      {
-        cwd: dir,
-      },
-      {
-        onOut: (data) => {
-          const match = data.match(
-            /(?<part>\d{1,7}\s\w{2,4}) of (?<whole>\d{1,7}\s\w{2,4})/,
-          );
+        if (match && match.groups) {
+          const { part } = match.groups;
+          const { bytes } = humanReadableToBytes(part);
+          const delta = bytes - secondFileTransferred;
+          secondFileTransferred = bytes;
+          transferred += delta;
+          const remaining = bigFileSize.size - bytes;
+          const speed = bytes / ((Date.now() - start) / 1000);
 
-          if (match && match.groups) {
-            const { part } = match.groups;
-            const { bytes } = humanReadableToBytes(part);
-            const delta = bytes - secondFileTransferred;
-            secondFileTransferred = bytes;
-            transferred += delta;
-            const remaining = bigFileSize.size - bytes;
-            const speed = bytes / ((Date.now() - start) / 1000);
-
-            progress = {
-              id,
-              activity,
-              done: false,
+          state.set({
+            progress: {
               transferred,
               speed,
               percentage: (transferred / totalSize) * 100,
               eta: remaining / speed,
-            };
-          }
-        },
-      },
-    );
+            },
+          });
+        }
+      });
 
-    clearInterval(intervalId);
+      proc.on('exit', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Command failed with code ${code}`));
+        }
+      });
+    });
   } catch (e) {
     console.log(e);
     throw Error('Failed to copy files');
@@ -210,92 +202,28 @@ const copyFiles = async ({
 };
 
 const cleanUp = async ({
-  id,
+  state,
   targetVolume,
   mountedIsoPath,
 }: {
-  id: string;
+  state: State;
   targetVolume: string;
   mountedIsoPath: string;
 }) => {
-  sendProgress({
-    id,
-    activity: 'Cleaning up',
-    done: false,
-    transferred: -1,
-    speed: -1,
-    percentage: -1,
-    eta: -1,
+  state.set({
+    progress: {
+      activity: 'Cleaning up',
+      transferred: -1,
+      speed: -1,
+      percentage: -1,
+      eta: -1,
+    },
   });
 
   try {
-    await executeCommand('diskutil', ['eject', targetVolume], {});
-    await executeCommand('umount', [mountedIsoPath], {});
+    await exec(`diskutil eject ${targetVolume}`);
+    await exec(`umount ${mountedIsoPath}`);
   } catch (e) {
     throw Error('Failed to clean up');
   }
 };
-
-export interface FlashWindowsWorkerOptions {
-  id: string;
-  sourcePath: string;
-  targetVolume: string;
-}
-
-export interface FlashWindowsWorkerOptionsFinal
-  extends FlashWindowsWorkerOptions {
-  isPackaged: boolean;
-}
-
-// expose(
-//   async ({
-//     id,
-//     sourcePath,
-//     targetVolume,
-//     isPackaged,
-//   }: FlashWindowsWorkerOptionsFinal) => {
-//     // Mount target ISO
-//     const mountedIsoPath = await mountIsoVolume({ id, sourcePath });
-//     // Validate ISO
-//     await validateIso({ mountedIsoPath });
-//     // Erase drive
-//     const diskName = await eraseDrive({ id, targetVolume, sourcePath });
-//     // Copy files
-//     await copyFiles({ id, mountedIsoPath, diskName, isPackaged });
-//     // Clean up
-//     await cleanUp({ id, targetVolume, mountedIsoPath });
-//   },
-// );
-
-// export default class FlashWindowsWorker extends Worker implements IWorker {
-//   constructor() {
-//     super();
-//   }
-
-//   run() {
-//     return;
-//   }
-// }
-
-export default createWorker(
-  async (
-    state,
-    { sourcePath, targetVolume }: { sourcePath: string; targetVolume: string },
-  ) => {
-    console.log('FlashWindowsWorker', sourcePath, targetVolume);
-    for (let i = 0; i < 100; i++) {
-      state.set({
-        progress: {
-          activity: 'Copying files',
-          transferred: i * 100,
-          speed: i * 100,
-          percentage: i,
-          eta: i * 100,
-        },
-      });
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-    console.log('done');
-    return;
-  },
-);

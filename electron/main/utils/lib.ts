@@ -1,5 +1,6 @@
 import path from 'path';
 import os from 'os';
+import { isDevelopment } from '@main/utils/env';
 
 type t_program =
   | {
@@ -13,17 +14,14 @@ type t_program =
 
 const arch = os.arch();
 
-export const getPath = (
-  program: t_program,
-  { isPackaged = true }: { isPackaged: boolean },
-) => {
-  // In prod: OS Install Maker.app/Contents/Resources/app.asar/dist-electron/main
-  // In dev: /Users/kyleupton/Documents/GitHub/os-install-maker/dist-electron/main
+export const getPath = (program: t_program) => {
+  // In prod: Boot Builder.app/Contents/Resources/app.asar/dist-electron/main
+  // In dev: /Users/<username>/Documents/GitHub/boot-bulder/dist-electron/main
   let base: string[];
-  if (isPackaged) {
-    base = [__dirname, '..', '..', '..', '..'];
-  } else {
+  if (isDevelopment) {
     base = [__dirname, '..', '..'];
+  } else {
+    base = [__dirname, '..', '..', '..', '..'];
   }
 
   return path.join(

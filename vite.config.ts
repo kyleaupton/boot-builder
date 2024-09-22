@@ -64,12 +64,16 @@ export default defineConfig(({ command }) => {
                 /* For `.vscode/.debug.script.mjs` */ '[startup] Electron App',
               );
             } else {
-              startup([
-                '.',
-                '--no-sandbox',
-                '--trace-warnings',
-                '--enable-logging',
-              ]);
+              // For debugging
+              // startup([
+              //   '.',
+              //   '--no-sandbox',
+              //   '--trace-warnings',
+              //   '--enable-logging',
+              // ]);
+
+              // Normal
+              startup();
             }
           },
           vite: {
