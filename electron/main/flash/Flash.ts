@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron';
 import { Worker } from 'node:worker_threads';
 import { join } from 'node:path';
 import { SerializedFlash } from '@shared/flash';
+import { removeFlash } from '.';
 
 import { type _Workers } from './workers/workers';
 
@@ -54,9 +55,15 @@ export default class Flash<
       } else if (message.type === 'result') {
         this.state.done = true;
         this.sendState();
+
+        // Since we're done, remove flash from main process memory
+        removeFlash(this.id);
       } else if (message.type === 'error') {
         this.state.status = message.data;
         this.sendState();
+
+        // Since we're done, remove flash from main process memory
+        removeFlash(this.id);
       }
     });
 
