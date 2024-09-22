@@ -2,6 +2,9 @@
 
 [![CI](https://github.com/kyleaupton/boot-builder/actions/workflows/ci.yml/badge.svg)](https://github.com/kyleaupton/boot-builder/actions/workflows/ci.yml)
 
+> [!NOTE]
+> This project is still under active development. Please check back soon for a v1 release!
+
 Boot Builder is a lightweight, easy-to-use desktop app that helps you create bootable USB drives for a various operating systems.
 
 ![](https://raw.githubusercontent.com/kyleaupton/boot-builder/main/docs/screenshot.png)
@@ -40,14 +43,17 @@ yarn dev
   - [x] Support Windows creation
   - [x] Support macOS creation (somewhat supported but needs further iteration)
   - [ ] Support Linux creation
+  - [ ] Support MS-DOS creation
 - [ ] Windows
   - [ ] Support Windows creation
   - [ ] Support macOS creation (if possible, needs RnD)
   - [ ] Support Linux creation
+  - [ ] Support MS-DOS creation
 - [ ] Linux
   - [ ] Support Windows creation
   - [ ] Support macOS creation
   - [ ] Support Linux creation
+  - [ ] Support MS-DOS creation
 - [ ] Ability to download Windows `.iso`s ([see win-iso](https://github.com/kyleaupton/win-iso))
 - [ ] Ability to download macOS installers (maybe not legal, we'll see)
 - [ ] Ability to download Linux `.iso`s
