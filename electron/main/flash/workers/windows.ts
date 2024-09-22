@@ -7,7 +7,7 @@ import { exec } from '@main/utils/child_process';
 import { exists, dirSize } from '@main/utils/fs';
 import { getPath } from '@main/utils/lib';
 import { humanReadableToBytes } from '@main/utils/bytes';
-import { Signal } from '@main/utils/signal';
+import { type Signal } from '@main/utils/signal';
 import { createWorker } from './utils';
 
 type State = Signal<SerializedFlash>;
@@ -185,6 +185,10 @@ const copyFiles = async ({
             },
           });
         }
+      });
+
+      proc.on('error', () => {
+        reject(new Error('Failed to copy files'));
       });
 
       proc.on('exit', (code) => {

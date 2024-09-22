@@ -1,99 +1,133 @@
-import builder, { Platform } from 'electron-builder';
-import { notarize as doNotarize } from 'electron-notarize';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import 'dotenv/config';
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import url from 'node:url';
+import { spawn } from 'node:child_process';
+import builder from 'electron-builder';
+import { config } from 'dotenv';
 
-const execAsync = promisify(exec);
+config();
 
 /**
- * build.mjs
- *
- * This script can be invoked via CLI or imported and used as an API
- *
- * CLI Usage:
- *
- *    build.mjs --targets [mac windows] --notarize=true
- *
- * API Usage:
- *
- *    await pack({
- *      mac: true,
- *      windows: true,
- *      notarize: true,
- *    });
+ * exec and inherit stdio
+ * @param {string} command
+ * @param {string[]} args
+ * @param {import('child_process').SpawnOptionsWithoutStdio} options
  */
+const exec = (command, args, options) => {
+  return new Promise((resolve, reject) => {
+    // Need to do some weirdness to get `npx` to execute on windows. First we
+    // set `shell` to `true`, and also we change `npx` to `npx.cmd`.
+    const _command =
+      command === 'npx' && process.platform === 'win32' ? 'npx.cmd' : command;
 
-const ID = 'com.kyleupton.boot-builder';
+    const child = spawn(_command, args, {
+      stdio: 'inherit',
+      shell: true,
+      ...options,
+    });
 
-export default async function pack({
-  mac = true,
-  windows = true,
-  notarize = true,
-}) {
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Command failed with exit code ${code}`));
+      }
+    });
+  });
+};
+
+/**
+ * Remove the devtools script tag from the index.html file
+ */
+export const removeDevtools = async () => {
+  const __filename = url.fileURLToPath(import.meta.url);
+  const __project = path.join(__filename, '../..');
+  const __index = path.join(__project, 'index.html');
+
+  const file = await fs.readFile(__index, 'utf-8');
+  const lines = file.split('\n');
+
+  // Find the index of the line that includes the devtools script tag
+  const index = lines.findIndex((line) =>
+    line.includes('<script src="http://localhost:8098"></script>'),
+  );
+
+  if (index > -1) {
+    lines.splice(index, 1);
+  }
+
+  await fs.writeFile(__index, lines.join('\n'));
+};
+
+const build = async ({ publish = false }) => {
   //
-  // Env Validation
+  // Env validation
   //
+
+  // Github token for publishing + checking for updates.
+  // Only needed when publishing.
   if (
-    !process.env.S3_BUCKET ||
-    !process.env.CSC_LINK ||
-    !process.env.CSC_KEY_PASSWORD
-    // !process.env.WIN_CSC_LINK ||
-    // !process.env.WIN_CSC_KEY_PASSWORD
+    publish &&
+    (!process.env.GITHUB_RELEASE_TOKEN || !process.env.GITHUB_TOKEN)
+  ) {
+    throw Error('Missing GITHUB_RELEASE_TOKEN or GITHUB_TOKEN env variable');
+  }
+
+  // Code signing env vars.
+  // Only the macOS app is code signed, and it's always signed regardless of `publish`.
+  if (
+    process.platform === 'darwin' &&
+    (!process.env.CSC_LINK || !process.env.CSC_KEY_PASSWORD)
   ) {
     throw Error('Missing code signing env variable(s)');
   }
 
-  if (notarize && (!process.env.APPLEID || !process.env.APPLEIDPASS)) {
+  // If we're building anything other than the macOS app, and
+  // the CSC env vars are set, we should throw an error.
+  if (
+    process.platform !== 'darwin' &&
+    (process.env.CSC_LINK || process.env.CSC_KEY_PASSWORD)
+  ) {
+    throw Error('Code signing env variables are only for macOS');
+  }
+
+  // Notarizing env vars.
+  // Only the macOS app is notarized, and it's ONLY notarized when publishing.
+  if (
+    publish &&
+    process.platform === 'darwin' &&
+    (!process.env.APPLE_ID ||
+      !process.env.APPLE_APP_SPECIFIC_PASSWORD ||
+      !process.env.APPLE_TEAM_ID)
+  ) {
     throw Error('Missing notarizing env variable(s)');
   }
 
-  if (!mac && !windows) {
-    throw Error('Must specify at least one target');
-  }
+  await removeDevtools();
+  await exec('npx', ['vue-tsc', '--noEmit']);
+  await exec('npx', ['vite', 'build']);
 
-  //
-  // Build the app with Vite
-  //
-  try {
-    const { stdout, stderr } = await execAsync(
-      'npx vue-tsc --noEmit && vite build',
-    );
-    console.log(stdout, stderr);
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
-
-  //
-  // Pack the app
-  //
   /**
    * @type {import('electron-builder').Configuration}
    * @see https://www.electron.build/configuration/configuration
    */
   const config = {
-    productName: 'Boot Builder',
-    appId: ID,
+    appId: 'com.boot-builder.app',
     asar: true,
+    productName: 'Boot Builder',
     directories: {
       output: 'release/${version}',
     },
     files: ['dist', 'dist-electron'],
-
-    // Mac Options
     mac: {
-      mergeASARs: undefined,
-      // singleArchFiles: 'electron/lib/*/arm64/**/*',
-      x64ArchFiles: '**/*',
-      artifactName: 'Boot_Builder_${version}_macOS.${ext}',
       target: {
         target: 'default',
-        arch: ['universal'],
+        arch: ['x64', 'arm64'],
       },
+      artifactName: 'Boot_Builder-macOS-${arch}-${version}.${ext}',
+      notarize: publish ? { teamId: process.env.APPLE_TEAM_ID } : false,
     },
-
-    // Windows Options
     win: {
       target: [
         {
@@ -101,7 +135,7 @@ export default async function pack({
           arch: ['x64'],
         },
       ],
-      artifactName: 'Boot_Builder_${version}_Windows.${ext}',
+      artifactName: 'Boot_Builder-windows-${version}.${ext}',
     },
     nsis: {
       oneClick: false,
@@ -109,51 +143,26 @@ export default async function pack({
       allowToChangeInstallationDirectory: true,
       deleteAppDataOnUninstall: false,
     },
-
-    // Update Options
-    // generateUpdatesFilesForAllChannels: true,
-    // publish: {
-    //   provider: 's3',
-    //   bucket: process.env.S3_BUCKET,
-    // },
-
-    // Extra files
-    extraFiles: ['electron/lib/**/*'],
-
-    // Notarize
-    afterSign: async (context) => {
-      if (context.electronPlatformName === 'darwin' && notarize) {
-        const { appOutDir } = context;
-        const appName = context.packager.appInfo.productFilename;
-
-        await doNotarize({
-          appBundleId: ID,
-          appPath: `${appOutDir}/${appName}.app`,
-          appleId: process.env.APPLEID,
-          appleIdPassword: process.env.APPLEIDPASS,
-        });
-      }
+    linux: {
+      target: ['AppImage'],
+      artifactName: 'Boot_Builder-linux-${arch}-${version}.${ext}',
     },
+    publish: {
+      provider: 'github',
+    },
+    // Extra binaries
+    extraFiles: ['electron/lib/**/*'],
   };
 
-  const targets = new Map();
-  if (mac) {
-    targets.set(Platform.MAC, new Map());
-  }
-  if (windows) {
-    targets.set(Platform.WINDOWS, new Map());
-  }
-
-  return builder.build({
+  await builder.build({
     config,
-    targets,
+    publish: publish ? 'always' : 'never',
   });
-}
+};
 
-if (process.argv.includes('--targets')) {
-  await pack({
-    mac: process.argv.includes('mac'),
-    windows: process.argv.includes('windows'),
-    notarize: process.argv.includes('--notarize=true'),
-  });
+//
+// Main
+//
+if (process.argv.includes('--build')) {
+  await build({ publish: process.argv.includes('--publish') });
 }
