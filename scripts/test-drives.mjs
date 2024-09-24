@@ -18,7 +18,7 @@ const __testDrives = path.join(__project, TEST_DRIVE_DIR);
  * Represents a drive
  * @typedef {{
  *  name: string;
- *  mounted: boolean;
+ *  mountPath: string | null;
  *  size: string;
  * }} Drive
  *
@@ -93,9 +93,11 @@ const getDrives = async () => {
       `du -sh ${path.join(__testDrives, existingDrive)}`,
     );
 
+    const mountedDrive = mountInfo.find((x) => x.name === existingDrive);
+
     payload.push({
       name: existingDrive,
-      mounted: !!mountInfo.find((x) => x.name === existingDrive),
+      mountPath: mountedDrive ? mountedDrive.mountPath : null,
       size: sizeStdout.split('\t')[0],
     });
   }
@@ -113,14 +115,11 @@ const mountDrive = async (driveName) => {
 
 /***
  * unmountDrive
- * @param {string} driveName
+ * @param {Drive} drive
  */
-const unmountDrive = async (driveName) => {
-  const mountInfo = await getMountInfo();
-  const mountedDrive = mountInfo.find((x) => x.name === driveName);
-
-  if (mountedDrive && mountedDrive.mountPath) {
-    return exec(`hdiutil detach "${mountedDrive.mountPath}"`);
+const unmountDrive = async (drive) => {
+  if (drive.mountPath) {
+    return exec(`hdiutil detach "${drive.mountPath}"`);
   }
 };
 
@@ -212,7 +211,8 @@ if (action === 'create') {
   ]);
 
   const unmountSpinner = ora('Unmounting drive').start();
-  await unmountDrive(driveName);
+  const drive = drives.find((x) => x.name === driveName);
+  if (drive) await unmountDrive(drive);
   unmountSpinner.succeed('Drive unmounted');
 
   const deleteSpinner = ora('Deleting drive').start();
@@ -223,8 +223,7 @@ if (action === 'create') {
   // Mount drive
   //
 
-  const mountInfo = await getMountInfo();
-  const unMountedDrives = mountInfo.filter((x) => !x.mountPath);
+  const unMountedDrives = drives.filter((x) => !x.mountPath);
 
   if (unMountedDrives.length === 0) {
     console.log('\nNo drives to mount');
