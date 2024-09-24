@@ -119,8 +119,8 @@ const unmountDrive = async (driveName) => {
   const mountInfo = await getMountInfo();
   const mountedDrive = mountInfo.find((x) => x.name === driveName);
 
-  if (mountedDrive && !mountedDrive.mountPath) {
-    return exec(`hdiutil detach ${mountedDrive.mountPath}`);
+  if (mountedDrive && mountedDrive.mountPath) {
+    return exec(`hdiutil detach "${mountedDrive.mountPath}"`);
   }
 };
 
@@ -128,8 +128,6 @@ const unmountDrive = async (driveName) => {
 // Main
 //
 const drives = await getDrives();
-
-console.log(await getMountInfo());
 
 console.log(
   table([['Name', 'Mounted?', 'Size'], ...drives.map((x) => Object.values(x))]),
@@ -188,7 +186,10 @@ if (action === 'create') {
   // Create drive
   const createSpinner = ora(`Creating drive ${_name}`).start();
   await exec(
-    `hdiutil create -size ${driveSize} -fs MS-DOS -volname "${driveName}" ${path.join(__testDrives, _name)}`,
+    `hdiutil create -size ${driveSize} -fs MS-DOS -volname "${driveName}" ${path.join(
+      __testDrives,
+      _name,
+    )}`,
   );
   createSpinner.succeed('Drive created');
 
@@ -221,4 +222,25 @@ if (action === 'create') {
   //
   // Mount drive
   //
+
+  const mountInfo = await getMountInfo();
+  const unMountedDrives = mountInfo.filter((x) => !x.mountPath);
+
+  if (unMountedDrives.length === 0) {
+    console.log('\nNo drives to mount');
+    process.exit(0);
+  }
+
+  const { driveName } = await inquirer.prompt([
+    {
+      type: 'list',
+      message: 'What drive would you like to mount?',
+      name: 'driveName',
+      choices: unMountedDrives.map((x) => x.name),
+    },
+  ]);
+
+  const mountSpinner = ora('Mounting drive').start();
+  await mountDrive(driveName);
+  mountSpinner.succeed('Drive mounted');
 }
