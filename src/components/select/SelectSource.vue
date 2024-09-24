@@ -14,10 +14,7 @@
       :class="{ 'p-disabled': isFlashing }"
     >
       <InputGroupAddon>
-        <font-awesome-icon
-          class="drive-section-header-icon"
-          :icon="['fas', 'file']"
-        />
+        <font-awesome-icon :icon="['fas', 'file']" />
       </InputGroupAddon>
       <InputText v-model="namePreview" :disabled="true" />
       <Button

@@ -1,10 +1,7 @@
 <template>
   <InputGroup :class="{ 'p-disabled': isFlashing }">
     <InputGroupAddon>
-      <font-awesome-icon
-        class="drive-section-header-icon"
-        :icon="['fas', 'hard-drive']"
-      />
+      <font-awesome-icon :icon="['fas', 'hard-drive']" />
     </InputGroupAddon>
 
     <Dropdown

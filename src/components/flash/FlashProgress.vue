@@ -74,4 +74,33 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progress-upper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.progress-flashing {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.progress-cancel {
+  font-size: 12px;
+  padding: 0.25rem 0.5rem;
+}
+
+.progress-lower {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+</style>

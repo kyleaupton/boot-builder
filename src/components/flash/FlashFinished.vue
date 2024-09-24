@@ -63,4 +63,35 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.flash-done-container {
+  flex-grow: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+  height: 100%;
+  padding: 10% 0;
+  /* margin: auto 0; */
+}
+
+.flash-done-text {
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.error-message {
+  border-radius: 6px;
+  text-align: center;
+  background-color: var(--surface-card);
+  padding: 24px 12px;
+  font-family: monospace;
+
+  overflow: auto;
+}
+
+.flash-done-actions {
+  flex-shrink: 0;
+}
+</style>

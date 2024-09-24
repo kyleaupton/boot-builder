@@ -28,4 +28,17 @@ export default defineComponent({
 .titlebar-text {
   font-weight: 600;
 }
+
+.drag {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
+}
+
+/* Not currently used. */
+/* But this is how one would */
+/* allow things to be clickable */
+.no-drag {
+  -webkit-app-region: no-drag;
+}
 </style>

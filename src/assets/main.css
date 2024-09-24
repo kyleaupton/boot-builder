@@ -8,3 +8,22 @@
   /* Colors */
   --color-destructive: hsl(0 84.2% 60.2%);
 }
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#app {
+  width: 100dvw;
+  height: 100dvh;
+  max-width: 100dvw;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--surface-ground);
+}

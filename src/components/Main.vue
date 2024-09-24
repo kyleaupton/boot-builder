@@ -87,4 +87,23 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.content {
+  padding: 0 4em;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 36px;
+}
+</style>
