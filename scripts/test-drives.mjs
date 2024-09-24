@@ -26,7 +26,7 @@ const __testDrives = path.join(__project, TEST_DRIVE_DIR);
  * @typedef {{
  *  name: string;
  *  imagePath: string;
- *  mountPath: string;
+ *  mountPath: string | null;
  * }} MountInfo
  */
 
@@ -38,7 +38,7 @@ const getMountInfo = async () => {
   /** @type {MountInfo[]} */
   const payload = [];
   const imagePathRegex = /image-path\s+:\s+(.+)/;
-  const mountedPathRegex = /\/Volumes\/[^\s]+/;
+  const mountPathRegex = /\/Volumes\/.+/;
 
   const { stdout: mountStdout } = await exec('hdiutil info');
 
@@ -49,16 +49,21 @@ const getMountInfo = async () => {
 
   for (const section of sections) {
     const imagePathMatch = section.match(imagePathRegex);
-    const mountedPathMatch = section.match(mountedPathRegex);
 
-    if (imagePathMatch) {
+    if (imagePathMatch && imagePathMatch[1].startsWith(__testDrives)) {
       const imagePath = imagePathMatch[1];
 
-      payload.push({
-        name: path.basename(imagePath),
-        imagePath,
-        mountedPath: mountedPathMatch ? mountedPathMatch[0] : null,
-      });
+      // Find last line of section, split on space, get last element, and trim
+      const sectionLines = section.trim().split('\n');
+      const mountPathMatch = sectionLines.pop()?.match(mountPathRegex);
+
+      if (mountPathMatch && mountPathMatch[0]) {
+        payload.push({
+          name: path.basename(imagePath),
+          imagePath,
+          mountPath: mountPathMatch[0],
+        });
+      }
     }
   }
 
@@ -114,17 +119,17 @@ const unmountDrive = async (driveName) => {
   const mountInfo = await getMountInfo();
   const mountedDrive = mountInfo.find((x) => x.name === driveName);
 
-  if (!mountedDrive) {
-    throw new Error(`Drive ${driveName} is not mounted`);
+  if (mountedDrive && !mountedDrive.mountPath) {
+    return exec(`hdiutil detach ${mountedDrive.mountPath}`);
   }
-
-  return exec(`hdiutil detach ${mountedDrive.mountPath}`);
 };
 
 //
 // Main
 //
 const drives = await getDrives();
+
+console.log(await getMountInfo());
 
 console.log(
   table([['Name', 'Mounted?', 'Size'], ...drives.map((x) => Object.values(x))]),
@@ -170,10 +175,11 @@ if (action === 'create') {
       default: defaultName,
     },
     {
-      type: 'input',
+      type: 'list',
       message: 'How large would you like the drive to be?',
       name: 'driveSize',
-      default: defaultName,
+      default: '8g',
+      choices: ['1g', '2g', '4g', '8g', '16g', '32g'],
     },
   ]);
 
@@ -182,13 +188,13 @@ if (action === 'create') {
   // Create drive
   const createSpinner = ora(`Creating drive ${_name}`).start();
   await exec(
-    `hdiutil create -size 1g -fs 'APFS' -volname ${driveName} ${path.join(__testDrives, _name)}`,
+    `hdiutil create -size ${driveSize} -fs MS-DOS -volname "${driveName}" ${path.join(__testDrives, _name)}`,
   );
   createSpinner.succeed('Drive created');
 
   // Mount drive
   const mountSpinner = ora('Mounting drive').start();
-  // await mountDrive();
+  await mountDrive(_name);
   await new Promise((resolve) => setTimeout(resolve, 2000));
   mountSpinner.succeed('Drive mounted');
 } else if (action === 'delete') {
@@ -204,7 +210,13 @@ if (action === 'create') {
     },
   ]);
 
-  // unount
+  const unmountSpinner = ora('Unmounting drive').start();
+  await unmountDrive(driveName);
+  unmountSpinner.succeed('Drive unmounted');
+
+  const deleteSpinner = ora('Deleting drive').start();
+  await fs.rm(path.join(__testDrives, driveName));
+  deleteSpinner.succeed('Drive deleted');
 } else if (action === 'mount') {
   //
   // Mount drive
