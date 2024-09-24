@@ -64,7 +64,7 @@ export default defineComponent({
       }
 
       const driveData = this.items.find(
-        (drive) => drive.devicePath === this.selectedDrive,
+        (drive) => drive.device === this.selectedDrive,
       );
 
       if (!driveData) {
@@ -75,13 +75,15 @@ export default defineComponent({
         `Are you sure you want to flash ${driveData.description}?`,
       );
 
-      if (accepted) {
-        // TODO: Support macOS
-        await window.ipcInvoke('/flash/new', nanoid(), 'windows', {
-          sourcePath: this.selectedSource,
-          targetVolume: this.selectedDrive,
-        });
+      if (!accepted) {
+        return;
       }
+
+      // TODO: Support macOS
+      await window.ipcInvoke('/flash/new', nanoid(), 'windows', {
+        sourcePath: this.selectedSource,
+        targetVolume: this.selectedDrive,
+      });
     },
   },
 });

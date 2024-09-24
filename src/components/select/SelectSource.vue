@@ -27,55 +27,42 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
-import { mapState } from 'pinia';
+<script setup lang="ts">
+import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
 import { showOpenIsoDialog, showOpenAppDialog } from '@/api/dialog';
 import { useFlashStore } from '@/stores';
 
-export default defineComponent({
-  name: 'SourceSelector',
+const { selectedSource, selectedOs, isFlashing } = storeToRefs(useFlashStore());
+const namePreview = ref<string | undefined>(undefined);
 
-  components: {
-    InputGroup,
-    InputGroupAddon,
-  },
+const showDialog = async () => {
+  let res;
+  if (selectedOs.value === 'windows') {
+    res = await showOpenIsoDialog();
+  } else if (selectedOs.value === 'macos') {
+    res = await showOpenAppDialog();
+  } else {
+    throw Error('Unsupprted OS');
+  }
 
-  data() {
-    return {
-      namePreview: '',
-    };
-  },
+  if (!res.filePaths[0]) {
+    throw Error('No file selected');
+  }
 
-  computed: {
-    ...mapState(useFlashStore, ['selectedSource', 'selectedOs', 'isFlashing']),
-  },
+  selectedSource.value = res.filePaths[0];
 
-  methods: {
-    async showDialog() {
-      let res;
-      if (this.selectedOs === 'windows') {
-        res = await showOpenIsoDialog();
-      } else if (this.selectedOs === 'macos') {
-        res = await showOpenAppDialog();
-      } else {
-        throw Error('Unsupprted OS');
-      }
+  namePreview.value = await window.ipcInvoke(
+    '/path/basename',
+    selectedSource.value,
+  );
+};
 
-      if (!res.filePaths[0]) {
-        throw Error('No file selected');
-      }
-
-      this.selectedSource = res.filePaths[0];
-    },
-
-    resetSource() {
-      this.selectedSource = undefined;
-    },
-  },
-});
+const resetSource = () => {
+  selectedSource.value = undefined;
+};
 </script>
 
 <style scoped>

@@ -28,7 +28,7 @@ const { selectedDrive, isFlashing } = storeToRefs(useFlashStore());
 const dropdownOptions = computed(() => {
   return items.value.map((drive) => ({
     label: `${drive.description} (${prettyBytes(drive.size ?? 0)})`,
-    value: drive.devicePath,
+    value: drive.device,
   }));
 });
 
