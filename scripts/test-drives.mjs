@@ -222,7 +222,6 @@ if (action === 'create') {
   //
   // Mount drive
   //
-
   const unMountedDrives = drives.filter((x) => !x.mountPath);
 
   if (unMountedDrives.length === 0) {

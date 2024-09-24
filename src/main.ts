@@ -29,6 +29,7 @@ import {
 import { faApple, faWindows } from '@fortawesome/free-brands-svg-icons';
 
 import App from './App.vue';
+import './assets/main.css';
 
 library.add(
   // Solid

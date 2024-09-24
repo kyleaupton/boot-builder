@@ -1,17 +1,17 @@
 <template>
   <div class="source-wrapper">
     <Button
-      v-if="!value"
+      v-if="!selectedSource"
       label="Choose file"
       icon="pi pi-upload"
-      :disabled="!chosenOs"
+      :disabled="!selectedOs"
       @click="showDialog"
     />
 
     <InputGroup
       v-else
       class="source-preview"
-      :class="{ 'p-disabled': flashing }"
+      :class="{ 'p-disabled': isFlashing }"
     >
       <InputGroupAddon>
         <font-awesome-icon
@@ -21,10 +21,10 @@
       </InputGroupAddon>
       <InputText v-model="namePreview" :disabled="true" />
       <Button
-        v-if="!flashing"
+        v-if="!isFlashing"
         icon="pi pi-times"
         severity="danger"
-        @click="value = ''"
+        @click="resetSource"
       />
     </InputGroup>
   </div>
@@ -32,9 +32,11 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { mapState } from 'pinia';
 import InputGroup from 'primevue/inputgroup';
 import InputGroupAddon from 'primevue/inputgroupaddon';
 import { showOpenIsoDialog, showOpenAppDialog } from '@/api/dialog';
+import { useFlashStore } from '@/stores';
 
 export default defineComponent({
   name: 'SourceSelector',
@@ -44,24 +46,6 @@ export default defineComponent({
     InputGroupAddon,
   },
 
-  props: {
-    // v-model
-    modelValue: {
-      type: String,
-      required: true,
-    },
-    chosenOs: {
-      type: String,
-      default: '',
-    },
-    flashing: {
-      type: Boolean,
-      default: false,
-    },
-  },
-
-  emits: ['update:modelValue'],
-
   data() {
     return {
       namePreview: '',
@@ -69,32 +53,15 @@ export default defineComponent({
   },
 
   computed: {
-    value: {
-      get() {
-        return this.modelValue;
-      },
-      set(value: string) {
-        this.$emit('update:modelValue', value);
-      },
-    },
-  },
-
-  mounted() {
-    window
-      .ipcInvoke('/path/basename', this.value)
-      .then((basename) => (this.namePreview = basename));
+    ...mapState(useFlashStore, ['selectedSource', 'selectedOs', 'isFlashing']),
   },
 
   methods: {
     async showDialog() {
-      type res_windows = Awaited<ReturnType<typeof showOpenIsoDialog>>;
-      type res_mac = Awaited<ReturnType<typeof showOpenAppDialog>>;
-
-      let res: res_windows | res_mac;
-
-      if (this.chosenOs === 'windows') {
+      let res;
+      if (this.selectedOs === 'windows') {
         res = await showOpenIsoDialog();
-      } else if (this.chosenOs === 'macos') {
+      } else if (this.selectedOs === 'macos') {
         res = await showOpenAppDialog();
       } else {
         throw Error('Unsupprted OS');
@@ -104,7 +71,11 @@ export default defineComponent({
         throw Error('No file selected');
       }
 
-      this.value = res.filePaths[0];
+      this.selectedSource = res.filePaths[0];
+    },
+
+    resetSource() {
+      this.selectedSource = undefined;
     },
   },
 });
