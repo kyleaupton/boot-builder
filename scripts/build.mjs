@@ -12,7 +12,8 @@ config();
  * exec and inherit stdio
  * @param {string} command
  * @param {string[]} args
- * @param {import('child_process').SpawnOptionsWithoutStdio} options
+ * @param {import('child_process').SpawnOptionsWithoutStdio} [options]
+ * @returns {Promise<void>}
  */
 const exec = (command, args, options) => {
   return new Promise((resolve, reject) => {
