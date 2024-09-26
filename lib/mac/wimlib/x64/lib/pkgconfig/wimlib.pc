@@ -1,0 +1,13 @@
+prefix=/Users/kyleupton/Documents/GitHub/boot-builder/wimlib-1.14.4/wimlib-install-x64
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: wimlib
+Description: Library to extract, create, modify, and mount Windows Imaging (WIM) files
+URL:  https://wimlib.net
+Version: 1.14.4
+Libs: -L${libdir} -lwim
+Requires.private: 
+Libs.private: 
+Cflags: -I${includedir}
