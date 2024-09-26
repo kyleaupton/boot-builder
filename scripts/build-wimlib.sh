@@ -4,7 +4,7 @@
 # It is intended to be ran on a Apple Silicon Mac.
 # You need to have the necessary build tools installed.
 # You can do this by running the following command:
-#   brew install FiloSottile/musl-cross/musl-cross
+#   brew install wget FiloSottile/musl-cross/musl-cross
 # (If Windows is working, then you need to install mingw-w64 too)
 
 # Define the output directory for binaries
@@ -34,7 +34,7 @@ cd $WIMLIB_SRC_DIR
 # macOS (arm64)
 #####################################
 echo "Building for macOS arm64..."
-./configure --prefix="$WIMLIB_SRC_DIR/wimlib-install-arm64" --enable-static --without-fuse --without-ntfs-3g
+./configure --prefix="$WIMLIB_SRC_DIR/wimlib-install-arm64" --enable-static --disable-shared --without-fuse --without-ntfs-3g
 make -j$(sysctl -n hw.ncpu)
 make install
 
@@ -47,7 +47,7 @@ make clean
 # macOS (x86_64)
 #####################################
 echo "Building for macOS x86_64..."
-./configure --prefix="$WIMLIB_SRC_DIR/wimlib-install-x64" --enable-static --without-fuse --without-ntfs-3g CC="clang -arch x86_64"
+./configure --prefix="$WIMLIB_SRC_DIR/wimlib-install-x64" --enable-static --disable-shared --without-fuse --without-ntfs-3g CC="clang -arch x86_64"
 make -j$(sysctl -n hw.ncpu)
 make install
 
@@ -60,7 +60,7 @@ make clean
 # Linux (x86_64)
 #####################################
 echo "Building for Linux x86_64..."
-./configure --host=x86_64-linux-musl --prefix="$WIMLIB_SRC_DIR/wimlib-install-linux-x64" --enable-static --without-fuse --without-ntfs-3g
+./configure --host=x86_64-linux-musl --prefix="$WIMLIB_SRC_DIR/wimlib-install-linux-x64" --enable-static --disable-shared --without-fuse --without-ntfs-3g
 make -j$(nproc)
 make install
 
