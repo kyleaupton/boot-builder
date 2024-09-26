@@ -4,11 +4,12 @@
 # It is intended to be ran on a Apple Silicon Mac.
 # You need to have the necessary build tools installed.
 # You can do this by running the following command:
-#   brew install autoconf automake libtool pkg-config FiloSottile/musl-cross/musl-cross
+#   brew install FiloSottile/musl-cross/musl-cross
 # (If Windows is working, then you need to install mingw-w64 too)
 
 # Define the output directory for binaries
-OUTPUT_DIR=$(pwd)/wimlib-binaries
+OUTPUT_DIR=$(pwd)/lib
+WIMLIB_SRC_DIR=$(pwd)/wimlib-1.14.4
 
 # Create the necessary directory structure
 mkdir -p "$OUTPUT_DIR/linux/wimlib/x64"
@@ -19,26 +20,15 @@ mkdir -p "$OUTPUT_DIR/win/wimlib/x64"
 #####################################
 # Setup wimlib source
 #####################################
-git clone https://github.com/ebiggers/wimlib.git wimlib-source || true
-cd wimlib-source || exit 1
+if [ ! -f wimlib-1.14.4.tar.gz ]; then
+  wget https://wimlib.net/downloads/wimlib-1.14.4.tar.gz
+fi
 
-# Get new tags from remote
-git fetch --tags
+tar -xvf wimlib-1.14.4.tar.gz
 
-# Get latest tag name
-latestTag=$(git describe --tags "$(git rev-list --tags --max-count=1)")
-
-# Checkout latest tag
-git checkout $latestTag
-
-# Define the source directory (change this if wimlib source is elsewhere)
-WIMLIB_SRC_DIR=$(pwd)/wimlib-source
-
-# Bootstrap the build system
-bash bootstrap
-
-# Clean previous builds
 make clean || true
+
+cd $WIMLIB_SRC_DIR
 
 #####################################
 # macOS (arm64)
@@ -49,7 +39,7 @@ make -j$(sysctl -n hw.ncpu)
 make install
 
 # Copy macOS arm64 binaries
-cp -r "$WIMLIB_SRC_DIR/wimlib-install-arm64/bin" "$OUTPUT_DIR/mac/wimlib/arm64/"
+cp -r "$WIMLIB_SRC_DIR/wimlib-install-arm64/" "$OUTPUT_DIR/mac/wimlib/arm64/"
 
 make clean
 
@@ -62,7 +52,7 @@ make -j$(sysctl -n hw.ncpu)
 make install
 
 # Copy macOS x86_64 binaries
-cp -r "$WIMLIB_SRC_DIR/wimlib-install-x64/bin" "$OUTPUT_DIR/mac/wimlib/x64/"
+cp -r "$WIMLIB_SRC_DIR/wimlib-install-x64/" "$OUTPUT_DIR/mac/wimlib/x64/"
 
 make clean
 
@@ -75,7 +65,7 @@ make -j$(nproc)
 make install
 
 # Copy Linux x86_64 binaries
-cp -r "$WIMLIB_SRC_DIR/wimlib-install-linux-x64/bin" "$OUTPUT_DIR/linux/wimlib/x64/"
+cp -r "$WIMLIB_SRC_DIR/wimlib-install-linux-x64/" "$OUTPUT_DIR/linux/wimlib/x64/"
 
 make clean
 
