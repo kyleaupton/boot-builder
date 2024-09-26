@@ -11,6 +11,9 @@ Boot Builder is a lightweight, easy-to-use desktop app that helps you create boo
 
 ## Support Matrix
 
+> [!NOTE]
+> We intend to support creating bootable USB installers on Windows, macOS, Linux. However, we are still in the early stages of development and have not yet implemented all features. The table below shows which features are currently supported.
+
 Boot Builder supports creating bootable USB installers across various host operating systems. The table below shows which host OSes (your computer’s OS) can create installers for specific target OSes.
 
 |                    | Creating Windows USB | Creating macOS USB | Creating Linux USB | Creating MS-DOS USB |
