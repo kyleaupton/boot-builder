@@ -38,5 +38,4 @@ build/bin
 test-drives/
 
 # Wimlib build
-wimlib-binaries/
-wimlib-source/
+wimlib-*
