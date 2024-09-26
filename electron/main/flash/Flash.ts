@@ -1,10 +1,13 @@
 import { BrowserWindow } from 'electron';
+import log from 'electron-log/main';
 import { Worker } from 'node:worker_threads';
 import { join } from 'node:path';
 import { SerializedFlash } from '@shared/flash';
 import { removeFlash } from '.';
 
 import { type _Workers } from './workers/workers';
+
+const logger = log.scope('main/Flash');
 
 export default class Flash<
   T extends keyof _Workers,
@@ -17,6 +20,7 @@ export default class Flash<
   worker: Worker | undefined;
 
   constructor(id: string, type: T, options: NoInfer<V>) {
+    logger.info('Flash constructor', { id, type, options });
     this.id = id;
     this.type = type;
     this.options = options;
@@ -37,6 +41,7 @@ export default class Flash<
   }
 
   start() {
+    logger.info('Flash start');
     this.worker = new Worker(
       join(process.env.DIST_ELECTRON, 'main', 'entry.js'),
       {
@@ -53,12 +58,14 @@ export default class Flash<
         this.state = message.data;
         this.sendState();
       } else if (message.type === 'result') {
+        logger.info('Flash result');
         this.state.done = true;
         this.sendState();
 
         // Since we're done, remove flash from main process memory
         removeFlash(this.id);
       } else if (message.type === 'error') {
+        logger.info('Flash error');
         this.state.error = message.data;
         this.sendState();
 
@@ -69,11 +76,14 @@ export default class Flash<
 
     // TODO: Handle this. What even could make the worker emit an error?
     this.worker.on('error', (error) => {
+      logger.error('Flash worker error');
+      logger.error(error);
       console.log(error);
     });
   }
 
   async cancel() {
+    logger.info('Flash cancel');
     if (this.worker) {
       await this.worker.terminate();
       this.state.canceled = true;

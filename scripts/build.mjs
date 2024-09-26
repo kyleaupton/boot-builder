@@ -124,10 +124,15 @@ const build = async ({ publish = false }) => {
     mac: {
       target: {
         target: 'default',
-        arch: ['x64', 'arm64'],
+        // arch: ['x64', 'arm64'],
+        arch: ['arm64'],
       },
       artifactName: 'Boot_Builder-macOS-${arch}-${version}.${ext}',
-      notarize: publish ? { teamId: process.env.APPLE_TEAM_ID } : false,
+      // binaries: ['electron/lib/**/*'],
+      notarize:
+        publish && process.env.APPLE_TEAM_ID
+          ? { teamId: process.env.APPLE_TEAM_ID }
+          : false,
     },
     win: {
       target: [
@@ -152,7 +157,7 @@ const build = async ({ publish = false }) => {
       provider: 'github',
     },
     // Extra binaries
-    extraFiles: ['electron/lib/**/*'],
+    extraFiles: ['lib/${os}/*/${arch}/**/*'],
   };
 
   await builder.build({

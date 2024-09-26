@@ -1,15 +1,17 @@
 import { stat } from 'node:fs/promises';
-import { resolve, dirname, basename } from 'node:path';
+import { resolve } from 'node:path';
 import { spawn } from 'node:child_process';
+import log from 'electron-log/node';
 import { copy } from '@kyleupton/glob-copy';
 import { SerializedFlash } from '@shared/flash';
 import { exec } from '@main/utils/child_process';
 import { exists, dirSize } from '@main/utils/fs';
-import { getPath } from '@main/utils/lib';
+import { getWimlibPath } from '@main/utils/lib';
 import { humanReadableToBytes } from '@main/utils/bytes';
 import { type Signal } from '@main/utils/signal';
 import { createWorker } from './utils';
 
+const logger = log.scope('main/flash-windows');
 type State = Signal<SerializedFlash>;
 
 //
@@ -143,23 +145,20 @@ const copyFiles = async ({
     });
 
     // Next copy the big file
-    const wimlibImagex = getPath({ name: 'wimlib', bin: 'wimlib-imagex' });
-    const dir = dirname(wimlibImagex);
-    const name = basename(wimlibImagex);
+    // const wimlibImagex = getWimlibPath();
+    const wimlibImagex =
+      '/Users/kyleupton/Downloads/wimlib-1.14.4/wimlib-install/bin/wimlib-imagex';
+    logger.info(`Using wimlib-imagex at ${wimlibImagex}`);
     const start = Date.now();
     let secondFileTransferred = 0;
 
     await new Promise<void>((resolve, reject) => {
-      const proc = spawn(
-        name,
-        [
-          'split',
-          `${mountedIsoPath}/sources/install.wim`,
-          `/Volumes/${diskName}/sources/install.swm`,
-          '3800',
-        ],
-        { cwd: dir },
-      );
+      const proc = spawn(wimlibImagex, [
+        'split',
+        `${mountedIsoPath}/sources/install.wim`,
+        `/Volumes/${diskName}/sources/install.swm`,
+        '3800',
+      ]);
 
       proc.stdout.on('data', (buff) => {
         const data = buff.toString();
@@ -187,8 +186,9 @@ const copyFiles = async ({
         }
       });
 
-      proc.on('error', () => {
-        reject(new Error('Failed to copy files'));
+      proc.on('error', (e) => {
+        logger.debug('got to proc.on("error")');
+        reject(e);
       });
 
       proc.on('exit', (code) => {
@@ -200,8 +200,9 @@ const copyFiles = async ({
       });
     });
   } catch (e) {
-    console.log(e);
-    throw Error('Failed to copy files');
+    logger.debug('got to catch');
+    logger.error(e);
+    throw e;
   }
 };
 

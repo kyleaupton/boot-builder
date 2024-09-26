@@ -21,6 +21,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import log from 'electron-log/renderer';
 import { mapState } from 'pinia';
 import { nanoid } from 'nanoid';
 import { useDisksStore, useFlashStore } from '@/stores';
@@ -30,6 +31,8 @@ import SelectOs from '@/components/select/SelectOs.vue';
 import SelectSource from '@/components/select/SelectSource.vue';
 import FlashProgress from '@/components/flash/FlashProgress.vue';
 import FlashFinished from '@/components/flash/FlashFinished.vue';
+
+const logger = log.scope('renderer/Main');
 
 export default defineComponent({
   name: 'Main',
@@ -59,7 +62,10 @@ export default defineComponent({
 
   methods: {
     async startFlash() {
+      logger.info('Starting flash process');
+
       if (!this.selectedDrive || !this.selectedOs || !this.selectedSource) {
+        logger.info('Invalid data');
         return;
       }
 
@@ -68,6 +74,7 @@ export default defineComponent({
       );
 
       if (!driveData) {
+        logger.error('Drive not found');
         return;
       }
 
@@ -76,6 +83,7 @@ export default defineComponent({
       );
 
       if (!accepted) {
+        logger.info('User canceled flash');
         return;
       }
 

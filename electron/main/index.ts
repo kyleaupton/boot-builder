@@ -1,10 +1,13 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import log from 'electron-log/main';
 import { release } from 'node:os';
 import { join } from 'node:path';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import { usb } from 'usb';
 
 import './ipc';
+
+log.initialize();
 
 // The built directory structure
 //
@@ -95,6 +98,8 @@ async function createWindow() {
 }
 
 app.on('ready', async () => {
+  log.info('App is ready');
+
   try {
     await installExtension(VUEJS_DEVTOOLS, {
       loadExtensionOptions: { allowFileAccess: true },
