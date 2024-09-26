@@ -36,3 +36,7 @@ build/bin
 # Test USBs
 *.dmg
 test-drives/
+
+# Wimlib build
+wimlib-binaries/
+wimlib-source/

@@ -145,9 +145,7 @@ const copyFiles = async ({
     });
 
     // Next copy the big file
-    // const wimlibImagex = getWimlibPath();
-    const wimlibImagex =
-      '/Users/kyleupton/Downloads/wimlib-1.14.4/wimlib-install/bin/wimlib-imagex';
+    const wimlibImagex = getWimlibPath();
     logger.info(`Using wimlib-imagex at ${wimlibImagex}`);
     const start = Date.now();
     let secondFileTransferred = 0;
