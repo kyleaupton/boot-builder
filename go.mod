@@ -1,4 +1,4 @@
-module changeme
+module boot-builder
 
 go 1.24.0
 
