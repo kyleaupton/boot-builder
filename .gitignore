@@ -1,5 +1,6 @@
-build/bin
-node_modules
+.task
+bin
 frontend/dist
-.DS_Store
-dist-electron
+frontend/node_modules
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
