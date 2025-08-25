@@ -1,8 +1,11 @@
 package main
 
 import (
+	"boot-builder/internal/drives"
+	"context"
 	"embed"
 	_ "embed"
+	"fmt"
 	"log"
 	"time"
 
@@ -66,6 +69,14 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	}()
+
+	// test drives
+	ctx := context.Background()
+	drives, driveErr := drives.ListRemovable(ctx)
+	if driveErr != nil {
+		log.Fatal(driveErr)
+	}
+	fmt.Println(drives)
 
 	// Run the application. This blocks until the application has been exited.
 	err := app.Run()

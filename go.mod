@@ -2,7 +2,10 @@ module boot-builder
 
 go 1.24.0
 
-require github.com/wailsapp/wails/v3 v3.0.0-alpha.25
+require (
+	github.com/wailsapp/wails/v3 v3.0.0-alpha.25
+	howett.net/plist v1.0.1
+)
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
