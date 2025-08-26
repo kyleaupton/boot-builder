@@ -2,6 +2,7 @@ package main
 
 import (
 	"boot-builder/internal/drives"
+	"boot-builder/internal/wim"
 	"context"
 	"embed"
 	_ "embed"
@@ -78,8 +79,26 @@ func main() {
 	}
 	fmt.Println(drives)
 
+	// test wimlib
+	err := wim.SplitWithProgress(
+		ctx,
+		"/Volumes/CCCOMA_X64FRE_EN-US_DV9/sources/install.wim",
+		"/Users/kyleupton/Documents/GitHub/boot-builder/wim-test/install.swm",
+		wim.SplitOptions{
+			PartSizeMiB:    3800,
+			CheckIntegrity: true,
+		},
+		func(progress wim.Progress) bool {
+			fmt.Println(progress)
+			return true
+		},
+	)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	// Run the application. This blocks until the application has been exited.
-	err := app.Run()
+	err = app.Run()
 
 	// If an error occurred while running the application, log it and exit.
 	if err != nil {
