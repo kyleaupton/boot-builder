@@ -1,12 +1,10 @@
 package main
 
 import (
-	"boot-builder/internal/drives"
-	"boot-builder/internal/wim"
-	"context"
+	"boot-builder/internal/eventbus"
+	"boot-builder/internal/service"
 	"embed"
 	_ "embed"
-	"fmt"
 	"log"
 	"time"
 
@@ -34,9 +32,6 @@ func main() {
 	app := application.New(application.Options{
 		Name:        "boot-builder",
 		Description: "A demo of using raw HTML & CSS",
-		Services: []application.Service{
-			application.NewService(&GreetService{}),
-		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
@@ -44,6 +39,12 @@ func main() {
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 	})
+
+	// Set global event emitter for backend modules
+	eventbus.SetEmitter(func(name string, data any) { app.Event.Emit(name, data) })
+
+	jobsSvc := service.NewJobsService()
+	app.RegisterService(application.NewService(jobsSvc))
 
 	// Create a new window with the necessary options.
 	// 'Title' is the title of the window.
@@ -71,34 +72,8 @@ func main() {
 		}
 	}()
 
-	// test drives
-	ctx := context.Background()
-	drives, driveErr := drives.ListRemovable(ctx)
-	if driveErr != nil {
-		log.Fatal(driveErr)
-	}
-	fmt.Println(drives)
-
-	// test wimlib
-	err := wim.SplitWithProgress(
-		ctx,
-		"/Volumes/CCCOMA_X64FRE_EN-US_DV9/sources/install.wim",
-		"/Users/kyleupton/Documents/GitHub/boot-builder/wim-test/install.swm",
-		wim.SplitOptions{
-			PartSizeMiB:    3800,
-			CheckIntegrity: true,
-		},
-		func(progress wim.Progress) bool {
-			fmt.Println(progress)
-			return true
-		},
-	)
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	// Run the application. This blocks until the application has been exited.
-	err = app.Run()
+	err := app.Run()
 
 	// If an error occurred while running the application, log it and exit.
 	if err != nil {

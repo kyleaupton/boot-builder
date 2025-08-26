@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import { onMounted } from 'vue';
+import { ListInstallers, ListJobs } from '../bindings/boot-builder/internal/service/jobsservice';
+
+onMounted(() => {
+  ListInstallers().then(installers => {
+    console.log(installers);
+  });
+  ListJobs().then(jobs => {
+    console.log(jobs);
+  });
+});
 </script>
 
 <template>
@@ -12,7 +22,6 @@ import HelloWorld from './components/HelloWorld.vue'
         <img src="/vue.svg" class="logo vue" alt="Vue logo"/>
       </a>
     </div>
-    <HelloWorld msg="Wails + Vue" />
   </div>
 </template>
 
