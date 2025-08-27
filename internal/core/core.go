@@ -37,6 +37,14 @@ type SourceSpec struct {
 	Local    string
 }
 
+type SourceMode string
+
+const (
+	SourceModeSupply   SourceMode = "supply"
+	SourceModeDownload SourceMode = "download"
+	SourceModeBoth     SourceMode = "both"
+)
+
 type CreateRequest struct {
 	Target  Target
 	DriveID string
@@ -61,6 +69,7 @@ type Installer interface {
 	ID() string
 	Name() string
 	Targets() []Target
+	AllowedSources() SourceMode
 	ValidateHost(ctx context.Context, host HostInfo) Capability
 	Plan(ctx context.Context, req CreateRequest) (*Plan, error)
 }

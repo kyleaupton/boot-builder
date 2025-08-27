@@ -16,6 +16,7 @@ type InstallerMeta struct {
 
 type StartJobRequest struct {
 	InstallerID string
+	SourceLocal string
 }
 
 type JobsService struct {
@@ -49,7 +50,7 @@ func (s *JobsService) StartJob(ctx context.Context, req StartJobRequest) (string
 	if !ok {
 		return "", nil
 	}
-	plan, err := inst.Plan(ctx, core.CreateRequest{})
+	plan, err := inst.Plan(ctx, core.CreateRequest{Source: core.SourceSpec{Local: req.SourceLocal}})
 	if err != nil {
 		return "", err
 	}

@@ -15,6 +15,8 @@ func (u UbuntuStub) Targets() []core.Target {
 	return []core.Target{{Family: core.OSLinux, Version: "24.04", Arch: "x86_64"}}
 }
 
+func (u UbuntuStub) AllowedSources() core.SourceMode { return core.SourceModeSupply }
+
 func (u UbuntuStub) ValidateHost(ctx context.Context, host core.HostInfo) core.Capability {
 	return core.Capability{Supported: true}
 }
