@@ -1,3 +1,5 @@
+//go:build darwin
+
 package drives
 
 import (
@@ -181,3 +183,4 @@ func preferDevPath(deviceNode, bsd string) string {
 	}
 	return deviceNode
 }
+

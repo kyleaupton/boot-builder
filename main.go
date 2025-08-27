@@ -45,6 +45,8 @@ func main() {
 
 	jobsSvc := service.NewJobsService()
 	app.RegisterService(application.NewService(jobsSvc))
+	drivesSvc := service.NewDrivesService()
+	app.RegisterService(application.NewService(drivesSvc))
 
 	// Create a new window with the necessary options.
 	// 'Title' is the title of the window.

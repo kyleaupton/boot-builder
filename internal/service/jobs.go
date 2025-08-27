@@ -3,7 +3,7 @@ package service
 import (
 	"boot-builder/internal/core"
 	"boot-builder/internal/eventbus"
-	"boot-builder/internal/installers/linux/ubuntu_stub"
+	"boot-builder/internal/installers/linux/ubuntu"
 	"boot-builder/internal/jobs"
 	"context"
 )
@@ -17,6 +17,7 @@ type InstallerMeta struct {
 type StartJobRequest struct {
 	InstallerID string
 	SourceLocal string
+	DriveID     string
 }
 
 type JobsService struct {
@@ -28,8 +29,8 @@ func NewJobsService() *JobsService {
 	svc := &JobsService{
 		installers: map[string]core.Installer{},
 	}
-	// register minimal installer(s)
-	u := ubuntu_stub.UbuntuStub{}
+	// register Ubuntu installer
+	u := ubuntu.Ubuntu{}
 	svc.installers[u.ID()] = u
 	svc.mgr = jobs.NewManager(func(ev core.Event) {
 		eventbus.Emit("job:event", ev)
@@ -50,7 +51,7 @@ func (s *JobsService) StartJob(ctx context.Context, req StartJobRequest) (string
 	if !ok {
 		return "", nil
 	}
-	plan, err := inst.Plan(ctx, core.CreateRequest{Source: core.SourceSpec{Local: req.SourceLocal}})
+	plan, err := inst.Plan(ctx, core.CreateRequest{Source: core.SourceSpec{Local: req.SourceLocal}, DriveID: req.DriveID})
 	if err != nil {
 		return "", err
 	}
