@@ -1,5 +1,6 @@
 .task
 bin
+build/helpers
 frontend/dist
 frontend/node_modules
 build/linux/appimage/build
@@ -8,3 +9,4 @@ build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 wim-test/
 wimlib*/
 wimlib-*
+test-drive.dmg

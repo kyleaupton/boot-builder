@@ -8,7 +8,7 @@
         <key>CFBundleExecutable</key>
             <string>boot-builder</string>
         <key>CFBundleIdentifier</key>
-            <string>com.wails.boot-builder</string>
+            <string>dev.kyleupton.boot-builder</string>
         <key>CFBundleVersion</key>
             <string>0.1.0</string>
         <key>CFBundleGetInfoString</key>
@@ -23,5 +23,10 @@
             <string>true</string>
         <key>NSHumanReadableCopyright</key>
             <string>© now, My Company</string>
+        <key>SMPrivilegedExecutables</key>
+            <dict>
+              <key>dev.kyleupton.boot-builder.helper</key>
+              <string>identifier "dev.kyleupton.boot-builder.helper" and anchor apple generic and certificate leaf[subject.OU] = "TEAMID12345"</string>
+            </dict>
     </dict>
 </plist>

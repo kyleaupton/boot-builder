@@ -1,40 +1,65 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { ListInstallers, ListJobs } from '../bindings/boot-builder/internal/service/jobsservice';
+import { ref, computed, onMounted } from 'vue';
+import { Events } from '@wailsio/runtime';
+import { StartJob } from '../bindings/boot-builder/internal/service/jobsservice';
+import { ListDrives} from '../bindings/boot-builder/internal/service/drivesservice'
 
-onMounted(() => {
-  ListInstallers().then(installers => {
-    console.log(installers);
-  });
-  ListJobs().then(jobs => {
-    console.log(jobs);
-  });
-});
+const currentProgress = ref(null)
+
+const prettyProgress = computed(() => {
+  if (currentProgress.value === null) {
+    return 'No progress';
+  }
+
+  return JSON.stringify(currentProgress.value, null, 2);
+})
+
+const startTest = async () => {
+  const job = await StartJob({
+    InstallerID: 'linux.ubuntu',
+    SourceLocal: '/Users/kyleupton/Downloads/ubuntu-24.04.3-live-server-amd64.iso',
+    DriveID: '/dev/disk4',
+  })
+
+  console.log('job', job)
+}
+
+onMounted(async () => {
+  const drives = await ListDrives()
+  console.log('drives', drives)
+
+  Events.On('job:event', (event) => {
+    console.log('event', event)
+    currentProgress.value = event.data
+  })
+})
 </script>
 
 <template>
   <div class="container">
-    <div>
-      <a data-wml-openURL="https://wails.io">
-        <img src="/wails.png" class="logo" alt="Wails logo"/>
-      </a>
-      <a data-wml-openURL="https://vuejs.org/">
-        <img src="/vue.svg" class="logo vue" alt="Vue logo"/>
-      </a>
-    </div>
+    <button @click="startTest">Start Test</button>
+    <pre>{{ prettyProgress }}</pre>
   </div>
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #e80000aa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+pre {
+  width: 80%;
+  height: 80%;
+  overflow-y: scroll;
+  background-color: #f0f0f0;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: monospace;
 }
 </style>

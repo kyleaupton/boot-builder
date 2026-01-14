@@ -2,9 +2,12 @@ package ubuntu
 
 import (
 	"boot-builder/internal/core"
+	"boot-builder/internal/drives"
 	"boot-builder/internal/steps"
 	"context"
+	"errors"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -24,6 +27,28 @@ func (u Ubuntu) ValidateHost(ctx context.Context, host core.HostInfo) core.Capab
 
 func (u Ubuntu) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, error) {
 	if runtime.GOOS == "darwin" {
+		// Guard against unsafe drives and non-removable targets
+		if req.DriveID == "" {
+			return nil, errors.New("DriveID is required")
+		}
+		if strings.HasSuffix(req.DriveID, "disk0") || req.DriveID == "/dev/disk0" {
+			return nil, errors.New("refusing to target /dev/disk0")
+		}
+		if !strings.HasPrefix(req.DriveID, "/dev/") {
+			req.DriveID = "/dev/" + req.DriveID
+		}
+		if ds, _ := drives.ListRemovable(ctx); len(ds) > 0 {
+			ok := false
+			for _, d := range ds {
+				if d.Device == req.DriveID {
+					ok = true
+					break
+				}
+			}
+			if !ok {
+				return nil, errors.New("DriveID not recognized as removable USB drive")
+			}
+		}
 		p := &core.Plan{
 			ID:   "plan-ubuntu-darwin",
 			Name: "Ubuntu USB (darwin)",

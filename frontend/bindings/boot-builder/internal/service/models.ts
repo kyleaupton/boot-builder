@@ -45,6 +45,7 @@ export class InstallerMeta {
 export class StartJobRequest {
     "InstallerID": string;
     "SourceLocal": string;
+    "DriveID": string;
 
     /** Creates a new StartJobRequest instance. */
     constructor($$source: Partial<StartJobRequest> = {}) {
@@ -53,6 +54,9 @@ export class StartJobRequest {
         }
         if (!("SourceLocal" in $$source)) {
             this["SourceLocal"] = "";
+        }
+        if (!("DriveID" in $$source)) {
+            this["DriveID"] = "";
         }
 
         Object.assign(this, $$source);

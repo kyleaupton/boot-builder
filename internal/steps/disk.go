@@ -2,7 +2,6 @@ package steps
 
 import (
 	"boot-builder/internal/core"
-	"boot-builder/internal/fs"
 	"boot-builder/internal/priv"
 	"context"
 	"errors"
@@ -24,7 +23,11 @@ func (d DarwinUnmountDisk) Run(ctx context.Context, e core.Executor) error {
 	if d.Device == "" {
 		return errors.New("device not specified")
 	}
-	out, err := priv.Run(ctx, "/usr/sbin/diskutil", "unmountDisk", "force", d.Device)
+	svc := priv.NewService()
+	if err := svc.EnsureReady(ctx); err != nil {
+		return err
+	}
+	out, err := svc.Disk().UnmountDisk(ctx, d.Device)
 	if err != nil {
 		// Non-fatal if already unmounted; still report
 		e.Emit(core.Event{Type: "log", Message: fmt.Sprintf("diskutil unmountDisk: %s", strings.TrimSpace(out))})
@@ -46,18 +49,21 @@ func (d DarwinRawWriteISO) Run(ctx context.Context, e core.Executor) error {
 	if d.ISOPath == "" || d.Device == "" {
 		return errors.New("missing ISOPath or Device")
 	}
-
-	// Prefer raw device node for speed
-	dev := d.Device
-	if strings.HasPrefix(dev, "/dev/disk") {
-		dev = strings.Replace(dev, "/dev/disk", "/dev/rdisk", 1)
+	if d.Device == "/dev/disk0" || strings.HasSuffix(d.Device, "disk0") {
+		return errors.New("refusing to write to /dev/disk0")
 	}
+
+	svc := priv.NewService()
+	if err := svc.EnsureReady(ctx); err != nil {
+		return err
+	}
+	dev := d.Device
 	progress := func(wrote, total int64) {
 		if total > 0 {
 			e.Emit(core.Event{Type: "progress", Percent: (float64(wrote) / float64(total)) * 100})
 		}
 	}
-	return fs.RawWriteToBlockDevice(ctx, d.ISOPath, dev, progress)
+	return svc.Disk().RawWrite(ctx, d.ISOPath, dev, progress)
 }
 
 // DarwinEjectDisk ejects the disk
@@ -72,7 +78,11 @@ func (d DarwinEjectDisk) Run(ctx context.Context, e core.Executor) error {
 	if d.Device == "" {
 		return errors.New("device not specified")
 	}
-	out, err := priv.Run(ctx, "/usr/sbin/diskutil", "eject", d.Device)
+	svc := priv.NewService()
+	if err := svc.EnsureReady(ctx); err != nil {
+		return err
+	}
+	out, err := svc.Disk().EjectDisk(ctx, d.Device)
 	if err != nil {
 		e.Emit(core.Event{Type: "log", Message: fmt.Sprintf("diskutil eject: %s", strings.TrimSpace(out))})
 		return nil

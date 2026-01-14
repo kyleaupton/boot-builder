@@ -6,6 +6,8 @@ import (
 	"boot-builder/internal/installers/linux/ubuntu"
 	"boot-builder/internal/jobs"
 	"context"
+	"errors"
+	"os"
 )
 
 type InstallerMeta struct {
@@ -50,6 +52,12 @@ func (s *JobsService) StartJob(ctx context.Context, req StartJobRequest) (string
 	inst, ok := s.installers[req.InstallerID]
 	if !ok {
 		return "", nil
+	}
+	if req.SourceLocal == "" {
+		return "", errors.New("source local path is required")
+	}
+	if _, err := os.Stat(req.SourceLocal); err != nil {
+		return "", err
 	}
 	plan, err := inst.Plan(ctx, core.CreateRequest{Source: core.SourceSpec{Local: req.SourceLocal}, DriveID: req.DriveID})
 	if err != nil {

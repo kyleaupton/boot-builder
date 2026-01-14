@@ -1,6 +1,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
     <dict>
+        <key>SMPrivilegedExecutables</key>
+            <dict>
+              <key>dev.kyleupton.boot-builder.helper</key>
+              <string>identifier "dev.kyleupton.boot-builder.helper"</string>
+            </dict>
         <key>CFBundlePackageType</key>
             <string>APPL</string>
         <key>CFBundleName</key>
@@ -8,7 +13,7 @@
         <key>CFBundleExecutable</key>
             <string>boot-builder</string>
         <key>CFBundleIdentifier</key>
-            <string>com.wails.boot-builder</string>
+            <string>dev.kyleupton.boot-builder</string>
         <key>CFBundleVersion</key>
             <string>0.1.0</string>
         <key>CFBundleGetInfoString</key>

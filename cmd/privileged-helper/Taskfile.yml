@@ -1,0 +1,55 @@
+version: "3"
+
+vars:
+  HELPER_NAME: "dev.kyleupton.boot-builder.helper"
+  BUILD_DIR: "../../build/helpers"
+  BUNDLE_DIR: "{{.BUILD_DIR}}/{{.HELPER_NAME}}"
+
+tasks:
+  build:
+    summary: Build the privileged helper as a bundle
+    cmds:
+      - task: clean
+      - task: compile
+      - task: create:bundle
+      - task: sign
+
+  clean:
+    summary: Remove old build artifacts
+    cmds:
+      - rm -rf {{.BUNDLE_DIR}}
+      - rm -f {{.BUILD_DIR}}/{{.HELPER_NAME}}.bin
+
+  compile:
+    summary: Compile the helper binary
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - |
+        clang -framework Foundation -framework Cocoa \
+              -fobjc-arc \
+              -mmacosx-version-min=10.15 \
+              -o {{.BUILD_DIR}}/{{.HELPER_NAME}}.bin \
+              main.m BBPrivilegedHelper.m
+
+  create:bundle:
+    summary: Create helper bundle structure
+    deps: [compile]
+    cmds:
+      - mkdir -p {{.BUNDLE_DIR}}/Contents/MacOS
+      - mkdir -p {{.BUNDLE_DIR}}/Contents/Resources
+      - mv {{.BUILD_DIR}}/{{.HELPER_NAME}}.bin {{.BUNDLE_DIR}}/Contents/MacOS/{{.HELPER_NAME}}
+      - cp Info.plist {{.BUNDLE_DIR}}/Contents/
+      - cp launchd.plist {{.BUNDLE_DIR}}/Contents/Resources/
+
+  sign:
+    summary: Code sign the helper bundle
+    cmds:
+      # Sign the binary first
+      - codesign --force --sign - --options runtime {{.BUNDLE_DIR}}/Contents/MacOS/{{.HELPER_NAME}}
+      # Then sign the bundle
+      - codesign --force --sign - {{.BUNDLE_DIR}}
+
+  verify:
+    summary: Verify code signature
+    cmds:
+      - codesign -vvv --deep --strict {{.BUNDLE_DIR}}

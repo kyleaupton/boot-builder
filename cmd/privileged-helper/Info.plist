@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>dev.kyleupton.boot-builder.helper</string>
+
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <!-- Authorize clients to connect to this XPC service -->
+    <!-- For development with ad-hoc signing, use simple identifier match -->
+    <!-- For production, add certificate requirements -->
+    <key>SMAuthorizedClients</key>
+    <array>
+        <!-- Development (ad-hoc signing) -->
+        <string>identifier "dev.kyleupton.boot-builder"</string>
+
+        <!-- Production (uncomment and update TEAMID when using Developer ID) -->
+        <!-- <string>identifier "dev.kyleupton.boot-builder" and anchor apple generic and certificate leaf[subject.OU] = "TEAMID12345"</string> -->
+    </array>
+
+    <!-- Advertise XPC Mach service -->
+    <key>MachServices</key>
+    <dict>
+        <key>dev.kyleupton.boot-builder.helper</key>
+        <true/>
+    </dict>
+</dict>
+</plist>

@@ -4,6 +4,7 @@ package drives
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -69,6 +70,8 @@ func (p *darwinProvider) ListRemovable(ctx context.Context) ([]Drive, error) {
 	if err != nil {
 		return nil, err
 	}
+	jsonData, _ := json.MarshalIndent(lst, "", "  ")
+	fmt.Println(string(jsonData))
 	mounts := indexMountpoints(lst)
 
 	// 2) For each whole disk, fetch detailed flags via `diskutil info -plist <diskN>`
@@ -81,6 +84,11 @@ func (p *darwinProvider) ListRemovable(ctx context.Context) ([]Drive, error) {
 		}
 		if !inf.WholeDisk {
 			continue
+		}
+
+		if bsd == "disk6" {
+			jsonData, _ = json.MarshalIndent(inf, "", "  ")
+			fmt.Println(string(jsonData))
 		}
 
 		proto := firstNonEmpty(inf.BusProtocol, inf.DeviceProtocol)
@@ -183,4 +191,3 @@ func preferDevPath(deviceNode, bsd string) string {
 	}
 	return deviceNode
 }
-
