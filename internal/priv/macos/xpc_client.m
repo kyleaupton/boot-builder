@@ -10,13 +10,18 @@ static const char *kHelperBundleID = "dev.kyleupton.boot-builder.helper";
 @protocol BBPrivilegedHelper
 - (void)unmountDisk:(NSString *)device reply:(void (^)(NSInteger status, NSString *out, NSString *err))reply;
 - (void)ejectDisk:(NSString *)device reply:(void (^)(NSInteger status, NSString *out, NSString *err))reply;
-- (void)rawWrite:(NSString *)isoPath device:(NSString *)device reply:(void (^)(NSInteger status, NSString *err))reply;
+- (void)rawWrite:(NSFileHandle *)isoFileHandle device:(NSString *)device reply:(void (^)(NSInteger status, NSString *err))reply;
 @end
 
 static NSXPCConnection *create_helper_connection(void) {
     NSString *label = [NSString stringWithUTF8String:kHelperLabel];
     NSXPCConnection *conn = [[NSXPCConnection alloc] initWithMachServiceName:label options:NSXPCConnectionPrivileged];
     NSXPCInterface *iface = [NSXPCInterface interfaceWithProtocol:@protocol(BBPrivilegedHelper)];
+
+    // Allow NSFileHandle to be sent over XPC for rawWrite
+    NSSet *allowedClasses = [NSSet setWithObjects:[NSFileHandle class], nil];
+    [iface setClasses:allowedClasses forSelector:@selector(rawWrite:device:reply:) argumentIndex:0 ofReply:NO];
+
     conn.remoteObjectInterface = iface;
     conn.invalidationHandler = ^{
         // handle invalidation if needed
@@ -137,19 +142,38 @@ int helper_eject_disk(const char *device, char **out, char **errmsg) {
 typedef void (*progress_cb_t)(long long wrote, long long total);
 int helper_raw_write(const char *iso_path, const char *raw_device, progress_cb_t cb, char **errmsg) {
     NSLog(@"[helper_raw_write] iso=%@ device=%@", [NSString stringWithUTF8String:iso_path], [NSString stringWithUTF8String:raw_device]);
+
+    // Open ISO file as the user (this process has access to user files)
+    NSString *isoPathStr = [NSString stringWithUTF8String:iso_path];
+    NSFileHandle *isoHandle = [NSFileHandle fileHandleForReadingAtPath:isoPathStr];
+    if (!isoHandle) {
+        setError([NSString stringWithFormat:@"Cannot open ISO file: %@", isoPathStr], errmsg);
+        return 1;
+    }
+
     NSXPCConnection *conn = create_helper_connection();
-    if (!conn) { setError(@"failed to create XPC connection", errmsg); return 1; }
+    if (!conn) {
+        [isoHandle closeFile];
+        setError(@"failed to create XPC connection", errmsg);
+        return 1;
+    }
+
     id<BBPrivilegedHelper> proxy = [conn remoteObjectProxy];
     __block NSInteger status = 1;
     __block NSString *serr = @"invalid reply";
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    [proxy rawWrite:[NSString stringWithUTF8String:iso_path] device:[NSString stringWithUTF8String:raw_device] reply:^(NSInteger st, NSString *e) {
+
+    // Pass the file handle to the helper (XPC will transfer it)
+    [proxy rawWrite:isoHandle device:[NSString stringWithUTF8String:raw_device] reply:^(NSInteger st, NSString *e) {
         status = st;
         serr = e;
         dispatch_semaphore_signal(sema);
     }];
+
     dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60 * NSEC_PER_SEC)));
     [conn invalidate];
+    [isoHandle closeFile];
+
     NSLog(@"[helper_raw_write] status=%ld", (long)status);
     if (status == 0) { return 0; }
     if (serr) setError(serr, errmsg);

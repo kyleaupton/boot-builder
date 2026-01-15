@@ -22,10 +22,10 @@
             reply:(void (^)(NSInteger status, NSString *output, NSString *error))reply;
 
 /// Write ISO file to raw block device
-/// @param isoPath Path to ISO file
+/// @param isoFileHandle File handle for ISO file (opened by client)
 /// @param device Device path (e.g., "/dev/disk4" - will be converted to /dev/rdisk4)
 /// @param reply Callback with (status, error message)
-- (void)rawWrite:(NSString *)isoPath
+- (void)rawWrite:(NSFileHandle *)isoFileHandle
           device:(NSString *)device
            reply:(void (^)(NSInteger status, NSString *error))reply;
 

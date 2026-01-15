@@ -6,6 +6,10 @@
     <key>Label</key>
     <string>dev.kyleupton.boot-builder.helper</string>
 
+    <!-- Path to the helper executable -->
+    <key>Program</key>
+    <string>/Library/PrivilegedHelperTools/dev.kyleupton.boot-builder.helper/Contents/MacOS/dev.kyleupton.boot-builder.helper</string>
+
     <!-- Advertise XPC Mach service -->
     <key>MachServices</key>
     <dict>

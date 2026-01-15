@@ -19,7 +19,13 @@
     NSLog(@"[Helper] Received connection from PID: %d", connection.processIdentifier);
 
     // Configure the connection
-    connection.exportedInterface = [NSXPCInterface interfaceWithProtocol:@protocol(BBPrivilegedHelper)];
+    NSXPCInterface *interface = [NSXPCInterface interfaceWithProtocol:@protocol(BBPrivilegedHelper)];
+
+    // Allow NSFileHandle to be received over XPC for rawWrite
+    NSSet *allowedClasses = [NSSet setWithObjects:[NSFileHandle class], nil];
+    [interface setClasses:allowedClasses forSelector:@selector(rawWrite:device:reply:) argumentIndex:0 ofReply:NO];
+
+    connection.exportedInterface = interface;
     connection.exportedObject = self;
 
     // XPC will verify code signature based on SMAuthorizedClients in Info.plist
@@ -133,12 +139,12 @@
     reply(status, outStr, errStr);
 }
 
-- (void)rawWrite:(NSString *)isoPath device:(NSString *)device reply:(void (^)(NSInteger, NSString *))reply {
-    NSLog(@"[Helper] rawWrite: ISO=%@ device=%@", isoPath, device);
+- (void)rawWrite:(NSFileHandle *)isoFileHandle device:(NSString *)device reply:(void (^)(NSInteger, NSString *))reply {
+    NSLog(@"[Helper] rawWrite: device=%@", device);
 
     // Validate inputs
-    if (!isoPath || isoPath.length == 0) {
-        reply(1, @"ISO path not specified");
+    if (!isoFileHandle) {
+        reply(1, @"ISO file handle not provided");
         return;
     }
 
@@ -166,24 +172,9 @@
         NSLog(@"[Helper] Using raw device: %@", rawDevice);
     }
 
-    // Verify ISO file exists
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if (![fm fileExistsAtPath:isoPath]) {
-        reply(1, [NSString stringWithFormat:@"ISO file not found: %@", isoPath]);
-        return;
-    }
-
-    // Open ISO file for reading
-    NSFileHandle *isoHandle = [NSFileHandle fileHandleForReadingAtPath:isoPath];
-    if (!isoHandle) {
-        reply(1, [NSString stringWithFormat:@"Cannot open ISO file: %@", isoPath]);
-        return;
-    }
-
     // Open raw device for writing (requires root privileges)
     NSFileHandle *devHandle = [NSFileHandle fileHandleForWritingAtPath:rawDevice];
     if (!devHandle) {
-        [isoHandle closeFile];
         reply(1, [NSString stringWithFormat:@"Cannot open device for writing: %@", rawDevice]);
         return;
     }
@@ -198,7 +189,7 @@
     @try {
         while (YES) {
             @autoreleasepool {
-                chunk = [isoHandle readDataOfLength:bufferSize];
+                chunk = [isoFileHandle readDataOfLength:bufferSize];
                 if (chunk.length == 0) {
                     break; // EOF
                 }
@@ -220,13 +211,11 @@
 
     } @catch (NSException *exception) {
         NSLog(@"[Helper] Write exception: %@", exception);
-        [isoHandle closeFile];
         [devHandle closeFile];
         reply(1, [NSString stringWithFormat:@"Write error: %@", exception.reason]);
         return;
     }
 
-    [isoHandle closeFile];
     [devHandle closeFile];
 
     reply(0, @"");
