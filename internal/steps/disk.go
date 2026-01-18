@@ -86,7 +86,19 @@ func (d DarwinWriteLinuxISO) Run(ctx context.Context, e core.Executor) error {
 	e.Emit(core.Event{Type: "log", Message: "Starting ISO write (this may take several minutes)..."})
 	e.Emit(core.Event{Type: "log", Message: "Pipeline: unmount → convert → restore → eject"})
 
-	if err := svc.Disk().WriteISO(ctx, tempPath, d.Device); err != nil {
+	// Progress callback to emit events during write
+	progress := func(bytesWritten, totalBytes uint64) {
+		if totalBytes > 0 {
+			percent := float64(bytesWritten) * 100.0 / float64(totalBytes)
+			e.Emit(core.Event{
+				Type:    "progress",
+				Percent: percent,
+				Message: fmt.Sprintf("%.1f / %.1f GB", float64(bytesWritten)/1e9, float64(totalBytes)/1e9),
+			})
+		}
+	}
+
+	if err := svc.Disk().WriteISO(ctx, tempPath, d.Device, progress); err != nil {
 		return fmt.Errorf("failed to write ISO: %w", err)
 	}
 

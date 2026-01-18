@@ -7,6 +7,7 @@ package macos
 #cgo darwin LDFLAGS: -framework Foundation -framework ServiceManagement -framework Security -framework CoreFoundation
 
 #include <stdlib.h>
+#include <stdint.h>
 
 // C-callable functions implemented in xpc_client.m
 int helper_ensure_ready(char **errmsg);
@@ -19,8 +20,29 @@ import "C"
 import (
 	"context"
 	"errors"
+	"sync"
 	"unsafe"
 )
+
+// progressCallback stores the current progress callback.
+// Only one write operation is supported at a time.
+var (
+	progressCallback ProgressFunc
+	progressMu       sync.Mutex
+)
+
+// GoProgressCallback is called from Objective-C when the helper reports progress.
+// This function is exported to C via CGO.
+//
+//export GoProgressCallback
+func GoProgressCallback(written, total C.uint64_t) {
+	progressMu.Lock()
+	cb := progressCallback
+	progressMu.Unlock()
+	if cb != nil {
+		cb(uint64(written), uint64(total))
+	}
+}
 
 type xpcClient struct{}
 
@@ -71,7 +93,20 @@ func (c *xpcClient) EjectDisk(ctx context.Context, device string) (string, error
 // WriteLinuxISO writes a Linux ISO to a disk using Disk Arbitration and direct I/O.
 // This is a long-running operation that can take several minutes for large ISOs.
 // The pipeline is: DA session → claim disk → unmount → raw write → eject → unclaim
-func (c *xpcClient) WriteLinuxISO(ctx context.Context, isoPath string, device string) error {
+//
+// The progress callback receives (bytesWritten, totalBytes) updates during the write.
+// Pass nil if progress updates are not needed.
+func (c *xpcClient) WriteLinuxISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error {
+	// Set the progress callback (only one write at a time is supported)
+	progressMu.Lock()
+	progressCallback = progress
+	progressMu.Unlock()
+	defer func() {
+		progressMu.Lock()
+		progressCallback = nil
+		progressMu.Unlock()
+	}()
+
 	cdev := C.CString(device)
 	defer C.free(unsafe.Pointer(cdev))
 	cpath := C.CString(isoPath)

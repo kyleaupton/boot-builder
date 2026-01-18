@@ -14,19 +14,54 @@
 static const char *kHelperLabel = "dev.kyleupton.boot-builder.helper";
 static const char *kHelperBundleID = "dev.kyleupton.boot-builder.helper";
 
+// CGO callback function exported from Go
+extern void GoProgressCallback(uint64_t written, uint64_t total);
+
+/// Protocol for receiving progress updates during write operations.
+/// The client implements this and exports it via the XPC connection.
+@protocol BBProgressReporter <NSObject>
+- (void)updateProgress:(uint64_t)bytesWritten totalBytes:(uint64_t)totalBytes;
+@end
+
 @protocol BBPrivilegedHelper
 - (void)unmountDisk:(NSString *)device reply:(void (^)(NSInteger status, NSString *out, NSString *err))reply;
 - (void)ejectDisk:(NSString *)device reply:(void (^)(NSInteger status, NSString *out, NSString *err))reply;
 - (void)writeLinuxISO:(NSString *)device
               isoPath:(NSString *)isoPath
+     progressReporter:(id<BBProgressReporter>)reporter
                 reply:(void (^)(BOOL success, NSString *err))reply;
+@end
+
+/// Progress reporter implementation that bridges to Go via CGO callback.
+@interface WriteProgressReporter : NSObject <BBProgressReporter>
+@end
+
+@implementation WriteProgressReporter
+- (void)updateProgress:(uint64_t)bytesWritten totalBytes:(uint64_t)totalBytes {
+    GoProgressCallback(bytesWritten, totalBytes);
+}
 @end
 
 static NSXPCConnection *create_helper_connection(void) {
     NSString *label = [NSString stringWithUTF8String:kHelperLabel];
     NSXPCConnection *conn = [[NSXPCConnection alloc] initWithMachServiceName:label options:NSXPCConnectionPrivileged];
-    NSXPCInterface *iface = [NSXPCInterface interfaceWithProtocol:@protocol(BBPrivilegedHelper)];
-    conn.remoteObjectInterface = iface;
+
+    // Configure the remote interface (what the helper exports)
+    NSXPCInterface *remoteIface = [NSXPCInterface interfaceWithProtocol:@protocol(BBPrivilegedHelper)];
+
+    // Tell XPC about the progress reporter proxy parameter
+    NSXPCInterface *progressIface = [NSXPCInterface interfaceWithProtocol:@protocol(BBProgressReporter)];
+    [remoteIface setInterface:progressIface
+                  forSelector:@selector(writeLinuxISO:isoPath:progressReporter:reply:)
+                argumentIndex:2
+                      ofReply:NO];
+
+    conn.remoteObjectInterface = remoteIface;
+
+    // Configure our exported interface (what we export for the helper to call back)
+    NSXPCInterface *exportedIface = [NSXPCInterface interfaceWithProtocol:@protocol(BBProgressReporter)];
+    conn.exportedInterface = exportedIface;
+
     conn.invalidationHandler = ^{
         NSLog(@"[XPC Client] Connection invalidated");
     };
@@ -157,6 +192,10 @@ int helper_write_linux_iso(const char *device, const char *isoPath, char **errms
         return 1;
     }
 
+    // Create progress reporter and export it on the connection
+    WriteProgressReporter *reporter = [[WriteProgressReporter alloc] init];
+    conn.exportedObject = reporter;
+
     __block BOOL success = NO;
     __block NSString *serr = nil;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
@@ -167,10 +206,11 @@ int helper_write_linux_iso(const char *device, const char *isoPath, char **errms
         dispatch_semaphore_signal(sema);
     }];
 
-    // Note: Progress is logged to system log by the helper.
-    // XPC only allows one reply block per message, so we can't have a progress callback.
+    // Pass the progress reporter proxy to the helper
+    // The helper will call updateProgress: on it, which bridges back to Go via GoProgressCallback
     [proxy writeLinuxISO:[NSString stringWithUTF8String:device]
                  isoPath:[NSString stringWithUTF8String:isoPath]
+        progressReporter:reporter
                    reply:^(BOOL s, NSString *e) {
         success = s;
         serr = e;

@@ -2,6 +2,11 @@ package macos
 
 import "context"
 
+// ProgressFunc is the callback type for write progress updates.
+// bytesWritten: total bytes written so far
+// totalBytes: total size of the ISO
+type ProgressFunc func(bytesWritten, totalBytes uint64)
+
 // Client defines the XPC client interface to the privileged helper.
 // This interface is shared across darwin and non-darwin builds.
 //
@@ -11,7 +16,8 @@ type Client interface {
 	EnsureReady(ctx context.Context) error
 	UnmountDisk(ctx context.Context, device string) (string, error)
 	EjectDisk(ctx context.Context, device string) (string, error)
-	// WriteLinuxISO writes a Linux ISO to disk using Apple's imaging pipeline
-	// (hdiutil convert → asr restore). This handles unmount and eject internally.
-	WriteLinuxISO(ctx context.Context, isoPath string, device string) error
+	// WriteLinuxISO writes a Linux ISO to disk using Disk Arbitration and direct I/O.
+	// The progress callback receives (bytesWritten, totalBytes) updates during the write.
+	// Pass nil if progress updates are not needed.
+	WriteLinuxISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error
 }

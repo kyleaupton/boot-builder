@@ -10,6 +10,12 @@
 
 #import <Foundation/Foundation.h>
 
+/// Protocol for receiving progress updates during write operations.
+/// The client implements this and passes a proxy to the helper.
+@protocol BBProgressReporter <NSObject>
+- (void)updateProgress:(uint64_t)bytesWritten totalBytes:(uint64_t)totalBytes;
+@end
+
 @protocol BBPrivilegedHelper
 
 /// Unmount all volumes on a disk device
@@ -28,10 +34,11 @@
 /// Pipeline: DA claim → unmount → raw write → eject → unclaim
 /// @param device Target device path (e.g., "/dev/disk4") - must be whole disk
 /// @param isoPath Path to the source ISO file
+/// @param progressReporter Proxy object for receiving progress updates (can be nil)
 /// @param reply Callback with (success, error message) - called once at end
-/// Note: Progress is logged to system log. XPC only allows one reply block per message.
 - (void)writeLinuxISO:(NSString *)device
               isoPath:(NSString *)isoPath
+     progressReporter:(id<BBProgressReporter>)reporter
                 reply:(void (^)(BOOL success, NSString *error))reply;
 
 @end

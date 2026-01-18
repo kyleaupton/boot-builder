@@ -67,7 +67,7 @@ func (d darwinDiskOps) EjectDisk(ctx context.Context, device string) (string, er
 	return strings.TrimSpace(string(out)), err
 }
 
-func (d darwinDiskOps) WriteISO(ctx context.Context, isoPath string, device string) error {
+func (d darwinDiskOps) WriteISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error {
 	// Without the XPC helper, we can't write ISOs on modern macOS
 	// due to raw disk access restrictions.
 	return errors.New("WriteISO requires the privileged helper to be installed")
@@ -84,6 +84,13 @@ func (d *darwinDiskOpsXPC) EjectDisk(ctx context.Context, device string) (string
 	return d.client.EjectDisk(ctx, device)
 }
 
-func (d *darwinDiskOpsXPC) WriteISO(ctx context.Context, isoPath string, device string) error {
-	return d.client.WriteLinuxISO(ctx, isoPath, device)
+func (d *darwinDiskOpsXPC) WriteISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error {
+	// Convert priv.ProgressFunc to macos.ProgressFunc
+	var macosProgress macosclient.ProgressFunc
+	if progress != nil {
+		macosProgress = func(written, total uint64) {
+			progress(written, total)
+		}
+	}
+	return d.client.WriteLinuxISO(ctx, isoPath, device, macosProgress)
 }

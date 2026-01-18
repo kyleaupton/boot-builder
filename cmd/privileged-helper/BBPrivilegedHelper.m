@@ -15,7 +15,7 @@
 #import "BBPrivilegedHelper.h"
 
 // Build version for debugging
-#define HELPER_BUILD_VERSION "2025-01-17-v16-apfs-container-fix"
+#define HELPER_BUILD_VERSION "2025-01-17-v17-progress-proxy"
 
 // Buffer size for disk I/O (1 MB)
 #define WRITE_BUFFER_SIZE (1024 * 1024)
@@ -35,8 +35,17 @@
 - (BOOL)listener:(NSXPCListener *)listener shouldAcceptNewConnection:(NSXPCConnection *)connection {
     NSLog(@"[Helper] Received connection from PID: %d (build: %s)", connection.processIdentifier, HELPER_BUILD_VERSION);
 
-    // Configure the connection
+    // Configure the exported interface (what we expose to the client)
     NSXPCInterface *interface = [NSXPCInterface interfaceWithProtocol:@protocol(BBPrivilegedHelper)];
+
+    // Configure the progress reporter proxy parameter for writeLinuxISO:isoPath:progressReporter:reply:
+    // This tells XPC how to handle the proxy object at argument index 2 (0-indexed: device=0, isoPath=1, reporter=2)
+    NSXPCInterface *progressInterface = [NSXPCInterface interfaceWithProtocol:@protocol(BBProgressReporter)];
+    [interface setInterface:progressInterface
+                forSelector:@selector(writeLinuxISO:isoPath:progressReporter:reply:)
+              argumentIndex:2
+                    ofReply:NO];
+
     connection.exportedInterface = interface;
     connection.exportedObject = self;
 
@@ -307,9 +316,11 @@ static DADissenterRef claimReleaseCallback(DADiskRef disk, void *context) {
 
 - (void)writeLinuxISO:(NSString *)device
               isoPath:(NSString *)isoPath
+     progressReporter:(id<BBProgressReporter>)reporter
                 reply:(void (^)(BOOL, NSString *))reply {
 
-    NSLog(@"[Helper] writeLinuxISO: device=%@ iso=%@ (build: %s)", device, isoPath, HELPER_BUILD_VERSION);
+    NSLog(@"[Helper] writeLinuxISO: device=%@ iso=%@ reporter=%@ (build: %s)",
+          device, isoPath, reporter ? @"present" : @"nil", HELPER_BUILD_VERSION);
     NSLog(@"[Helper] Running as UID: %d, EUID: %d", getuid(), geteuid());
 
     // Validate inputs
@@ -456,11 +467,20 @@ static DADissenterRef claimReleaseCallback(DADiskRef disk, void *context) {
 
             bytesWritten += bytesRead;
 
-            // Log progress periodically (XPC only allows one reply block, so no callback)
+            // Report progress periodically via the proxy
             if (bytesWritten - lastProgressReport >= PROGRESS_INTERVAL) {
                 lastProgressReport = bytesWritten;
                 NSLog(@"[Helper] Progress: %llu / %llu bytes (%.1f%%)",
                       bytesWritten, totalBytes, (double)bytesWritten / totalBytes * 100);
+
+                // Call the progress reporter proxy (if provided)
+                if (reporter) {
+                    @try {
+                        [reporter updateProgress:bytesWritten totalBytes:totalBytes];
+                    } @catch (NSException *e) {
+                        NSLog(@"[Helper] Progress reporter error: %@ (continuing write)", e.reason);
+                    }
+                }
             }
         }
 

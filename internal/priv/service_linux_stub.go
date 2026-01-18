@@ -25,6 +25,6 @@ func (l linuxDiskOps) UnmountDisk(ctx context.Context, device string) (string, e
 func (l linuxDiskOps) EjectDisk(ctx context.Context, device string) (string, error) {
 	return "", errors.New("not implemented on linux yet")
 }
-func (l linuxDiskOps) WriteISO(ctx context.Context, isoPath string, device string) error {
+func (l linuxDiskOps) WriteISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error {
 	return errors.New("not implemented on linux yet")
 }

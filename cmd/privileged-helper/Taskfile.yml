@@ -7,11 +7,10 @@ vars:
 
 tasks:
   build:
-    summary: Build the privileged helper as a bundle
+    summary: Build the privileged helper as a single binary with embedded plists
     cmds:
       - task: clean
       - task: compile
-      - task: create:bundle
       - task: sign
 
   clean:
@@ -44,14 +43,11 @@ tasks:
   #     - cp launchd.plist {{.BUNDLE_DIR}}/Contents/Resources/
 
   sign:
-    summary: Code sign the helper bundle
+    summary: Code sign the helper binary
     cmds:
-      # Sign the binary first
-      - codesign --force --sign - --options runtime {{.BUNDLE_DIR}}/Contents/MacOS/{{.HELPER_NAME}}
-      # Then sign the bundle
-      - codesign --force --sign - {{.BUNDLE_DIR}}
+      - codesign --force --sign - --options runtime {{.BUILD_DIR}}/{{.HELPER_NAME}}
 
   verify:
     summary: Verify code signature
     cmds:
-      - codesign -vvv --deep --strict {{.BUNDLE_DIR}}
+      - codesign -vvv --strict {{.BUILD_DIR}}/{{.HELPER_NAME}}
