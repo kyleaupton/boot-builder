@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { Events } from '@wailsio/runtime';
-import { StartJob } from '../bindings/boot-builder/internal/service/jobsservice';
-import { ListDrives} from '../bindings/boot-builder/internal/service/drivesservice'
-
-import '@/styles.css'
+import { StartJob } from '@bindings/boot-builder/internal/service/jobsservice';
+import { ListDrives } from '@bindings/boot-builder/internal/service/drivesservice'
 
 const currentProgress = ref(null)
 
