@@ -4,6 +4,8 @@ import { Events } from '@wailsio/runtime';
 import { StartJob } from '../bindings/boot-builder/internal/service/jobsservice';
 import { ListDrives} from '../bindings/boot-builder/internal/service/drivesservice'
 
+import '@/styles.css'
+
 const currentProgress = ref(null)
 
 const prettyProgress = computed(() => {
