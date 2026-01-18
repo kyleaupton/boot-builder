@@ -25,21 +25,23 @@ tasks:
     cmds:
       - mkdir -p {{.BUILD_DIR}}
       - |
-        clang -framework Foundation -framework Cocoa \
-              -fobjc-arc \
-              -mmacosx-version-min=10.15 \
-              -o {{.BUILD_DIR}}/{{.HELPER_NAME}}.bin \
-              main.m BBPrivilegedHelper.m
+        clang -framework Foundation -framework Cocoa -framework DiskArbitration \
+          -fobjc-arc \
+          -mmacosx-version-min=10.15 \
+          -sectcreate __TEXT __info_plist Info.plist \
+          -sectcreate __TEXT __launchd_plist launchd.plist \
+          -o {{.BUILD_DIR}}/{{.HELPER_NAME}} \
+          main.m BBPrivilegedHelper.m
 
-  create:bundle:
-    summary: Create helper bundle structure
-    deps: [compile]
-    cmds:
-      - mkdir -p {{.BUNDLE_DIR}}/Contents/MacOS
-      - mkdir -p {{.BUNDLE_DIR}}/Contents/Resources
-      - mv {{.BUILD_DIR}}/{{.HELPER_NAME}}.bin {{.BUNDLE_DIR}}/Contents/MacOS/{{.HELPER_NAME}}
-      - cp Info.plist {{.BUNDLE_DIR}}/Contents/
-      - cp launchd.plist {{.BUNDLE_DIR}}/Contents/Resources/
+  # create:bundle:
+  #   summary: Create helper bundle structure
+  #   deps: [compile]
+  #   cmds:
+  #     - mkdir -p {{.BUNDLE_DIR}}/Contents/MacOS
+  #     - mkdir -p {{.BUNDLE_DIR}}/Contents/Resources
+  #     - mv {{.BUILD_DIR}}/{{.HELPER_NAME}}.bin {{.BUNDLE_DIR}}/Contents/MacOS/{{.HELPER_NAME}}
+  #     - cp Info.plist {{.BUNDLE_DIR}}/Contents/
+  #     - cp launchd.plist {{.BUNDLE_DIR}}/Contents/Resources/
 
   sign:
     summary: Code sign the helper bundle

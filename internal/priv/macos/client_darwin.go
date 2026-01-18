@@ -8,17 +8,11 @@ package macos
 
 #include <stdlib.h>
 
-typedef void (*progress_cb_t)(long long wrote, long long total);
-
 // C-callable functions implemented in xpc_client.m
 int helper_ensure_ready(char **errmsg);
 int helper_unmount_disk(const char *device, char **out, char **errmsg);
 int helper_eject_disk(const char *device, char **out, char **errmsg);
-int helper_raw_write(const char *iso_path, const char *raw_device, progress_cb_t cb, char **errmsg);
-
-// Trampoline to call Go progress callback from C
-extern void go_progress_trampoline(long long wrote, long long total);
-static void progress_adapter(progress_cb_t cb, long long wrote, long long total) { cb(wrote, total); }
+int helper_write_linux_iso(const char *device, const char *isoPath, char **errmsg);
 */
 import "C"
 
@@ -74,22 +68,24 @@ func (c *xpcClient) EjectDisk(ctx context.Context, device string) (string, error
 	return C.GoString(cout), nil
 }
 
-//export go_progress_trampoline
-func go_progress_trampoline(wrote C.longlong, total C.longlong) {}
-
-func (c *xpcClient) RawWrite(ctx context.Context, isoPath string, rawDevice string, onProgress func(wrote, total int64)) error {
-	ciso := C.CString(isoPath)
-	cdev := C.CString(rawDevice)
-	defer C.free(unsafe.Pointer(ciso))
+// WriteLinuxISO writes a Linux ISO to a disk using Disk Arbitration and direct I/O.
+// This is a long-running operation that can take several minutes for large ISOs.
+// The pipeline is: DA session → claim disk → unmount → raw write → eject → unclaim
+func (c *xpcClient) WriteLinuxISO(ctx context.Context, isoPath string, device string) error {
+	cdev := C.CString(device)
 	defer C.free(unsafe.Pointer(cdev))
+	cpath := C.CString(isoPath)
+	defer C.free(unsafe.Pointer(cpath))
 	var cerr *C.char
-	// For now, no progress bridge. We can wire it later using a global callback.
-	ret := C.helper_raw_write(ciso, cdev, (C.progress_cb_t)(C.go_progress_trampoline), &cerr)
+
+	ret := C.helper_write_linux_iso(cdev, cpath, &cerr)
 	if ret != 0 {
 		if cerr != nil {
 			defer C.free(unsafe.Pointer(cerr))
+			return errors.New(C.GoString(cerr))
 		}
-		return errors.New(C.GoString(cerr))
+		return errors.New("failed to write Linux ISO to disk")
 	}
+
 	return nil
 }

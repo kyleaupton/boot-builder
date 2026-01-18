@@ -49,13 +49,13 @@ func (u Ubuntu) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, e
 				return nil, errors.New("DriveID not recognized as removable USB drive")
 			}
 		}
+		// Use single step that orchestrates Apple's imaging tools:
+		// diskutil unmount → hdiutil convert → asr restore → eject
 		p := &core.Plan{
 			ID:   "plan-ubuntu-darwin",
 			Name: "Ubuntu USB (darwin)",
 			Steps: []core.Step{
-				steps.DarwinUnmountDisk{Device: req.DriveID},
-				steps.DarwinRawWriteISO{ISOPath: req.Source.Local, Device: req.DriveID},
-				steps.DarwinEjectDisk{Device: req.DriveID},
+				steps.DarwinWriteLinuxISO{ISOPath: req.Source.Local, Device: req.DriveID},
 			},
 		}
 		return p, nil

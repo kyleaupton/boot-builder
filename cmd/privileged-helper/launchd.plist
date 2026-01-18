@@ -2,15 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Must match helper bundle ID -->
     <key>Label</key>
     <string>dev.kyleupton.boot-builder.helper</string>
 
-    <!-- Path to the helper executable -->
-    <key>Program</key>
-    <string>/Library/PrivilegedHelperTools/dev.kyleupton.boot-builder.helper/Contents/MacOS/dev.kyleupton.boot-builder.helper</string>
-
-    <!-- Advertise XPC Mach service -->
     <key>MachServices</key>
     <dict>
         <key>dev.kyleupton.boot-builder.helper</key>

@@ -2,15 +2,15 @@ package priv
 
 import "context"
 
-// ProgressFunc reports progress for long-running operations.
-// total may be zero if unknown.
-type ProgressFunc func(wrote, total int64)
-
 // DiskOps defines privileged disk operations.
 type DiskOps interface {
 	UnmountDisk(ctx context.Context, device string) (string, error)
-	RawWrite(ctx context.Context, isoPath string, rawDevice string, progress ProgressFunc) error
 	EjectDisk(ctx context.Context, device string) (string, error)
+	// WriteISO writes a Linux ISO to a disk device.
+	// On macOS, this uses Disk Arbitration to claim exclusive access and direct I/O.
+	// On Linux, this would use dd with pkexec.
+	// This is a long-running operation that handles unmount and eject internally.
+	WriteISO(ctx context.Context, isoPath string, device string) error
 }
 
 // PrivilegedService provides access to privileged operations.

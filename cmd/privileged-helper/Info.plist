@@ -14,23 +14,9 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
 
-    <!-- Authorize clients to connect to this XPC service -->
-    <!-- For development with ad-hoc signing, use simple identifier match -->
-    <!-- For production, add certificate requirements -->
     <key>SMAuthorizedClients</key>
     <array>
-        <!-- Development (ad-hoc signing) -->
         <string>identifier "dev.kyleupton.boot-builder"</string>
-
-        <!-- Production (uncomment and update TEAMID when using Developer ID) -->
-        <!-- <string>identifier "dev.kyleupton.boot-builder" and anchor apple generic and certificate leaf[subject.OU] = "TEAMID12345"</string> -->
     </array>
-
-    <!-- Advertise XPC Mach service -->
-    <key>MachServices</key>
-    <dict>
-        <key>dev.kyleupton.boot-builder.helper</key>
-        <true/>
-    </dict>
 </dict>
 </plist>

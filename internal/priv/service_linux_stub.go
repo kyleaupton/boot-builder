@@ -22,9 +22,9 @@ type linuxDiskOps struct{}
 func (l linuxDiskOps) UnmountDisk(ctx context.Context, device string) (string, error) {
 	return "", errors.New("not implemented on linux yet")
 }
-func (l linuxDiskOps) RawWrite(ctx context.Context, isoPath string, rawDevice string, progress ProgressFunc) error {
-	return errors.New("not implemented on linux yet")
-}
 func (l linuxDiskOps) EjectDisk(ctx context.Context, device string) (string, error) {
 	return "", errors.New("not implemented on linux yet")
+}
+func (l linuxDiskOps) WriteISO(ctx context.Context, isoPath string, device string) error {
+	return errors.New("not implemented on linux yet")
 }

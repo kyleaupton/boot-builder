@@ -63,7 +63,9 @@ func (s *JobsService) StartJob(ctx context.Context, req StartJobRequest) (string
 	if err != nil {
 		return "", err
 	}
-	return s.mgr.Enqueue(ctx, plan)
+	// Use background context for the job - the request context gets cancelled
+	// when the RPC call returns, but the job runs asynchronously
+	return s.mgr.Enqueue(context.Background(), plan)
 }
 
 func (s *JobsService) ListJobs() []jobs.Job { return s.mgr.List() }

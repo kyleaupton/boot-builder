@@ -1,3 +1,10 @@
+//
+//  xpc_client.m
+//  Boot Builder XPC Client
+//
+//  Client-side XPC calls to the privileged helper.
+//
+
 #import <Foundation/Foundation.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <ServiceManagement/ServiceManagement.h>
@@ -10,24 +17,21 @@ static const char *kHelperBundleID = "dev.kyleupton.boot-builder.helper";
 @protocol BBPrivilegedHelper
 - (void)unmountDisk:(NSString *)device reply:(void (^)(NSInteger status, NSString *out, NSString *err))reply;
 - (void)ejectDisk:(NSString *)device reply:(void (^)(NSInteger status, NSString *out, NSString *err))reply;
-- (void)rawWrite:(NSFileHandle *)isoFileHandle device:(NSString *)device reply:(void (^)(NSInteger status, NSString *err))reply;
+- (void)writeLinuxISO:(NSString *)device
+              isoPath:(NSString *)isoPath
+                reply:(void (^)(BOOL success, NSString *err))reply;
 @end
 
 static NSXPCConnection *create_helper_connection(void) {
     NSString *label = [NSString stringWithUTF8String:kHelperLabel];
     NSXPCConnection *conn = [[NSXPCConnection alloc] initWithMachServiceName:label options:NSXPCConnectionPrivileged];
     NSXPCInterface *iface = [NSXPCInterface interfaceWithProtocol:@protocol(BBPrivilegedHelper)];
-
-    // Allow NSFileHandle to be sent over XPC for rawWrite
-    NSSet *allowedClasses = [NSSet setWithObjects:[NSFileHandle class], nil];
-    [iface setClasses:allowedClasses forSelector:@selector(rawWrite:device:reply:) argumentIndex:0 ofReply:NO];
-
     conn.remoteObjectInterface = iface;
     conn.invalidationHandler = ^{
-        // handle invalidation if needed
+        NSLog(@"[XPC Client] Connection invalidated");
     };
     conn.interruptionHandler = ^{
-        // handle interruption if needed
+        NSLog(@"[XPC Client] Connection interrupted");
     };
     [conn resume];
     return conn;
@@ -139,45 +143,54 @@ int helper_eject_disk(const char *device, char **out, char **errmsg) {
     return (int)status ?: 1;
 }
 
-typedef void (*progress_cb_t)(long long wrote, long long total);
-int helper_raw_write(const char *iso_path, const char *raw_device, progress_cb_t cb, char **errmsg) {
-    NSLog(@"[helper_raw_write] iso=%@ device=%@", [NSString stringWithUTF8String:iso_path], [NSString stringWithUTF8String:raw_device]);
-
-    // Open ISO file as the user (this process has access to user files)
-    NSString *isoPathStr = [NSString stringWithUTF8String:iso_path];
-    NSFileHandle *isoHandle = [NSFileHandle fileHandleForReadingAtPath:isoPathStr];
-    if (!isoHandle) {
-        setError([NSString stringWithFormat:@"Cannot open ISO file: %@", isoPathStr], errmsg);
-        return 1;
-    }
+// Write a Linux ISO to a disk using Disk Arbitration and direct I/O
+// This is a long-running operation (several minutes for large ISOs)
+// Returns: 0 on success, 1 on error
+int helper_write_linux_iso(const char *device, const char *isoPath, char **errmsg) {
+    NSLog(@"[helper_write_linux_iso] device=%@ isoPath=%@",
+          [NSString stringWithUTF8String:device],
+          [NSString stringWithUTF8String:isoPath]);
 
     NSXPCConnection *conn = create_helper_connection();
     if (!conn) {
-        [isoHandle closeFile];
         setError(@"failed to create XPC connection", errmsg);
         return 1;
     }
 
-    id<BBPrivilegedHelper> proxy = [conn remoteObjectProxy];
-    __block NSInteger status = 1;
-    __block NSString *serr = @"invalid reply";
+    __block BOOL success = NO;
+    __block NSString *serr = nil;
     dispatch_semaphore_t sema = dispatch_semaphore_create(0);
 
-    // Pass the file handle to the helper (XPC will transfer it)
-    [proxy rawWrite:isoHandle device:[NSString stringWithUTF8String:raw_device] reply:^(NSInteger st, NSString *e) {
-        status = st;
+    id<BBPrivilegedHelper> proxy = [conn remoteObjectProxyWithErrorHandler:^(NSError *error) {
+        NSLog(@"[helper_write_linux_iso] XPC error: %@", error);
+        serr = [NSString stringWithFormat:@"XPC error: %@", error.localizedDescription];
+        dispatch_semaphore_signal(sema);
+    }];
+
+    // Note: Progress is logged to system log by the helper.
+    // XPC only allows one reply block per message, so we can't have a progress callback.
+    [proxy writeLinuxISO:[NSString stringWithUTF8String:device]
+                 isoPath:[NSString stringWithUTF8String:isoPath]
+                   reply:^(BOOL s, NSString *e) {
+        success = s;
         serr = e;
         dispatch_semaphore_signal(sema);
     }];
 
-    dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60 * NSEC_PER_SEC)));
+    // Very long timeout - direct I/O can take many minutes for large ISOs (4-6GB)
+    long timeout = dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3600 * NSEC_PER_SEC)));
     [conn invalidate];
-    [isoHandle closeFile];
 
-    NSLog(@"[helper_raw_write] status=%ld", (long)status);
-    if (status == 0) { return 0; }
-    if (serr) setError(serr, errmsg);
-    return (int)status ?: 1;
+    if (timeout != 0) {
+        setError(@"timeout waiting for helper (>1 hour)", errmsg);
+        return 1;
+    }
+
+    if (!success && serr) {
+        setError(serr, errmsg);
+        return 1;
+    }
+
+    NSLog(@"[helper_write_linux_iso] success=%d", success);
+    return success ? 0 : 1;
 }
-
-
