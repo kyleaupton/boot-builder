@@ -2,6 +2,11 @@
 
 This file provides guidance for Claude Code when working on this project.
 
+Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask, except for things that have explicit MCP servers like shadcn-vue.
+
+Documentation IDs:
+Wails3 - /websites/v3alpha_wails_io
+
 ## Project Overview
 
 **OS Install Maker** is a cross-platform desktop app built with Wails v3 that creates bootable USB OS installers. The primary motivation: making Windows USB installers on macOS requires splitting large `.wim` files (>4GB) for FAT32 compatibility using wimlib.
