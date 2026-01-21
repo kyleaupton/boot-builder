@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { Events, WailsEvent } from '@wailsio/runtime'
+import { Events } from '@wailsio/runtime'
+import { toast } from 'vue-sonner'
 import { StartJob, ListJobs } from '@bindings/boot-builder/internal/service/jobsservice'
 import { Status } from '@bindings/boot-builder/internal/jobs/models'
 import type { Job, JobEvent, StartJobRequest } from '@/types'
@@ -49,6 +50,17 @@ export const useJobStore = defineStore('job', () => {
             failed: Status.StatusFailed,
           }
           job.Status = stateMap[event.Message] ?? job.Status
+
+          // Show toast notifications on completion
+          if (event.Message === 'succeeded') {
+            toast.success('Flash complete!', {
+              description: 'Your bootable drive is ready to use.',
+            })
+          } else if (event.Message === 'failed') {
+            toast.error('Flash failed', {
+              description: 'Check the error details for more information.',
+            })
+          }
         }
         break
       }
@@ -82,7 +94,7 @@ export const useJobStore = defineStore('job', () => {
   function subscribeToEvents(): void {
     if (eventUnsubscribe) return
 
-    eventUnsubscribe = Events.On(WailsEventNames.JOB_EVENT, (ev: WailsEvent) => {
+    eventUnsubscribe = Events.On(WailsEventNames.JOB_EVENT, (ev: Events.WailsEvent) => {
       handleJobEvent(ev.data as JobEvent)
     })
   }

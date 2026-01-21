@@ -1,5 +1,5 @@
 import { onUnmounted } from 'vue'
-import { Events, WailsEvent } from '@wailsio/runtime'
+import { Events } from '@wailsio/runtime'
 
 /**
  * Type-safe Wails event subscription with automatic cleanup on unmount.
@@ -13,7 +13,7 @@ export function useWailsEvents<T = unknown>(
   eventName: string,
   callback: (data: T) => void
 ): () => void {
-  const handler = (event: WailsEvent) => {
+  const handler = (event: Events.WailsEvent) => {
     callback(event.data as T)
   }
 
@@ -33,7 +33,7 @@ export function useWailsEventOnce<T = unknown>(
   eventName: string,
   callback: (data: T) => void
 ): () => void {
-  const handler = (event: WailsEvent) => {
+  const handler = (event: Events.WailsEvent) => {
     callback(event.data as T)
   }
 
@@ -54,7 +54,7 @@ export function subscribeToWailsEvent<T = unknown>(
   eventName: string,
   callback: (data: T) => void
 ): () => void {
-  const handler = (event: WailsEvent) => {
+  const handler = (event: Events.WailsEvent) => {
     callback(event.data as T)
   }
 

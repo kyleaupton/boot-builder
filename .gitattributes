@@ -1,1 +1,2 @@
 internal/wim/deps/** linguist-vendored
+frontend/src/components/ui/** linguist-generated

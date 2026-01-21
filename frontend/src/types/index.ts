@@ -1,8 +1,12 @@
 // Re-export Wails bindings types for convenience
-export { Drive } from '@bindings/boot-builder/internal/drives/models'
-export { Job, Status } from '@bindings/boot-builder/internal/jobs/models'
-export { InstallerMeta, StartJobRequest } from '@bindings/boot-builder/internal/service/models'
-export { Plan, Target, OSFamily, Step } from '@bindings/boot-builder/internal/core/models'
+export type { Drive } from '@bindings/boot-builder/internal/drives/models'
+export type { Job } from '@bindings/boot-builder/internal/jobs/models'
+export { Status } from '@bindings/boot-builder/internal/jobs/models'
+export type { InstallerMeta, StartJobRequest } from '@bindings/boot-builder/internal/service/models'
+export type { Plan, Target, OSFamily, Step } from '@bindings/boot-builder/internal/core/models'
+
+// Import Target for local use in this file
+import type { Target } from '@bindings/boot-builder/internal/core/models'
 
 // Frontend-specific types
 

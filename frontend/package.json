@@ -7,18 +7,22 @@
     "dev": "vite",
     "build:dev": "vue-tsc && vite build --minify false --mode development",
     "build": "vue-tsc && vite build --mode production",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "type-check": "vue-tsc"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
-    "@wailsio/runtime": "latest",
+    "@vueuse/core": "^14.1.0",
+    "@wailsio/runtime": "^3.0.0-alpha.78",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-vue-next": "^0.562.0",
     "pinia": "^3.0.4",
+    "reka-ui": "^2.7.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
-    "vue": "^3.2.45"
+    "vue": "^3.2.45",
+    "vue-sonner": "^2.0.9"
   },
   "devDependencies": {
     "@types/node": "^25.0.9",

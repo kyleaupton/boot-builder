@@ -1,5 +1,5 @@
 import { ref, onMounted, onUnmounted } from 'vue'
-import { Events, WailsEvent } from '@wailsio/runtime'
+import { Events } from '@wailsio/runtime'
 import { WailsEventNames } from './useWailsEvents'
 
 export interface FileDropPayload {
@@ -39,7 +39,7 @@ export function useDragDrop(options?: UseDragDropOptions) {
     )
   }
 
-  const handleFileDrop = (event: WailsEvent) => {
+  const handleFileDrop = (event: Events.WailsEvent) => {
     const payload = event.data as FileDropPayload
     const filtered = filterFiles(payload.files)
 

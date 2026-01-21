@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { onMounted, computed } from 'vue'
+import { useColorMode } from '@vueuse/core'
 import { useDrivesStore, useSourceStore, useJobStore } from '@/stores'
-import { useDragDrop } from '@/composables'
 import type { AppState } from '@/types'
+import { Button } from '@/components/ui/button'
+import SourceDropzone from '@/components/SourceDropzone.vue'
+import DriveSelector from '@/components/DriveSelector.vue'
+import ProgressPanel from '@/components/ProgressPanel.vue'
+import StatusAlert from '@/components/StatusAlert.vue'
+import FlashButton from '@/components/FlashButton.vue'
+import StepIndicator from '@/components/StepIndicator.vue'
+import { Toaster } from '@/components/ui/sonner'
 
 // Initialize stores
 const drivesStore = useDrivesStore()
@@ -19,23 +27,22 @@ const appState = computed((): AppState => {
   return 'empty'
 })
 
-// File drop handling
-useDragDrop({
-  accept: ['.iso', '.img'],
-  onDrop: (files) => {
-    if (files.length > 0) {
-      sourceStore.setSource(files[0])
-    }
-  },
+// Step number for the stepper based on app state
+const currentStepNumber = computed((): 1 | 2 | 3 => {
+  switch (appState.value) {
+    case 'empty':
+    case 'source-only':
+      return sourceStore.hasSource ? 2 : 1
+    case 'ready':
+      return 2
+    case 'in-progress':
+    case 'complete':
+    case 'error':
+      return 3
+    default:
+      return 1
+  }
 })
-
-// Format drive size for display
-function formatSize(bytes: number): string {
-  const gb = bytes / (1024 * 1024 * 1024)
-  if (gb >= 1) return `${gb.toFixed(1)} GB`
-  const mb = bytes / (1024 * 1024)
-  return `${mb.toFixed(0)} MB`
-}
 
 // Start job handler
 async function handleStartJob() {
@@ -62,6 +69,9 @@ function handleReset() {
 }
 
 onMounted(() => {
+  const mode = useColorMode()
+  mode.value = 'dark';
+
   drivesStore.startAutoRefresh()
   sourceStore.loadInstallers()
   jobStore.subscribeToEvents()
@@ -69,287 +79,91 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container" data-file-drop-target>
-    <div class="debug-panel">
-      <h1>OS Install Maker</h1>
-      <p class="state-badge">State: <code>{{ appState }}</code></p>
+  <div class="app-container">
+    <header class="app-header">
+      <h1 class="app-title">Boot Builder</h1>
+      <StepIndicator :current-step="currentStepNumber" />
+    </header>
 
-      <!-- Source Section -->
-      <section class="section">
-        <h2>Source</h2>
-        <div v-if="sourceStore.hasSource" class="source-info">
-          <p><strong>File:</strong> {{ sourceStore.filename }}</p>
-          <p><strong>Installer:</strong> {{ sourceStore.detectedInstaller?.Name ?? 'Unknown' }}</p>
-          <button class="btn-secondary" @click="sourceStore.clearSource">Clear</button>
-        </div>
-        <div v-else class="dropzone-placeholder">
-          <p>Drop an ISO file here</p>
-          <p class="hint">or the window will accept drops anywhere</p>
-        </div>
-      </section>
+    <Toaster position="bottom-center" />
 
-      <!-- Drive Section -->
-      <section class="section">
-        <h2>Target Drive</h2>
-        <div v-if="drivesStore.hasDrives" class="drive-list">
-          <label
-            v-for="drive in drivesStore.removableDrives"
-            :key="drive.Device"
-            class="drive-item"
-            :class="{ selected: drivesStore.selectedDriveId === drive.Device }"
-          >
-            <input
-              type="radio"
-              :value="drive.Device"
-              :checked="drivesStore.selectedDriveId === drive.Device"
-              @change="drivesStore.selectDrive(drive.Device)"
-            />
-            <span class="drive-info">
-              <span class="drive-name">{{ drive.Model || 'Unknown Drive' }}</span>
-              <span class="drive-meta">{{ drive.Device }} · {{ formatSize(drive.SizeBytes) }}</span>
-            </span>
-          </label>
-        </div>
-        <p v-else class="empty-state">No removable drives detected</p>
-        <p v-if="drivesStore.isLoading" class="loading">Refreshing...</p>
-      </section>
+    <!-- Main Content -->
+    <main class="app-main">
+      <SourceDropzone />
+      <DriveSelector
+        v-if="sourceStore.hasSource && appState !== 'in-progress' && appState !== 'complete' && appState !== 'error'"
+      />
+      <ProgressPanel v-if="appState === 'in-progress'" />
+      <StatusAlert
+        v-if="appState === 'complete' || appState === 'error'"
+        :status="appState"
+        :error="jobStore.error"
+      />
+    </main>
 
-      <!-- Progress Section -->
-      <section v-if="appState === 'in-progress'" class="section">
-        <h2>Progress</h2>
-        <div class="progress-info">
-          <p v-if="jobStore.currentStep"><strong>Step:</strong> {{ jobStore.currentStep }}</p>
-          <p v-if="jobStore.currentMessage">{{ jobStore.currentMessage }}</p>
-          <div class="progress-bar-container">
-            <div class="progress-bar" :style="{ width: `${jobStore.progress}%` }"></div>
-          </div>
-          <p class="progress-percent">{{ jobStore.progress }}%</p>
-        </div>
-      </section>
+    <footer class="app-footer">
+      <FlashButton
+        v-if="appState === 'ready'"
+        :loading="jobStore.isStarting"
+        @click="handleStartJob"
+      />
 
-      <!-- Complete Section -->
-      <section v-if="appState === 'complete'" class="section success">
-        <h2>Complete!</h2>
-        <p>Your bootable USB has been created successfully.</p>
-      </section>
-
-      <!-- Error Section -->
-      <section v-if="jobStore.error" class="section error">
-        <h2>Error</h2>
-        <p>{{ jobStore.error }}</p>
-      </section>
-
-      <!-- Actions -->
-      <div class="actions">
-        <button
-          v-if="appState === 'ready'"
-          class="btn-primary"
-          :disabled="jobStore.isStarting"
-          @click="handleStartJob"
-        >
-          {{ jobStore.isStarting ? 'Starting...' : 'Flash Drive' }}
-        </button>
-
-        <button
-          v-if="appState === 'complete' || appState === 'error'"
-          class="btn-primary"
-          @click="handleReset"
-        >
-          Start Over
-        </button>
-      </div>
-    </div>
+      <Button
+        v-if="appState === 'complete' || appState === 'error'"
+        size="lg"
+        variant="secondary"
+        class="reset-button"
+        @click="handleReset"
+      >
+        Start Over
+      </Button>
+    </footer>
   </div>
 </template>
 
 <style scoped>
-.container {
+.app-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 2rem;
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
 }
 
-.debug-panel {
-  width: 100%;
-  max-width: 500px;
-}
-
-h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.state-badge {
-  margin-bottom: 1.5rem;
-  color: var(--muted-foreground);
-}
-
-.state-badge code {
-  background: var(--muted);
-  padding: 0.125rem 0.5rem;
-  border-radius: var(--radius);
-  font-size: 0.875rem;
-}
-
-.section {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card);
-}
-
-.section h2 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted-foreground);
-  margin-bottom: 0.75rem;
-}
-
-.source-info p {
-  margin: 0.25rem 0;
-}
-
-.dropzone-placeholder {
+.app-header {
+  padding: 1rem 1.5rem;
   text-align: center;
-  padding: 2rem;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
-  color: var(--muted-foreground);
+  --wails-draggable: drag;
 }
 
-.dropzone-placeholder .hint {
-  font-size: 0.75rem;
-  margin-top: 0.5rem;
+.app-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--foreground);
 }
 
-.drive-list {
+.app-main {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
 }
 
-.drive-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: border-color 0.2s;
+.app-footer {
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
 }
 
-.drive-item:hover {
-  border-color: var(--primary);
-}
-
-.drive-item.selected {
-  border-color: var(--primary);
-  background: var(--accent);
-}
-
-.drive-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.drive-name {
-  font-weight: 500;
-}
-
-.drive-meta {
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
-}
-
-.empty-state {
-  color: var(--muted-foreground);
-  font-style: italic;
-}
-
-.loading {
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
-  margin-top: 0.5rem;
-}
-
-.progress-info p {
-  margin: 0.25rem 0;
-}
-
-.progress-bar-container {
-  height: 8px;
-  background: var(--muted);
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 0.75rem 0;
-}
-
-.progress-bar {
-  height: 100%;
-  background: var(--primary);
-  transition: width 0.3s ease;
-}
-
-.progress-percent {
-  font-size: 0.875rem;
-  color: var(--muted-foreground);
-}
-
-.section.success {
-  border-color: var(--chart-2);
-  background: color-mix(in oklch, var(--chart-2) 10%, transparent);
-}
-
-.section.error {
-  border-color: var(--destructive);
-  background: color-mix(in oklch, var(--destructive) 10%, transparent);
-}
-
-.actions {
-  margin-top: 1.5rem;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 0.625rem 1.25rem;
-  border: none;
-  border-radius: var(--radius);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: var(--primary-foreground);
-}
-
-.btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: var(--muted);
-  color: var(--muted-foreground);
-  margin-top: 0.5rem;
-}
-
-.btn-secondary:hover {
-  background: var(--accent);
+.reset-button {
+  width: 100%;
+  height: 3rem;
+  font-size: 1rem;
 }
 </style>

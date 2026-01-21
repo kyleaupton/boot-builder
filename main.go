@@ -60,9 +60,8 @@ func main() {
 			Backdrop:                application.MacBackdropTranslucent,
 			TitleBar:                application.MacTitleBarHiddenInset,
 		},
-		BackgroundColour:  application.NewRGB(27, 38, 54),
-		URL:               "/",
-		EnableDragAndDrop: true,
+		BackgroundColour: application.NewRGB(27, 38, 54),
+		URL:              "/",
 	})
 
 	// Create a goroutine that emits an event containing the current time every second.
