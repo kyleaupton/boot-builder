@@ -26,6 +26,20 @@ func (u Ubuntu) ValidateHost(ctx context.Context, host core.HostInfo) core.Capab
 }
 
 func (u Ubuntu) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, error) {
+	// Dry-run mode: return simulated steps for UI testing
+	if core.DryRun {
+		return &core.Plan{
+			ID:   "plan-ubuntu-dryrun",
+			Name: "Ubuntu USB (dry-run)",
+			Steps: []core.Step{
+				steps.NoOp{Label: "Unmounting disk...", Delay: 1 * time.Second, Ticks: 5},
+				steps.NoOp{Label: "Writing ISO to USB...", Delay: 8 * time.Second, Ticks: 20},
+				steps.NoOp{Label: "Verifying write...", Delay: 2 * time.Second, Ticks: 10},
+				steps.NoOp{Label: "Ejecting disk...", Delay: 500 * time.Millisecond, Ticks: 2},
+			},
+		}, nil
+	}
+
 	if runtime.GOOS == "darwin" {
 		// Guard against unsafe drives and non-removable targets
 		if req.DriveID == "" {

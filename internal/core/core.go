@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+// DryRun controls whether real disk operations are performed.
+// When true, installers should return mock steps and drives are simulated.
+// Set via DRY_RUN environment variable.
+var DryRun bool
+
 type OSFamily string
 
 const (

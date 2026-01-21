@@ -1,11 +1,14 @@
 package main
 
 import (
+	"boot-builder/internal/core"
+	"boot-builder/internal/drives"
 	"boot-builder/internal/eventbus"
 	"boot-builder/internal/service"
 	"embed"
 	_ "embed"
 	"log"
+	"os"
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -23,6 +26,12 @@ var assets embed.FS
 // and starts a goroutine that emits a time-based event every second. It subsequently runs the application and
 // logs any error that might occur.
 func main() {
+	// Check for dry-run mode via environment variable
+	if os.Getenv("DRY_RUN") == "1" || os.Getenv("DRY_RUN") == "true" {
+		core.DryRun = true
+		log.Println("🧪 DRY-RUN MODE: Using mock drives, no real disk operations")
+		drives.SetProvider(drives.MockProvider{Drives: drives.DefaultMockDrives()})
+	}
 
 	// Create a new Wails application by providing the necessary options.
 	// Variables 'Name' and 'Description' are for application metadata.
