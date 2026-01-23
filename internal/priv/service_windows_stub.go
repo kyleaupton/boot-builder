@@ -19,12 +19,6 @@ func (s *windowsService) Shutdown(ctx context.Context) error { return nil }
 
 type windowsDiskOps struct{}
 
-func (w windowsDiskOps) UnmountDisk(ctx context.Context, device string) (string, error) {
-	return "", errors.New("not implemented on windows yet")
-}
-func (w windowsDiskOps) EjectDisk(ctx context.Context, device string) (string, error) {
-	return "", errors.New("not implemented on windows yet")
-}
 func (w windowsDiskOps) WriteISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error {
 	return errors.New("not implemented on windows yet")
 }

@@ -14,8 +14,6 @@ type ProgressFunc func(bytesWritten, totalBytes uint64)
 // rather than attempting raw disk I/O. This works with macOS security model.
 type Client interface {
 	EnsureReady(ctx context.Context) error
-	UnmountDisk(ctx context.Context, device string) (string, error)
-	EjectDisk(ctx context.Context, device string) (string, error)
 	// WriteLinuxISO writes a Linux ISO to disk using Disk Arbitration and direct I/O.
 	// The progress callback receives (bytesWritten, totalBytes) updates during the write.
 	// Pass nil if progress updates are not needed.

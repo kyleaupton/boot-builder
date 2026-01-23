@@ -21,14 +21,6 @@ func (c *xpcClientWrapper) EnsureReady(ctx context.Context) error {
 	return c.client.EnsureReady(ctx)
 }
 
-func (c *xpcClientWrapper) UnmountDisk(ctx context.Context, device string) (string, error) {
-	return c.client.UnmountDisk(ctx, device)
-}
-
-func (c *xpcClientWrapper) EjectDisk(ctx context.Context, device string) (string, error) {
-	return c.client.EjectDisk(ctx, device)
-}
-
 func (c *xpcClientWrapper) WriteLinuxISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error {
 	// Convert macos.ProgressFunc to xpc.ProgressFunc
 	var xpcProgress xpc.ProgressFunc

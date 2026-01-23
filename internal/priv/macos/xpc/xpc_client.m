@@ -24,8 +24,6 @@ extern void GoProgressCallback(uint64_t written, uint64_t total);
 @end
 
 @protocol BBPrivilegedHelper
-- (void)unmountDisk:(NSString *)device reply:(void (^)(NSInteger status, NSString *out, NSString *err))reply;
-- (void)ejectDisk:(NSString *)device reply:(void (^)(NSInteger status, NSString *out, NSString *err))reply;
 - (void)writeLinuxISO:(NSString *)device
               isoPath:(NSString *)isoPath
      progressReporter:(id<BBProgressReporter>)reporter
@@ -124,58 +122,6 @@ int helper_ensure_ready(char **errmsg) {
     }
     NSLog(@"[helper_ensure_ready] SMJobBless ok");
     return 0;
-}
-
-int helper_unmount_disk(const char *device, char **out, char **errmsg) {
-    NSLog(@"[helper_unmount_disk] %@", [NSString stringWithUTF8String:device]);
-    NSXPCConnection *conn = create_helper_connection();
-    if (!conn) { setError(@"failed to create XPC connection", errmsg); return 1; }
-    id<BBPrivilegedHelper> proxy = [conn remoteObjectProxy];
-    __block NSInteger status = 1;
-    __block NSString *sout = nil;
-    __block NSString *serr = @"invalid reply";
-    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    [proxy unmountDisk:[NSString stringWithUTF8String:device] reply:^(NSInteger st, NSString *o, NSString *e) {
-        status = st;
-        sout = o;
-        serr = e;
-        dispatch_semaphore_signal(sema);
-    }];
-    dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60 * NSEC_PER_SEC)));
-    [conn invalidate];
-    NSLog(@"[helper_unmount_disk] status=%ld", (long)status);
-    if (status == 0) {
-        if (sout) { *out = strdup(sout.UTF8String); }
-        return 0;
-    }
-    if (serr) setError(serr, errmsg);
-    return (int)status ?: 1;
-}
-
-int helper_eject_disk(const char *device, char **out, char **errmsg) {
-    NSLog(@"[helper_eject_disk] %@", [NSString stringWithUTF8String:device]);
-    NSXPCConnection *conn = create_helper_connection();
-    if (!conn) { setError(@"failed to create XPC connection", errmsg); return 1; }
-    id<BBPrivilegedHelper> proxy = [conn remoteObjectProxy];
-    __block NSInteger status = 1;
-    __block NSString *sout = nil;
-    __block NSString *serr = @"invalid reply";
-    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
-    [proxy ejectDisk:[NSString stringWithUTF8String:device] reply:^(NSInteger st, NSString *o, NSString *e) {
-        status = st;
-        sout = o;
-        serr = e;
-        dispatch_semaphore_signal(sema);
-    }];
-    dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60 * NSEC_PER_SEC)));
-    [conn invalidate];
-    NSLog(@"[helper_eject_disk] status=%ld", (long)status);
-    if (status == 0) {
-        if (sout) { *out = strdup(sout.UTF8String); }
-        return 0;
-    }
-    if (serr) setError(serr, errmsg);
-    return (int)status ?: 1;
 }
 
 // Write a Linux ISO to a disk using Disk Arbitration and direct I/O

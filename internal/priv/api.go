@@ -9,8 +9,6 @@ type ProgressFunc func(bytesWritten, totalBytes uint64)
 
 // DiskOps defines privileged disk operations.
 type DiskOps interface {
-	UnmountDisk(ctx context.Context, device string) (string, error)
-	EjectDisk(ctx context.Context, device string) (string, error)
 	// WriteISO writes a Linux ISO to a disk device.
 	// On macOS, this uses Disk Arbitration to claim exclusive access and direct I/O.
 	// On Linux, this would use dd with pkexec.

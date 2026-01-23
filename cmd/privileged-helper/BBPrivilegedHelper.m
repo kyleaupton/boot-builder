@@ -262,58 +262,6 @@ static DADissenterRef claimReleaseCallback(DADiskRef disk, void *context) {
 
 #pragma mark - BBPrivilegedHelper Protocol
 
-- (void)unmountDisk:(NSString *)device reply:(void (^)(NSInteger, NSString *, NSString *))reply {
-    NSLog(@"[Helper] unmountDisk: %@", device);
-
-    if (!device || device.length == 0) {
-        reply(1, @"", @"Device not specified");
-        return;
-    }
-
-    if (![device hasPrefix:@"/dev/"]) {
-        reply(1, @"", @"Invalid device path - must start with /dev/");
-        return;
-    }
-
-    NSString *output = nil;
-    NSString *error = nil;
-    NSInteger status = 0;
-
-    [self runCommand:@"/usr/sbin/diskutil"
-           arguments:@[@"unmountDisk", @"force", device]
-              output:&output
-               error:&error
-              status:&status];
-
-    reply(status, output ?: @"", error ?: @"");
-}
-
-- (void)ejectDisk:(NSString *)device reply:(void (^)(NSInteger, NSString *, NSString *))reply {
-    NSLog(@"[Helper] ejectDisk: %@", device);
-
-    if (!device || device.length == 0) {
-        reply(1, @"", @"Device not specified");
-        return;
-    }
-
-    if (![device hasPrefix:@"/dev/"]) {
-        reply(1, @"", @"Invalid device path - must start with /dev/");
-        return;
-    }
-
-    NSString *output = nil;
-    NSString *error = nil;
-    NSInteger status = 0;
-
-    [self runCommand:@"/usr/sbin/diskutil"
-           arguments:@[@"eject", device]
-              output:&output
-               error:&error
-              status:&status];
-
-    reply(status, output ?: @"", error ?: @"");
-}
-
 - (void)writeLinuxISO:(NSString *)device
               isoPath:(NSString *)isoPath
      progressReporter:(id<BBProgressReporter>)reporter

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -17,6 +18,7 @@ import (
 )
 
 // DarwinUnmountDisk unmounts all volumes on a disk (e.g. /dev/disk4)
+// This does not require privileges for removable USB drives.
 type DarwinUnmountDisk struct{ Device string }
 
 func (d DarwinUnmountDisk) Name() string            { return "Unmount target" }
@@ -28,23 +30,21 @@ func (d DarwinUnmountDisk) Run(ctx context.Context, e core.Executor) error {
 	if d.Device == "" {
 		return errors.New("device not specified")
 	}
-	svc := priv.NewService()
-	if err := svc.EnsureReady(ctx); err != nil {
-		return err
-	}
-	out, err := svc.Disk().UnmountDisk(ctx, d.Device)
+	cmd := exec.CommandContext(ctx, "/usr/sbin/diskutil", "unmountDisk", "force", d.Device)
+	out, err := cmd.CombinedOutput()
+	outStr := strings.TrimSpace(string(out))
 	if err != nil {
 		// Check if it's already unmounted (not an error) or a real failure
-		outLower := strings.ToLower(out)
+		outLower := strings.ToLower(outStr)
 		if strings.Contains(outLower, "not mounted") || strings.Contains(outLower, "already unmounted") {
 			e.Emit(core.Event{Type: "log", Message: "Device already unmounted"})
 			return nil
 		}
 		// Real error - fail the step
-		e.Emit(core.Event{Type: "log", Message: fmt.Sprintf("diskutil unmountDisk failed: %s", strings.TrimSpace(out))})
+		e.Emit(core.Event{Type: "log", Message: fmt.Sprintf("diskutil unmountDisk failed: %s", outStr)})
 		return fmt.Errorf("failed to unmount %s: %w", d.Device, err)
 	}
-	e.Emit(core.Event{Type: "log", Message: strings.TrimSpace(out)})
+	e.Emit(core.Event{Type: "log", Message: outStr})
 	return nil
 }
 
@@ -107,6 +107,7 @@ func (d DarwinWriteLinuxISO) Run(ctx context.Context, e core.Executor) error {
 }
 
 // DarwinEjectDisk ejects the disk
+// This does not require privileges for removable USB drives.
 type DarwinEjectDisk struct{ Device string }
 
 func (d DarwinEjectDisk) Name() string            { return "Eject" }
@@ -118,15 +119,13 @@ func (d DarwinEjectDisk) Run(ctx context.Context, e core.Executor) error {
 	if d.Device == "" {
 		return errors.New("device not specified")
 	}
-	svc := priv.NewService()
-	if err := svc.EnsureReady(ctx); err != nil {
-		return err
-	}
-	out, err := svc.Disk().EjectDisk(ctx, d.Device)
+	cmd := exec.CommandContext(ctx, "/usr/sbin/diskutil", "eject", d.Device)
+	out, err := cmd.CombinedOutput()
+	outStr := strings.TrimSpace(string(out))
 	if err != nil {
-		e.Emit(core.Event{Type: "log", Message: fmt.Sprintf("diskutil eject: %s", strings.TrimSpace(out))})
+		e.Emit(core.Event{Type: "log", Message: fmt.Sprintf("diskutil eject: %s", outStr)})
 		return nil
 	}
-	e.Emit(core.Event{Type: "log", Message: strings.TrimSpace(out)})
+	e.Emit(core.Event{Type: "log", Message: outStr})
 	return nil
 }

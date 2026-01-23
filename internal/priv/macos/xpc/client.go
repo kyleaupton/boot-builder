@@ -11,8 +11,6 @@ package xpc
 
 // C-callable functions implemented in xpc_client.m
 int helper_ensure_ready(char **errmsg);
-int helper_unmount_disk(const char *device, char **out, char **errmsg);
-int helper_eject_disk(const char *device, char **out, char **errmsg);
 int helper_write_linux_iso(const char *device, const char *isoPath, char **errmsg);
 */
 import "C"
@@ -61,38 +59,6 @@ func (c *Client) EnsureReady(ctx context.Context) error {
 		return errors.New(C.GoString(cerr))
 	}
 	return nil
-}
-
-func (c *Client) UnmountDisk(ctx context.Context, device string) (string, error) {
-	cd := C.CString(device)
-	defer C.free(unsafe.Pointer(cd))
-	var cout *C.char
-	var cerr *C.char
-	ret := C.helper_unmount_disk(cd, &cout, &cerr)
-	if ret != 0 {
-		if cerr != nil {
-			defer C.free(unsafe.Pointer(cerr))
-		}
-		return "", errors.New(C.GoString(cerr))
-	}
-	defer C.free(unsafe.Pointer(cout))
-	return C.GoString(cout), nil
-}
-
-func (c *Client) EjectDisk(ctx context.Context, device string) (string, error) {
-	cd := C.CString(device)
-	defer C.free(unsafe.Pointer(cd))
-	var cout *C.char
-	var cerr *C.char
-	ret := C.helper_eject_disk(cd, &cout, &cerr)
-	if ret != 0 {
-		if cerr != nil {
-			defer C.free(unsafe.Pointer(cerr))
-		}
-		return "", errors.New(C.GoString(cerr))
-	}
-	defer C.free(unsafe.Pointer(cout))
-	return C.GoString(cout), nil
 }
 
 // WriteLinuxISO writes a Linux ISO to a disk using Disk Arbitration and direct I/O.
