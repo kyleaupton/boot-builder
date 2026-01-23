@@ -4,6 +4,7 @@ import (
 	"boot-builder/internal/core"
 	"boot-builder/internal/drives"
 	"boot-builder/internal/eventbus"
+	"boot-builder/internal/logger"
 	"boot-builder/internal/service"
 	"embed"
 	_ "embed"
@@ -50,6 +51,9 @@ func main() {
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 	})
+
+	// Use Wails' logger for unified log format
+	logger.SetLogger(app.Logger)
 
 	// Set global event emitter for backend modules
 	eventbus.SetEmitter(func(name string, data any) { app.Event.Emit(name, data) })

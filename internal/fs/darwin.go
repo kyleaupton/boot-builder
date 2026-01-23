@@ -3,61 +3,137 @@
 package fs
 
 import (
-	"bufio"
 	"context"
 	"io"
 	"os"
-	"strings"
+	"path/filepath"
 )
 
 type darwinFS struct{}
 
 func platformFS() FileOps { return &darwinFS{} }
 
-func (d *darwinFS) RawWriteToBlockDevice(ctx context.Context, srcPath string, devicePath string, onProgress ProgressFunc) error {
-	in, err := os.Open(srcPath)
+func (d *darwinFS) CopyDir(ctx context.Context, src, dst string, opts CopyOptions, onProgress ProgressFunc) error {
+	// First pass: calculate total size of files to copy
+	var totalBytes int64
+	err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		// Apply filter
+		if opts.Filter != nil && !opts.Filter(relPath, info) {
+			return nil
+		}
+
+		totalBytes += info.Size()
+		return nil
+	})
 	if err != nil {
 		return err
 	}
-	defer in.Close()
 
-	dev := devicePath
-	if strings.HasPrefix(dev, "/dev/disk") {
-		dev = strings.Replace(dev, "/dev/disk", "/dev/rdisk", 1)
-	}
-	out, err := os.OpenFile(dev, os.O_WRONLY, 0)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
+	// Second pass: copy files with progress
+	var writtenBytes int64
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-	buf := make([]byte, 4<<20)
-	reader := bufio.NewReader(in)
-	var written int64
-	fi, _ := in.Stat()
-	total := fi.Size()
-	for {
+		// Check for cancellation
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
-		n, rerr := reader.Read(buf)
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			return os.MkdirAll(dstPath, 0755)
+		}
+
+		// Apply filter
+		if opts.Filter != nil && !opts.Filter(relPath, info) {
+			return nil
+		}
+
+		// Copy the file with progress
+		written, err := copyFileWithProgress(ctx, path, dstPath, func(fileWrote int64) {
+			if onProgress != nil {
+				onProgress(writtenBytes+fileWrote, totalBytes)
+			}
+		})
+		if err != nil {
+			return err
+		}
+		writtenBytes += written
+
+		return nil
+	})
+}
+
+// copyFileWithProgress copies a single file and calls onProgress with bytes written for this file.
+// Returns the total bytes written.
+func copyFileWithProgress(ctx context.Context, src, dst string, onProgress func(wrote int64)) (int64, error) {
+	// Ensure parent directory exists
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return 0, err
+	}
+
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer dstFile.Close()
+
+	buf := make([]byte, 2*1024*1024) // 2MB buffer
+	var written int64
+
+	for {
+		select {
+		case <-ctx.Done():
+			return written, ctx.Err()
+		default:
+		}
+
+		n, readErr := srcFile.Read(buf)
 		if n > 0 {
-			if _, werr := out.Write(buf[:n]); werr != nil {
-				return werr
+			if _, writeErr := dstFile.Write(buf[:n]); writeErr != nil {
+				return written, writeErr
 			}
 			written += int64(n)
 			if onProgress != nil {
-				onProgress(written, total)
+				onProgress(written)
 			}
 		}
-		if rerr == io.EOF {
+
+		if readErr == io.EOF {
 			break
 		}
-		if rerr != nil {
-			return rerr
+		if readErr != nil {
+			return written, readErr
 		}
 	}
-	return out.Sync()
+
+	return written, nil
 }

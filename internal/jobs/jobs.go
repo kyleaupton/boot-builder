@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"boot-builder/internal/core"
+	"boot-builder/internal/logger"
 	"context"
 	"sync"
 	"time"
@@ -64,6 +65,8 @@ type execAdapter struct {
 func (e execAdapter) Emit(ev core.Event) { ev.JobID = e.jobID; e.emit(ev) }
 
 func (m *Manager) run(ctx context.Context, job *Job) {
+	logger.Info("job started", "jobID", job.ID, "steps", len(job.Plan.Steps))
+
 	m.mu.Lock()
 	job.Status = StatusRunning
 	job.UpdatedAt = time.Now()
@@ -73,9 +76,11 @@ func (m *Manager) run(ctx context.Context, job *Job) {
 	e := execAdapter{emit: m.emit, jobID: job.ID}
 	total := float64(len(job.Plan.Steps))
 	for i, s := range job.Plan.Steps {
+		logger.Debug("step starting", "jobID", job.ID, "step", s.Name(), "index", i)
 		e.Emit(core.Event{Type: "step-start", Message: s.Name()})
 		err := s.Run(ctx, e)
 		if err != nil {
+			logger.Error("step failed", "jobID", job.ID, "step", s.Name(), "error", err)
 			m.mu.Lock()
 			job.Status = StatusFailed
 			job.UpdatedAt = time.Now()
@@ -83,6 +88,7 @@ func (m *Manager) run(ctx context.Context, job *Job) {
 			m.emit(core.Event{JobID: job.ID, Type: "state", Message: string(job.Status), Error: err.Error()})
 			return
 		}
+		logger.Debug("step completed", "jobID", job.ID, "step", s.Name())
 		m.mu.Lock()
 		job.Progress = float64(i+1) / total
 		job.UpdatedAt = time.Now()
@@ -91,6 +97,7 @@ func (m *Manager) run(ctx context.Context, job *Job) {
 		e.Emit(core.Event{Type: "step-end", Message: s.Name()})
 	}
 
+	logger.Info("job completed", "jobID", job.ID)
 	m.mu.Lock()
 	job.Status = StatusSucceeded
 	job.UpdatedAt = time.Now()

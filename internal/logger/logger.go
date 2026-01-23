@@ -9,9 +9,19 @@ import (
 var L *slog.Logger
 
 func init() {
+	// Default logger - will be replaced by Wails logger via SetLogger()
 	L = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
+}
+
+// SetLogger replaces the default logger with the provided one.
+// Call this with app.Logger after creating the Wails application
+// to unify log formats.
+func SetLogger(l *slog.Logger) {
+	if l != nil {
+		L = l
+	}
 }
 
 // Convenience functions for structured logging

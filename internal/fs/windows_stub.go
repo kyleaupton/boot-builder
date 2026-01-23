@@ -11,7 +11,6 @@ type windowsFS struct{}
 
 func platformFS() FileOps { return &windowsFS{} }
 
-func (w *windowsFS) RawWriteToBlockDevice(ctx context.Context, srcPath string, devicePath string, onProgress ProgressFunc) error {
-	return errors.New("fs.RawWriteToBlockDevice not implemented on windows yet")
+func (w *windowsFS) CopyDir(ctx context.Context, src, dst string, opts CopyOptions, onProgress ProgressFunc) error {
+	return errors.New("fs.CopyDir not implemented on windows yet")
 }
-

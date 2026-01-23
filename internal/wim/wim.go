@@ -83,6 +83,7 @@ static int wim_split_with_cb(const char* src,
 import "C"
 
 import (
+	"boot-builder/internal/logger"
 	"context"
 	"errors"
 	"fmt"
@@ -109,9 +110,12 @@ func Init() error {
 	if libInited {
 		return nil
 	}
+	logger.Debug("initializing wimlib")
 	if ret := C.wimlib_global_init(C.int(0)); ret != 0 {
+		logger.Error("wimlib_global_init failed", "returnCode", int(ret))
 		return fmt.Errorf("wimlib_global_init failed: %d", int(ret))
 	}
+	logger.Debug("wimlib initialized successfully")
 	libInited = true
 	return nil
 }
@@ -123,7 +127,10 @@ func SplitWithProgress(
 	opts SplitOptions,
 	cb func(Progress) bool,
 ) error {
+	logger.Debug("wimlib split starting", "src", srcWIM, "dstPrefix", dstPrefix, "partSizeMiB", opts.PartSizeMiB)
+
 	if err := Init(); err != nil {
+		logger.Error("wimlib init failed", "error", err)
 		return err
 	}
 	if opts.PartSizeMiB <= 0 {
@@ -146,11 +153,14 @@ func SplitWithProgress(
 
 	ret := C.wim_split_with_cb(cSrc, cDst, partBytes, check, unsafe.Pointer(h))
 	if ret == 0 {
+		logger.Debug("wimlib split completed successfully")
 		return nil
 	}
 	if errors.Is(ctx.Err(), context.Canceled) {
+		logger.Warn("wimlib split canceled")
 		return context.Canceled
 	}
+	logger.Error("wimlib split failed", "returnCode", int(ret))
 	return fmt.Errorf("wimlib split failed: %d", int(ret))
 }
 
@@ -161,13 +171,17 @@ type progressState struct {
 
 //export goWimProgress
 func goWimProgress(msg C.int, info *C.union_wimlib_progress_info, user unsafe.Pointer) C.int {
+	logger.Debug("wimlib progress callback", "msg", int(msg))
+
 	h := cgo.Handle(user)
 	st, ok := h.Value().(progressState)
 	if !ok {
+		logger.Warn("wimlib progress: invalid handle")
 		return 0
 	}
 	select {
 	case <-st.ctx.Done():
+		logger.Debug("wimlib progress: context canceled")
 		return 1
 	default:
 	}
@@ -179,6 +193,7 @@ func goWimProgress(msg C.int, info *C.union_wimlib_progress_info, user unsafe.Po
 		p.Phase = "writing"
 		p.DoneBytes = uint64(ws.completed_bytes)
 		p.TotalBytes = uint64(ws.total_bytes)
+		logger.Debug("wimlib progress: write_streams", "done", p.DoneBytes, "total", p.TotalBytes)
 
 	case C.WIMLIB_PROGRESS_MSG_SPLIT_BEGIN_PART:
 		sp := (*C.struct_wimlib_progress_info_split)(unsafe.Pointer(info))
@@ -187,6 +202,7 @@ func goWimProgress(msg C.int, info *C.union_wimlib_progress_info, user unsafe.Po
 		p.TotalParts = uint32(sp.total_parts)
 		p.DoneBytes = uint64(sp.completed_bytes) // overall bytes copied so far
 		p.TotalBytes = uint64(sp.total_bytes)    // overall bytes to copy
+		logger.Debug("wimlib progress: split_begin_part", "part", p.Part, "totalParts", p.TotalParts)
 
 	case C.WIMLIB_PROGRESS_MSG_SPLIT_END_PART:
 		sp := (*C.struct_wimlib_progress_info_split)(unsafe.Pointer(info))
@@ -195,20 +211,20 @@ func goWimProgress(msg C.int, info *C.union_wimlib_progress_info, user unsafe.Po
 		p.TotalParts = uint32(sp.total_parts)
 		p.DoneBytes = uint64(sp.completed_bytes)
 		p.TotalBytes = uint64(sp.total_bytes)
-
-	// If your header exposes integrity progress structs and you opened with CHECK_INTEGRITY,
-	// you can also add:
-	// case C.WIMLIB_PROGRESS_MSG_VERIFY_INTEGRITY:
-	//   vi := (*C.struct_wimlib_progress_info_integrity)(unsafe.Pointer(info))
-	//   p.Phase = "verify"
-	//   p.DoneBytes = uint64(vi.completed_bytes)
-	//   p.TotalBytes = uint64(vi.total_bytes)
+		logger.Debug("wimlib progress: split_end_part", "part", p.Part, "totalParts", p.TotalParts)
 
 	default:
 		p.Phase = "other"
+		logger.Debug("wimlib progress: other message", "msg", int(msg))
 	}
-	if st.cb != nil && !st.cb(p) {
-		return 1
+
+	if st.cb != nil {
+		if !st.cb(p) {
+			logger.Debug("wimlib progress: callback returned false, aborting")
+			return 1
+		}
+	} else {
+		logger.Warn("wimlib progress: no callback registered")
 	}
 	return 0
 }

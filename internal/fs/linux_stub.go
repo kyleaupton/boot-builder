@@ -11,7 +11,6 @@ type linuxFS struct{}
 
 func platformFS() FileOps { return &linuxFS{} }
 
-func (l *linuxFS) RawWriteToBlockDevice(ctx context.Context, srcPath string, devicePath string, onProgress ProgressFunc) error {
-	return errors.New("fs.RawWriteToBlockDevice not implemented on linux yet")
+func (l *linuxFS) CopyDir(ctx context.Context, src, dst string, opts CopyOptions, onProgress ProgressFunc) error {
+	return errors.New("fs.CopyDir not implemented on linux yet")
 }
-

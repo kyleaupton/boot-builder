@@ -3,6 +3,7 @@
 package priv
 
 import (
+	"boot-builder/internal/logger"
 	macosclient "boot-builder/internal/priv/macos"
 	"context"
 	"errors"
@@ -19,16 +20,21 @@ func platformService() PrivilegedService { return &darwinService{} }
 
 func (s *darwinService) EnsureReady(ctx context.Context) error {
 	s.once.Do(func() {
+		logger.Debug("checking privileged helper status")
 		// Try to initialize XPC helper first.
 		c := macosclient.NewClient()
 		if c != nil {
 			if err := c.EnsureReady(ctx); err == nil {
+				logger.Debug("privileged helper ready via XPC")
 				s.client = c
 				s.ready = nil
 				return
+			} else {
+				logger.Warn("XPC helper not ready, falling back", "error", err)
 			}
 		}
 		// Fallback: no helper yet; direct execution will be used.
+		logger.Debug("using fallback privileged execution")
 		s.ready = nil
 	})
 	return s.ready

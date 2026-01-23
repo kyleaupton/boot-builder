@@ -4,6 +4,7 @@ import (
 	"boot-builder/internal/core"
 	"boot-builder/internal/eventbus"
 	"boot-builder/internal/installers/linux"
+	"boot-builder/internal/installers/windows"
 	"boot-builder/internal/jobs"
 	"context"
 	"errors"
@@ -34,6 +35,11 @@ func NewJobsService() *JobsService {
 	// register generic Linux installer
 	l := linux.Linux{}
 	svc.installers[l.ID()] = l
+
+	// register Windows installer
+	w := windows.Windows{}
+	svc.installers[w.ID()] = w
+
 	svc.mgr = jobs.NewManager(func(ev core.Event) {
 		eventbus.Emit("job:event", ev)
 	})
