@@ -9,8 +9,9 @@ import DriveSelector from '@/components/DriveSelector.vue'
 import ProgressPanel from '@/components/ProgressPanel.vue'
 import StatusAlert from '@/components/StatusAlert.vue'
 import FlashButton from '@/components/FlashButton.vue'
-import StepIndicator from '@/components/StepIndicator.vue'
 import { Toaster } from '@/components/ui/sonner'
+import 'vue-sonner/style.css'
+
 
 // Initialize stores
 const drivesStore = useDrivesStore()
@@ -27,26 +28,16 @@ const appState = computed((): AppState => {
   return 'empty'
 })
 
-// Step number for the stepper based on app state
-const currentStepNumber = computed((): 1 | 2 | 3 => {
-  switch (appState.value) {
-    case 'empty':
-    case 'source-only':
-      return sourceStore.hasSource ? 2 : 1
-    case 'ready':
-      return 2
-    case 'in-progress':
-    case 'complete':
-    case 'error':
-      return 3
-    default:
-      return 1
-  }
+// Show the selection panels (source + drive) vs centered progress/status view
+const showSelectionView = computed(() => {
+  return !['in-progress', 'complete', 'error'].includes(appState.value)
 })
 
 // Start job handler
 async function handleStartJob() {
   if (!sourceStore.source || !drivesStore.selectedDrive || !sourceStore.detectedInstaller) {
+    // TODO: Communicate this to the user
+    console.warn('Please select a source and drive', sourceStore.source, drivesStore.selectedDrive, sourceStore.detectedInstaller)
     return
   }
 
@@ -79,91 +70,86 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app-container">
-    <header class="app-header">
-      <h1 class="app-title">Boot Builder</h1>
-      <StepIndicator :current-step="currentStepNumber" />
+  <div class="flex flex-col min-h-screen bg-background text-foreground">
+    <header class="app-header p-4 text-center">
+      <h1 class="text-xl font-semibold m-0">Boot Builder</h1>
     </header>
 
     <Toaster position="bottom-center" />
 
-    <!-- Main Content -->
-    <main class="app-main">
-      <SourceDropzone />
-      <DriveSelector
-        v-if="sourceStore.hasSource && appState !== 'in-progress' && appState !== 'complete' && appState !== 'error'"
-      />
-      <ProgressPanel v-if="appState === 'in-progress'" />
-      <StatusAlert
-        v-if="appState === 'complete' || appState === 'error'"
-        :status="appState"
-        :error="jobStore.error"
-      />
+    <!-- Selection View: Source + Drive panels -->
+    <main v-if="showSelectionView" class="flex-1 flex flex-col justify-between px-4 pb-4">
+      <div
+        class="flex gap-4 w-full mx-auto transition-all duration-400 ease-out"
+        :class="sourceStore.hasSource ? 'max-w-[800px]' : 'max-w-[500px]'"
+      >
+        <div class="flex-1 min-w-0 transition-all duration-400 ease-out">
+          <SourceDropzone />
+        </div>
+        <Transition name="slide-in">
+          <div v-if="sourceStore.hasSource" class="flex-1 min-w-0">
+            <DriveSelector />
+          </div>
+        </Transition>
+      </div>
+
+      <!-- Flash Button (shown when source selected, disabled until drive selected) -->
+      <div
+        v-if="sourceStore.hasSource"
+        class="w-full max-w-[800px] mx-auto mt-4"
+      >
+        <FlashButton
+          :loading="jobStore.isStarting"
+          :disabled="appState !== 'ready'"
+          @click="handleStartJob"
+        />
+      </div>
     </main>
 
-    <footer class="app-footer">
-      <FlashButton
-        v-if="appState === 'ready'"
-        :loading="jobStore.isStarting"
-        @click="handleStartJob"
-      />
+    <!-- Progress/Status View: Centered -->
+    <main v-else class="flex-1 flex flex-col items-center justify-center px-4 pb-4">
+      <div class="w-full max-w-[400px] flex flex-col gap-6">
+        <ProgressPanel v-if="appState === 'in-progress'" />
 
-      <Button
-        v-if="appState === 'complete' || appState === 'error'"
-        size="lg"
-        variant="secondary"
-        class="reset-button"
-        @click="handleReset"
-      >
-        Start Over
-      </Button>
-    </footer>
+        <template v-if="appState === 'complete' || appState === 'error'">
+          <StatusAlert
+            :status="appState"
+            :error="jobStore.error"
+          />
+
+          <Button
+            size="lg"
+            variant="secondary"
+            class="w-full h-12 text-base"
+            @click="handleReset"
+          >
+            Start Over
+          </Button>
+        </template>
+      </div>
+    </main>
   </div>
 </template>
 
 <style scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: var(--background);
-  color: var(--foreground);
-}
-
+/* Wails window drag region */
 .app-header {
-  padding: 1rem 1.5rem;
-  text-align: center;
   --wails-draggable: drag;
 }
 
-.app-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-  color: var(--foreground);
+/* Slide-in transition for drive panel */
+.slide-in-enter-active {
+  transition: all 0.4s ease;
+  transition-delay: 0.1s;
 }
 
-.app-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0 1.5rem;
-  max-width: 500px;
-  width: 100%;
-  margin: 0 auto;
+.slide-in-leave-active {
+  transition: all 0.3s ease;
 }
 
-.app-footer {
-  padding: 1.5rem;
-  max-width: 500px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.reset-button {
-  width: 100%;
-  height: 3rem;
-  font-size: 1rem;
+.slide-in-enter-from,
+.slide-in-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
 }
 </style>
