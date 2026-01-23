@@ -51,7 +51,7 @@ export const useSourceStore = defineStore('source', () => {
 
     // Pattern matching - can be extended as more installers are added
     if (lower.includes('ubuntu') || lower.includes('linux')) {
-      return installers.value.find((i) => i.ID === 'linux.ubuntu') ?? null
+      return installers.value.find((i) => i.ID === 'linux') ?? null
     }
     if (lower.includes('windows') || lower.includes('win10') || lower.includes('win11')) {
       return installers.value.find((i) => i.ID === 'windows') ?? null

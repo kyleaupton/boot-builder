@@ -3,7 +3,7 @@ package service
 import (
 	"boot-builder/internal/core"
 	"boot-builder/internal/eventbus"
-	"boot-builder/internal/installers/linux/ubuntu"
+	"boot-builder/internal/installers/linux"
 	"boot-builder/internal/jobs"
 	"context"
 	"errors"
@@ -31,9 +31,9 @@ func NewJobsService() *JobsService {
 	svc := &JobsService{
 		installers: map[string]core.Installer{},
 	}
-	// register Ubuntu installer
-	u := ubuntu.Ubuntu{}
-	svc.installers[u.ID()] = u
+	// register generic Linux installer
+	l := linux.Linux{}
+	svc.installers[l.ID()] = l
 	svc.mgr = jobs.NewManager(func(ev core.Event) {
 		eventbus.Emit("job:event", ev)
 	})
