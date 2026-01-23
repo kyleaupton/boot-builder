@@ -8,6 +8,7 @@ import (
 	"embed"
 	_ "embed"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -41,6 +42,7 @@ func main() {
 	app := application.New(application.Options{
 		Name:        "boot-builder",
 		Description: "A demo of using raw HTML & CSS",
+		LogLevel:    slog.LevelInfo,
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
