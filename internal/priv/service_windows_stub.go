@@ -22,3 +22,7 @@ type windowsDiskOps struct{}
 func (w windowsDiskOps) WriteISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error {
 	return errors.New("not implemented on windows yet")
 }
+
+func (w windowsDiskOps) FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error {
+	return errors.New("not implemented on windows yet")
+}

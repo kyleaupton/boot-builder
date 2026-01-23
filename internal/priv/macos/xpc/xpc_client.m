@@ -28,6 +28,10 @@ extern void GoProgressCallback(uint64_t written, uint64_t total);
               isoPath:(NSString *)isoPath
      progressReporter:(id<BBProgressReporter>)reporter
                 reply:(void (^)(BOOL success, NSString *err))reply;
+- (void)formatDisk:(NSString *)device
+        filesystem:(NSString *)filesystem
+        volumeName:(NSString *)volumeName
+             reply:(void (^)(BOOL success, NSString *err))reply;
 @end
 
 /// Progress reporter implementation that bridges to Go via CGO callback.
@@ -178,5 +182,56 @@ int helper_write_linux_iso(const char *device, const char *isoPath, char **errms
     }
 
     NSLog(@"[helper_write_linux_iso] success=%d", success);
+    return success ? 0 : 1;
+}
+
+// Format a disk with the specified filesystem and volume name
+// Returns: 0 on success, 1 on error
+int helper_format_disk(const char *device, const char *filesystem, const char *volumeName, char **errmsg) {
+    NSLog(@"[helper_format_disk] device=%@ filesystem=%@ volumeName=%@",
+          [NSString stringWithUTF8String:device],
+          [NSString stringWithUTF8String:filesystem],
+          [NSString stringWithUTF8String:volumeName]);
+
+    NSXPCConnection *conn = create_helper_connection();
+    if (!conn) {
+        setError(@"failed to create XPC connection", errmsg);
+        return 1;
+    }
+
+    __block BOOL success = NO;
+    __block NSString *serr = nil;
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+
+    id<BBPrivilegedHelper> proxy = [conn remoteObjectProxyWithErrorHandler:^(NSError *error) {
+        NSLog(@"[helper_format_disk] XPC error: %@", error);
+        serr = [NSString stringWithFormat:@"XPC error: %@", error.localizedDescription];
+        dispatch_semaphore_signal(sema);
+    }];
+
+    [proxy formatDisk:[NSString stringWithUTF8String:device]
+           filesystem:[NSString stringWithUTF8String:filesystem]
+           volumeName:[NSString stringWithUTF8String:volumeName]
+                reply:^(BOOL s, NSString *e) {
+        success = s;
+        serr = e;
+        dispatch_semaphore_signal(sema);
+    }];
+
+    // Formatting typically takes less than a minute
+    long timeout = dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(300 * NSEC_PER_SEC)));
+    [conn invalidate];
+
+    if (timeout != 0) {
+        setError(@"timeout waiting for helper (>5 minutes)", errmsg);
+        return 1;
+    }
+
+    if (!success && serr) {
+        setError(serr, errmsg);
+        return 1;
+    }
+
+    NSLog(@"[helper_format_disk] success=%d", success);
     return success ? 0 : 1;
 }

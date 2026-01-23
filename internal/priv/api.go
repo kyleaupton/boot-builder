@@ -16,6 +16,12 @@ type DiskOps interface {
 	// The progress callback receives (bytesWritten, totalBytes) updates during the write.
 	// Pass nil if progress updates are not needed.
 	WriteISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error
+
+	// FormatDisk formats a disk with the specified filesystem.
+	// On macOS, this uses diskutil eraseDisk.
+	// Supported filesystems: FAT32, ExFAT, APFS, HFS+
+	// The volumeName is the label for the new volume.
+	FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error
 }
 
 // PrivilegedService provides access to privileged operations.

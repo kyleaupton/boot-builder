@@ -501,4 +501,97 @@ cleanup:
     reply(success, errorMessage);
 }
 
+- (void)formatDisk:(NSString *)device
+        filesystem:(NSString *)filesystem
+        volumeName:(NSString *)volumeName
+             reply:(void (^)(BOOL, NSString *))reply {
+
+    NSLog(@"[Helper] formatDisk: device=%@ filesystem=%@ volumeName=%@ (build: %s)",
+          device, filesystem, volumeName, HELPER_BUILD_VERSION);
+
+    // Validate inputs
+    if (!device || device.length == 0) {
+        reply(NO, @"Device not specified");
+        return;
+    }
+
+    if (!filesystem || filesystem.length == 0) {
+        reply(NO, @"Filesystem not specified");
+        return;
+    }
+
+    if (!volumeName || volumeName.length == 0) {
+        reply(NO, @"Volume name not specified");
+        return;
+    }
+
+    if (![device hasPrefix:@"/dev/"]) {
+        reply(NO, @"Invalid device path - must start with /dev/");
+        return;
+    }
+
+    // Safety check: prevent formatting disk0
+    NSString *bsdName = [self bsdNameFromDevice:device];
+    if ([bsdName isEqualToString:@"disk0"]) {
+        NSLog(@"[Helper] BLOCKED: Refusing to format disk0");
+        reply(NO, @"Refusing to format /dev/disk0 (system disk)");
+        return;
+    }
+
+    // Validate filesystem type
+    NSArray *validFilesystems = @[@"FAT32", @"ExFAT", @"APFS", @"HFS+", @"JHFS+", @"MS-DOS"];
+    NSString *fsUpper = [filesystem uppercaseString];
+
+    // Map common names to diskutil names
+    NSString *diskutilFS = filesystem;
+    if ([fsUpper isEqualToString:@"FAT32"]) {
+        diskutilFS = @"FAT32";
+    } else if ([fsUpper isEqualToString:@"EXFAT"]) {
+        diskutilFS = @"ExFAT";
+    } else if ([fsUpper isEqualToString:@"HFS+"]) {
+        diskutilFS = @"HFS+";
+    }
+
+    BOOL validFS = NO;
+    for (NSString *valid in validFilesystems) {
+        if ([fsUpper isEqualToString:[valid uppercaseString]]) {
+            validFS = YES;
+            break;
+        }
+    }
+
+    if (!validFS) {
+        reply(NO, [NSString stringWithFormat:@"Unsupported filesystem: %@. Supported: FAT32, ExFAT, APFS, HFS+", filesystem]);
+        return;
+    }
+
+    NSLog(@"[Helper] Formatting %@ as %@ with label '%@'...", device, diskutilFS, volumeName);
+
+    NSString *output = nil;
+    NSString *error = nil;
+    NSInteger status = 0;
+
+    // diskutil eraseDisk <filesystem> <volumeName> <device>
+    // Use MBR partition scheme for FAT32 (better compatibility with Windows)
+    // Use GPT for other filesystems
+    NSString *partitionScheme = ([fsUpper isEqualToString:@"FAT32"] || [fsUpper isEqualToString:@"EXFAT"]) ? @"MBR" : @"GPT";
+
+    BOOL success = [self runCommand:@"/usr/sbin/diskutil"
+                          arguments:@[@"eraseDisk", diskutilFS, volumeName, partitionScheme, device]
+                             output:&output
+                              error:&error
+                             status:&status];
+
+    if (!success) {
+        NSString *errMsg = [NSString stringWithFormat:@"diskutil eraseDisk failed (status %ld): %@ %@",
+                           (long)status, output ?: @"", error ?: @""];
+        NSLog(@"[Helper] %@", errMsg);
+        reply(NO, errMsg);
+        return;
+    }
+
+    NSLog(@"[Helper] formatDisk completed successfully");
+    reply(YES, nil);
+}
+
 @end

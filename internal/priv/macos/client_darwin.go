@@ -31,3 +31,7 @@ func (c *xpcClientWrapper) WriteLinuxISO(ctx context.Context, isoPath string, de
 	}
 	return c.client.WriteLinuxISO(ctx, isoPath, device, xpcProgress)
 }
+
+func (c *xpcClientWrapper) FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error {
+	return c.client.FormatDisk(ctx, device, filesystem, volumeName)
+}

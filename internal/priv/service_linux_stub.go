@@ -22,3 +22,7 @@ type linuxDiskOps struct{}
 func (l linuxDiskOps) WriteISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error {
 	return errors.New("not implemented on linux yet")
 }
+
+func (l linuxDiskOps) FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error {
+	return errors.New("not implemented on linux yet")
+}

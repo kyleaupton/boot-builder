@@ -53,6 +53,12 @@ func (d darwinDiskOps) WriteISO(ctx context.Context, isoPath string, device stri
 	return errors.New("WriteISO requires the privileged helper to be installed")
 }
 
+func (d darwinDiskOps) FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error {
+	// Without the XPC helper, we can't format disks on modern macOS
+	// due to disk access restrictions.
+	return errors.New("FormatDisk requires the privileged helper to be installed")
+}
+
 // darwinDiskOpsXPC uses the privileged XPC helper for disk operations.
 type darwinDiskOpsXPC struct{ client macosclient.Client }
 
@@ -65,4 +71,8 @@ func (d *darwinDiskOpsXPC) WriteISO(ctx context.Context, isoPath string, device 
 		}
 	}
 	return d.client.WriteLinuxISO(ctx, isoPath, device, macosProgress)
+}
+
+func (d *darwinDiskOpsXPC) FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error {
+	return d.client.FormatDisk(ctx, device, filesystem, volumeName)
 }

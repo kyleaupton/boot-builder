@@ -29,4 +29,14 @@
      progressReporter:(id<BBProgressReporter>)reporter
                 reply:(void (^)(BOOL success, NSString *error))reply;
 
+/// Format a disk with the specified filesystem
+/// @param device Target device path (e.g., "/dev/disk4") - must be whole disk
+/// @param filesystem Filesystem type (e.g., "FAT32", "ExFAT", "APFS", "HFS+")
+/// @param volumeName Label for the new volume
+/// @param reply Callback with (success, error message) - called once at end
+- (void)formatDisk:(NSString *)device
+        filesystem:(NSString *)filesystem
+        volumeName:(NSString *)volumeName
+             reply:(void (^)(BOOL success, NSString *error))reply;
+
 @end

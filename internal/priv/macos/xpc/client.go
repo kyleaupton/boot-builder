@@ -12,6 +12,7 @@ package xpc
 // C-callable functions implemented in xpc_client.m
 int helper_ensure_ready(char **errmsg);
 int helper_write_linux_iso(const char *device, const char *isoPath, char **errmsg);
+int helper_format_disk(const char *device, const char *filesystem, const char *volumeName, char **errmsg);
 */
 import "C"
 
@@ -91,6 +92,29 @@ func (c *Client) WriteLinuxISO(ctx context.Context, isoPath string, device strin
 			return errors.New(C.GoString(cerr))
 		}
 		return errors.New("failed to write Linux ISO to disk")
+	}
+
+	return nil
+}
+
+// FormatDisk formats a disk with the specified filesystem and volume name.
+// This uses diskutil eraseDisk under the hood.
+func (c *Client) FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error {
+	cdev := C.CString(device)
+	defer C.free(unsafe.Pointer(cdev))
+	cfs := C.CString(filesystem)
+	defer C.free(unsafe.Pointer(cfs))
+	cname := C.CString(volumeName)
+	defer C.free(unsafe.Pointer(cname))
+	var cerr *C.char
+
+	ret := C.helper_format_disk(cdev, cfs, cname, &cerr)
+	if ret != 0 {
+		if cerr != nil {
+			defer C.free(unsafe.Pointer(cerr))
+			return errors.New(C.GoString(cerr))
+		}
+		return errors.New("failed to format disk")
 	}
 
 	return nil

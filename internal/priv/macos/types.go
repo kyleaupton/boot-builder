@@ -18,4 +18,7 @@ type Client interface {
 	// The progress callback receives (bytesWritten, totalBytes) updates during the write.
 	// Pass nil if progress updates are not needed.
 	WriteLinuxISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error
+	// FormatDisk formats a disk with the specified filesystem and volume name.
+	// Supported filesystems: FAT32, ExFAT, APFS, HFS+
+	FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error
 }
