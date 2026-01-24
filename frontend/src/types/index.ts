@@ -40,6 +40,7 @@ export type AppState =
   | 'ready'       // Both selected, can flash
   | 'in-progress' // Flashing in progress
   | 'complete'    // Successfully finished
+  | 'cancelled'   // User cancelled the operation
   | 'error'       // Error occurred
 
 /** Source file info after selection/detection */

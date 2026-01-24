@@ -1,6 +1,12 @@
 package macos
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+// ErrCancelled is returned when an operation is cancelled by the user.
+var ErrCancelled = errors.New("operation cancelled")
 
 // ProgressFunc is the callback type for write progress updates.
 // bytesWritten: total bytes written so far
@@ -21,4 +27,7 @@ type Client interface {
 	// FormatDisk formats a disk with the specified filesystem and volume name.
 	// Supported filesystems: FAT32, ExFAT, APFS, HFS+
 	FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error
+	// CancelCurrentOperation cancels the currently running operation (if any).
+	// This is safe to call even if no operation is running.
+	CancelCurrentOperation()
 }

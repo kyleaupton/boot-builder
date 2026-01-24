@@ -22,6 +22,7 @@ const jobStore = useJobStore()
 const appState = computed((): AppState => {
   if (jobStore.isFailed || jobStore.error) return 'error'
   if (jobStore.isRunning || jobStore.isPending) return 'in-progress'
+  if (jobStore.isCancelled) return 'cancelled'
   if (jobStore.isComplete) return 'complete'
   if (sourceStore.hasSource && drivesStore.selectedDrive) return 'ready'
   if (sourceStore.hasSource) return 'source-only'
@@ -30,7 +31,7 @@ const appState = computed((): AppState => {
 
 // Show the selection panels (source + drive) vs centered progress/status view
 const showSelectionView = computed(() => {
-  return !['in-progress', 'complete', 'error'].includes(appState.value)
+  return !['in-progress', 'complete', 'cancelled', 'error'].includes(appState.value)
 })
 
 // Start job handler
@@ -111,7 +112,7 @@ onMounted(() => {
       <div class="w-full max-w-[400px] flex flex-col gap-6">
         <ProgressPanel v-if="appState === 'in-progress'" />
 
-        <template v-if="appState === 'complete' || appState === 'error'">
+        <template v-if="appState === 'complete' || appState === 'cancelled' || appState === 'error'">
           <StatusAlert
             :status="appState"
             :error="jobStore.error"

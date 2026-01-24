@@ -13,6 +13,7 @@ package xpc
 int helper_ensure_ready(char **errmsg);
 int helper_write_linux_iso(const char *device, const char *isoPath, char **errmsg);
 int helper_format_disk(const char *device, const char *filesystem, const char *volumeName, char **errmsg);
+void helper_cancel_current_operation(void);
 */
 import "C"
 
@@ -62,12 +63,23 @@ func (c *Client) EnsureReady(ctx context.Context) error {
 	return nil
 }
 
+// ErrCancelled is returned when an operation is cancelled by the user.
+var ErrCancelled = errors.New("operation cancelled")
+
+// CancelCurrentOperation cancels the currently running operation (if any).
+// This is safe to call even if no operation is running.
+func (c *Client) CancelCurrentOperation() {
+	C.helper_cancel_current_operation()
+}
+
 // WriteLinuxISO writes a Linux ISO to a disk using Disk Arbitration and direct I/O.
 // This is a long-running operation that can take several minutes for large ISOs.
 // The pipeline is: DA session → claim disk → unmount → raw write → eject → unclaim
 //
 // The progress callback receives (bytesWritten, totalBytes) updates during the write.
 // Pass nil if progress updates are not needed.
+//
+// If the context is cancelled, the operation will be cancelled and ErrCancelled returned.
 func (c *Client) WriteLinuxISO(ctx context.Context, isoPath string, device string, progress ProgressFunc) error {
 	// Set the progress callback (only one write at a time is supported)
 	progressMu.Lock()
@@ -77,6 +89,19 @@ func (c *Client) WriteLinuxISO(ctx context.Context, isoPath string, device strin
 		progressMu.Lock()
 		progressCallback = nil
 		progressMu.Unlock()
+	}()
+
+	// Set up context cancellation goroutine
+	done := make(chan struct{})
+	defer close(done)
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			c.CancelCurrentOperation()
+		case <-done:
+			// Operation completed normally, exit goroutine
+		}
 	}()
 
 	cdev := C.CString(device)
@@ -89,7 +114,12 @@ func (c *Client) WriteLinuxISO(ctx context.Context, isoPath string, device strin
 	if ret != 0 {
 		if cerr != nil {
 			defer C.free(unsafe.Pointer(cerr))
-			return errors.New(C.GoString(cerr))
+			errMsg := C.GoString(cerr)
+			// Check for cancellation error (prefixed with "cancelled:")
+			if len(errMsg) > 10 && errMsg[:10] == "cancelled:" {
+				return ErrCancelled
+			}
+			return errors.New(errMsg)
 		}
 		return errors.New("failed to write Linux ISO to disk")
 	}

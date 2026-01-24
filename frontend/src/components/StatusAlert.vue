@@ -11,6 +11,7 @@ const props = defineProps<{
 const showDetails = ref(false)
 
 const isSuccess = computed(() => props.status === 'complete')
+const isCancelled = computed(() => props.status === 'cancelled')
 const isError = computed(() => props.status === 'error')
 </script>
 
@@ -34,6 +35,29 @@ const isError = computed(() => props.status === 'error')
     <AlertTitle>Success</AlertTitle>
     <AlertDescription>
       Your bootable USB drive has been created successfully. You can safely remove it now.
+    </AlertDescription>
+  </Alert>
+
+  <!-- Cancelled Alert -->
+  <Alert v-else-if="isCancelled" class="cancelled-alert">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6" />
+      <path d="m9 9 6 6" />
+    </svg>
+    <AlertTitle>Cancelled</AlertTitle>
+    <AlertDescription>
+      The operation was cancelled. Your drive may be in an incomplete state.
     </AlertDescription>
   </Alert>
 
@@ -77,6 +101,15 @@ const isError = computed(() => props.status === 'error')
 
 .success-alert svg {
   color: var(--chart-2);
+}
+
+.cancelled-alert {
+  border-color: var(--muted-foreground);
+  background: color-mix(in oklch, var(--muted-foreground) 10%, var(--card));
+}
+
+.cancelled-alert svg {
+  color: var(--muted-foreground);
 }
 
 .error-alert {

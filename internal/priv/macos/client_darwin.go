@@ -5,6 +5,7 @@ package macos
 import (
 	"boot-builder/internal/priv/macos/xpc"
 	"context"
+	"errors"
 )
 
 // xpcClientWrapper wraps the xpc.Client to implement the macos.Client interface.
@@ -29,9 +30,18 @@ func (c *xpcClientWrapper) WriteLinuxISO(ctx context.Context, isoPath string, de
 			progress(written, total)
 		}
 	}
-	return c.client.WriteLinuxISO(ctx, isoPath, device, xpcProgress)
+	err := c.client.WriteLinuxISO(ctx, isoPath, device, xpcProgress)
+	// Convert xpc.ErrCancelled to macos.ErrCancelled for consistent error checking
+	if errors.Is(err, xpc.ErrCancelled) {
+		return ErrCancelled
+	}
+	return err
 }
 
 func (c *xpcClientWrapper) FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error {
 	return c.client.FormatDisk(ctx, device, filesystem, volumeName)
+}
+
+func (c *xpcClientWrapper) CancelCurrentOperation() {
+	c.client.CancelCurrentOperation()
 }

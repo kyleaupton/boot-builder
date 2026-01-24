@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { Events } from '@wailsio/runtime'
 import { toast } from 'vue-sonner'
-import { StartJob, ListJobs } from '@bindings/boot-builder/internal/service/jobsservice'
+import { StartJob, ListJobs, CancelJob } from '@bindings/boot-builder/internal/service/jobsservice'
 import { Status } from '@bindings/boot-builder/internal/jobs/models'
 import type { Job, JobEvent, StartJobRequest, StepState } from '@/types'
 import { WailsEventNames } from '@/composables'
@@ -16,6 +16,7 @@ export const useJobStore = defineStore('job', () => {
   const currentMessage = ref<string | null>(null)
   const error = ref<string | null>(null)
   const isStarting = ref(false)
+  const isCancelling = ref(false)
   const steps = ref<StepState[]>([])
 
   // Event subscription handle
@@ -35,6 +36,7 @@ export const useJobStore = defineStore('job', () => {
   const isComplete = computed(() => status.value === Status.StatusSucceeded)
   const isFailed = computed(() => status.value === Status.StatusFailed)
   const isPending = computed(() => status.value === Status.StatusPending)
+  const isCancelled = computed(() => status.value === Status.StatusCancelled)
   const isIdle = computed(() => !currentJobId.value || (!isRunning.value && !isPending.value))
   const currentRunningStep = computed(() => steps.value.find((s) => s.status === 'running'))
 
@@ -66,6 +68,7 @@ export const useJobStore = defineStore('job', () => {
             running: Status.StatusRunning,
             succeeded: Status.StatusSucceeded,
             failed: Status.StatusFailed,
+            cancelled: Status.StatusCancelled,
           }
           job.Status = stateMap[event.message] ?? job.Status
 
@@ -79,6 +82,11 @@ export const useJobStore = defineStore('job', () => {
             }
           }
 
+          // Clear cancelling state when we get final status
+          if (event.message === 'cancelled' || event.message === 'succeeded' || event.message === 'failed') {
+            isCancelling.value = false
+          }
+
           // Show toast notifications on completion
           if (event.message === 'succeeded') {
             toast.success('Flash complete!', {
@@ -87,6 +95,10 @@ export const useJobStore = defineStore('job', () => {
           } else if (event.message === 'failed') {
             toast.error('Flash failed', {
               description: event.error || 'Check the error details for more information.',
+            })
+          } else if (event.message === 'cancelled') {
+            toast.info('Flash cancelled', {
+              description: 'The operation was cancelled.',
             })
           }
         }
@@ -224,6 +236,25 @@ export const useJobStore = defineStore('job', () => {
     }
   }
 
+  async function cancelJob(): Promise<boolean> {
+    if (!currentJobId.value) {
+      return false
+    }
+
+    isCancelling.value = true
+    try {
+      const cancelled = await CancelJob(currentJobId.value)
+      if (!cancelled) {
+        isCancelling.value = false
+      }
+      return cancelled
+    } catch (e) {
+      console.error('Failed to cancel job:', e)
+      isCancelling.value = false
+      return false
+    }
+  }
+
   function clearCurrentJob(): void {
     currentJobId.value = null
     progress.value = 0
@@ -242,6 +273,7 @@ export const useJobStore = defineStore('job', () => {
     currentMessage.value = null
     error.value = null
     isStarting.value = false
+    isCancelling.value = false
     steps.value = []
     pendingEvents = []
   }
@@ -255,6 +287,7 @@ export const useJobStore = defineStore('job', () => {
     currentMessage,
     error,
     isStarting,
+    isCancelling,
     steps,
     // Getters
     currentJob,
@@ -263,6 +296,7 @@ export const useJobStore = defineStore('job', () => {
     isComplete,
     isFailed,
     isPending,
+    isCancelled,
     isIdle,
     currentRunningStep,
     // Actions
@@ -270,6 +304,7 @@ export const useJobStore = defineStore('job', () => {
     unsubscribeFromEvents,
     startJob,
     refreshJobs,
+    cancelJob,
     clearCurrentJob,
     $reset,
   }

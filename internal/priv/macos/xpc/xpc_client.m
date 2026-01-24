@@ -14,6 +14,10 @@
 static const char *kHelperLabel = "dev.kyleupton.boot-builder.helper";
 static const char *kHelperBundleID = "dev.kyleupton.boot-builder.helper";
 
+// Active XPC connection for the current operation.
+// Used to send cancel requests over the same connection as the operation.
+static NSXPCConnection *_activeConnection = nil;
+
 // CGO callback function exported from Go
 extern void GoProgressCallback(uint64_t written, uint64_t total);
 
@@ -32,6 +36,7 @@ extern void GoProgressCallback(uint64_t written, uint64_t total);
         filesystem:(NSString *)filesystem
         volumeName:(NSString *)volumeName
              reply:(void (^)(BOOL success, NSString *err))reply;
+- (void)cancelCurrentOperation;
 @end
 
 /// Progress reporter implementation that bridges to Go via CGO callback.
@@ -142,6 +147,9 @@ int helper_write_linux_iso(const char *device, const char *isoPath, char **errms
         return 1;
     }
 
+    // Store connection globally so cancel can use it
+    _activeConnection = conn;
+
     // Create progress reporter and export it on the connection
     WriteProgressReporter *reporter = [[WriteProgressReporter alloc] init];
     conn.exportedObject = reporter;
@@ -169,6 +177,9 @@ int helper_write_linux_iso(const char *device, const char *isoPath, char **errms
 
     // Very long timeout - direct I/O can take many minutes for large ISOs (4-6GB)
     long timeout = dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3600 * NSEC_PER_SEC)));
+
+    // Clear active connection and invalidate
+    _activeConnection = nil;
     [conn invalidate];
 
     if (timeout != 0) {
@@ -234,4 +245,24 @@ int helper_format_disk(const char *device, const char *filesystem, const char *v
 
     NSLog(@"[helper_format_disk] success=%d", success);
     return success ? 0 : 1;
+}
+
+// Cancel the currently running operation (if any).
+// Sends the cancel request over the same connection as the active operation.
+// Safe to call even if no operation is running (no-op).
+void helper_cancel_current_operation(void) {
+    NSXPCConnection *conn = _activeConnection;
+    if (!conn) {
+        NSLog(@"[helper_cancel_current_operation] No active connection - ignoring");
+        return;
+    }
+
+    NSLog(@"[helper_cancel_current_operation] Sending cancel request");
+
+    id<BBPrivilegedHelper> proxy = [conn remoteObjectProxyWithErrorHandler:^(NSError *error) {
+        NSLog(@"[helper_cancel_current_operation] XPC error: %@", error);
+    }];
+
+    // Fire and forget - the operation's reply block will be called with the cancel error
+    [proxy cancelCurrentOperation];
 }

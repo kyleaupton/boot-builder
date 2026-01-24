@@ -39,4 +39,10 @@
         volumeName:(NSString *)volumeName
              reply:(void (^)(BOOL success, NSString *error))reply;
 
+/// Cancel the currently running operation (if any).
+/// Idempotent - safe to call multiple times or when no operation is running.
+/// The cancelled operation's reply block will be called with success=NO and
+/// an error message indicating cancellation.
+- (void)cancelCurrentOperation;
+
 @end

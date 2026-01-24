@@ -3,11 +3,17 @@ import { computed } from 'vue'
 import { useJobStore } from '@/stores'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { Check, Circle, Loader2, X } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Check, Circle, Loader2, X, XCircle } from 'lucide-vue-next'
 
 const jobStore = useJobStore()
 const steps = computed(() => jobStore.steps)
 const isActive = computed(() => jobStore.isRunning || jobStore.isPending)
+const isCancelling = computed(() => jobStore.isCancelling)
+
+async function handleCancel() {
+  await jobStore.cancelJob()
+}
 </script>
 
 <template>
@@ -15,8 +21,22 @@ const isActive = computed(() => jobStore.isRunning || jobStore.isPending)
     <CardHeader class="progress-header">
       <div class="progress-header-row">
         <CardTitle class="progress-title">Creating Bootable USB</CardTitle>
-        <div v-if="isActive" class="active-indicator">
-          <div class="pulse-dot" />
+        <div class="header-actions">
+          <div v-if="isActive && !isCancelling" class="active-indicator">
+            <div class="pulse-dot" />
+          </div>
+          <Button
+            v-if="isActive"
+            variant="ghost"
+            size="sm"
+            class="cancel-button"
+            :disabled="isCancelling"
+            @click="handleCancel"
+          >
+            <Loader2 v-if="isCancelling" class="cancel-icon spinning" />
+            <XCircle v-else class="cancel-icon" />
+            <span>{{ isCancelling ? 'Cancelling...' : 'Cancel' }}</span>
+          </Button>
         </div>
       </div>
     </CardHeader>
@@ -79,9 +99,36 @@ const isActive = computed(() => jobStore.isRunning || jobStore.isPending)
   color: var(--muted-foreground);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .active-indicator {
   display: flex;
   align-items: center;
+}
+
+.cancel-button {
+  height: 1.75rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  gap: 0.25rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.cancel-button:hover {
+  color: hsl(var(--destructive));
+}
+
+.cancel-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.cancel-icon.spinning {
+  animation: spin 1s linear infinite;
 }
 
 .pulse-dot {

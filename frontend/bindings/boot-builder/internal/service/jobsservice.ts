@@ -13,6 +13,14 @@ import * as jobs$0 from "../jobs/models.js";
 // @ts-ignore: Unused imports
 import * as $models from "./models.js";
 
+/**
+ * CancelJob cancels a running job by ID.
+ * Returns true if the job was found and cancelled, false if not found or already completed.
+ */
+export function CancelJob(jobID: string): $CancellablePromise<boolean> {
+    return $Call.ByID(770981431, jobID);
+}
+
 export function ListInstallers(): $CancellablePromise<$models.InstallerMeta[]> {
     return $Call.ByID(3026363171).then(($result: any) => {
         return $$createType1($result);

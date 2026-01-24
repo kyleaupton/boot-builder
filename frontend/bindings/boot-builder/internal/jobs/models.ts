@@ -67,6 +67,7 @@ export enum Status {
     StatusRunning = "running",
     StatusSucceeded = "succeeded",
     StatusFailed = "failed",
+    StatusCancelled = "cancelled",
 };
 
 // Private type creation functions

@@ -15,7 +15,7 @@
 #import "BBPrivilegedHelper.h"
 
 // Build version for debugging
-#define HELPER_BUILD_VERSION "2025-01-17-v17-progress-proxy"
+#define HELPER_BUILD_VERSION "2026-01-24-v18-cancellation"
 
 // Buffer size for disk I/O (1 MB)
 #define WRITE_BUFFER_SIZE (1024 * 1024)
@@ -26,6 +26,9 @@
 @interface BBPrivilegedHelperService : NSObject <NSXPCListenerDelegate, BBPrivilegedHelper> {
     id<NSObject> _activityToken;
 }
+/// Flag to signal cancellation to the running operation.
+/// Atomic for thread-safety between the cancel call and the write loop.
+@property (atomic) BOOL cancelRequested;
 @end
 
 @implementation BBPrivilegedHelperService
@@ -49,12 +52,17 @@
     connection.exportedInterface = interface;
     connection.exportedObject = self;
 
+    // Capture weak reference to avoid retain cycle in blocks
+    __weak BBPrivilegedHelperService *weakSelf = self;
+
     connection.invalidationHandler = ^{
-        NSLog(@"[Helper] Connection invalidated");
+        NSLog(@"[Helper] Connection invalidated - treating as cancel");
+        weakSelf.cancelRequested = YES;
     };
 
     connection.interruptionHandler = ^{
-        NSLog(@"[Helper] Connection interrupted");
+        NSLog(@"[Helper] Connection interrupted - treating as cancel");
+        weakSelf.cancelRequested = YES;
     };
 
     [connection resume];
@@ -262,6 +270,11 @@ static DADissenterRef claimReleaseCallback(DADiskRef disk, void *context) {
 
 #pragma mark - BBPrivilegedHelper Protocol
 
+- (void)cancelCurrentOperation {
+    NSLog(@"[Helper] Cancel requested (build: %s)", HELPER_BUILD_VERSION);
+    self.cancelRequested = YES;
+}
+
 - (void)writeLinuxISO:(NSString *)device
               isoPath:(NSString *)isoPath
      progressReporter:(id<BBProgressReporter>)reporter
@@ -270,6 +283,9 @@ static DADissenterRef claimReleaseCallback(DADiskRef disk, void *context) {
     NSLog(@"[Helper] writeLinuxISO: device=%@ iso=%@ reporter=%@ (build: %s)",
           device, isoPath, reporter ? @"present" : @"nil", HELPER_BUILD_VERSION);
     NSLog(@"[Helper] Running as UID: %d, EUID: %d", getuid(), geteuid());
+
+    // Reset cancellation flag for new operation
+    self.cancelRequested = NO;
 
     // Validate inputs
     if (!device || device.length == 0) {
@@ -401,6 +417,13 @@ static DADissenterRef claimReleaseCallback(DADiskRef disk, void *context) {
         ssize_t bytesRead;
 
         while ((bytesRead = read(srcFd, buffer, WRITE_BUFFER_SIZE)) > 0) {
+            // Check for cancellation before each chunk
+            if (self.cancelRequested) {
+                NSLog(@"[Helper] Cancellation detected at %llu bytes - stopping write", bytesWritten);
+                errorMessage = @"cancelled:Operation cancelled by user";
+                goto cleanup;
+            }
+
             ssize_t totalWritten = 0;
             while (totalWritten < bytesRead) {
                 ssize_t written = write(dstFd, (char *)buffer + totalWritten, bytesRead - totalWritten);

@@ -18,3 +18,6 @@ func (c *xpcClient) WriteLinuxISO(ctx context.Context, isoPath string, device st
 func (c *xpcClient) FormatDisk(ctx context.Context, device string, filesystem string, volumeName string) error {
 	return errors.New("FormatDisk requires CGO build")
 }
+func (c *xpcClient) CancelCurrentOperation() {
+	// No-op in stub build
+}
