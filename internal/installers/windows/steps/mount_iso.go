@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 )
 
 // MountISO mounts the Windows ISO file.
@@ -19,6 +21,10 @@ func (MountISO) Name() string        { return "Mounting ISO" }
 func (MountISO) HasProgress() bool   { return false }
 
 func (MountISO) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		return pipeline.Simulate(ctx, e, 1*time.Second, 3)
+	}
+
 	e.Emit(core.Event{Type: "log", Message: "Mounting Windows ISO..."})
 
 	cmd := exec.CommandContext(ctx, "/usr/bin/hdiutil", "attach", "-readonly", "-nobrowse", "-mountrandom", "/tmp", state.ISOPath)

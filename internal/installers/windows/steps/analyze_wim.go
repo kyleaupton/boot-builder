@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 )
 
 const (
@@ -25,6 +27,12 @@ func (AnalyzeWim) Name() string        { return "Analyzing install.wim" }
 func (AnalyzeWim) HasProgress() bool   { return false }
 
 func (AnalyzeWim) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		// Simulate WIM needs splitting in dry-run mode
+		state.NeedsSplit = true
+		return pipeline.Simulate(ctx, e, 500*time.Millisecond, 3)
+	}
+
 	e.Emit(core.Event{Type: "log", Message: "Analyzing install.wim..."})
 
 	wimPath, err := findInstallWim(state.ISOMountPath)

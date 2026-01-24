@@ -10,6 +10,7 @@ import (
 
 	"boot-builder/internal/core"
 	"boot-builder/internal/fs"
+	"boot-builder/internal/pipeline"
 )
 
 // CopyFiles copies all files from the ISO to USB, skipping files > FAT32 limit.
@@ -20,6 +21,10 @@ func (CopyFiles) Name() string        { return "Copying files" }
 func (CopyFiles) HasProgress() bool   { return true }
 
 func (CopyFiles) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		return pipeline.Simulate(ctx, e, 5*time.Second, 15)
+	}
+
 	e.Emit(core.Event{Type: "log", Message: "Copying files..."})
 
 	opts := fs.CopyDirOptions{

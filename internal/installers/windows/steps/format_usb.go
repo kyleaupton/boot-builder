@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 )
 
 // FormatUSB formats the target disk as FAT32.
@@ -21,6 +22,10 @@ func (FormatUSB) Name() string        { return "Formatting USB as FAT32" }
 func (FormatUSB) HasProgress() bool   { return false }
 
 func (FormatUSB) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		return pipeline.Simulate(ctx, e, 2*time.Second, 5)
+	}
+
 	e.Emit(core.Event{Type: "log", Message: "Formatting USB as FAT32..."})
 
 	if err := state.PrivService.Disk().FormatDisk(ctx, state.TargetDisk, "FAT32", state.VolumeName); err != nil {

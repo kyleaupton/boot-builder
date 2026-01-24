@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/google/uuid"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 	"boot-builder/internal/wim"
 )
 
@@ -23,6 +25,14 @@ func (SplitWim) Name() string        { return "Splitting install.wim" }
 func (SplitWim) HasProgress() bool   { return true }
 
 func (SplitWim) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		if !state.NeedsSplit {
+			e.Emit(core.Event{Type: "log", Message: "install.wim does not need splitting, skipping"})
+			return nil
+		}
+		return pipeline.Simulate(ctx, e, 10*time.Second, 30)
+	}
+
 	if !state.NeedsSplit {
 		e.Emit(core.Event{Type: "log", Message: "install.wim does not need splitting, skipping"})
 		return nil

@@ -7,8 +7,10 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 )
 
 // Finalize unmounts the ISO, ejects the USB, and cleans up temp files.
@@ -19,6 +21,10 @@ func (Finalize) Name() string        { return "Finalizing" }
 func (Finalize) HasProgress() bool   { return false }
 
 func (Finalize) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		return pipeline.Simulate(ctx, e, 500*time.Millisecond, 2)
+	}
+
 	// Unmount ISO
 	if state.ISOMountPath != "" {
 		e.Emit(core.Event{Type: "log", Message: "Unmounting ISO..."})

@@ -6,11 +6,13 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/google/uuid"
 
 	"boot-builder/internal/core"
 	"boot-builder/internal/fs"
+	"boot-builder/internal/pipeline"
 )
 
 // Prepare clones the ISO to a neutral location to bypass TCC restrictions.
@@ -23,6 +25,10 @@ func (Prepare) Name() string        { return "Preparing ISO" }
 func (Prepare) HasProgress() bool   { return false }
 
 func (Prepare) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		return pipeline.Simulate(ctx, e, 1*time.Second, 5)
+	}
+
 	e.Emit(core.Event{Type: "log", Message: "Preparing ISO..."})
 
 	tempPath := filepath.Join(fs.TempISODir, uuid.New().String()+".iso")

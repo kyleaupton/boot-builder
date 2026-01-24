@@ -6,8 +6,10 @@ import (
 	"context"
 	"os/exec"
 	"strings"
+	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 )
 
 // Eject ejects the target disk after writing is complete.
@@ -19,6 +21,10 @@ func (Eject) Name() string        { return "Ejecting disk" }
 func (Eject) HasProgress() bool   { return false }
 
 func (Eject) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		return pipeline.Simulate(ctx, e, 500*time.Millisecond, 2)
+	}
+
 	e.Emit(core.Event{Type: "log", Message: "Ejecting disk..."})
 
 	cmd := exec.CommandContext(ctx, "/usr/sbin/diskutil", "eject", state.TargetDisk)

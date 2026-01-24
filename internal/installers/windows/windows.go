@@ -8,14 +8,12 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"boot-builder/internal/core"
 	"boot-builder/internal/drives"
 	winsteps "boot-builder/internal/installers/windows/steps"
 	"boot-builder/internal/pipeline"
 	"boot-builder/internal/priv"
-	"boot-builder/internal/steps"
 )
 
 const (
@@ -54,112 +52,86 @@ func (w Windows) ValidateHost(ctx context.Context, host core.HostInfo) core.Capa
 }
 
 func (w Windows) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, error) {
-	// Validate the ISO exists
-	if req.Source.Local == "" {
-		return nil, errors.New("ISO path is required")
-	}
+	// Skip validation in dry-run mode (file may not exist)
+	if !core.DryRun {
+		// Validate the ISO exists
+		if req.Source.Local == "" {
+			return nil, errors.New("ISO path is required")
+		}
 
-	info, err := os.Stat(req.Source.Local)
-	if err != nil {
-		return nil, fmt.Errorf("cannot access ISO: %w", err)
-	}
-	if info.IsDir() {
-		return nil, errors.New("ISO path is a directory, not a file")
-	}
-
-	// Dry-run mode: return simulated steps for UI testing
-	if core.DryRun {
-		return &core.Plan{
-			ID:   "plan-windows-dryrun",
-			Name: "Windows USB (dry-run)",
-			Steps: []core.Step{
-				steps.NoOp{Label: "Mounting ISO...", Delay: 1 * time.Second, Ticks: 3},
-				steps.NoOp{Label: "Formatting USB as FAT32...", Delay: 2 * time.Second, Ticks: 5},
-				steps.NoOp{Label: "Copying boot files...", Delay: 5 * time.Second, Ticks: 15},
-				steps.NoOp{Label: "Processing install.wim...", Delay: 10 * time.Second, Ticks: 30},
-				steps.NoOp{Label: "Ejecting disk...", Delay: 500 * time.Millisecond, Ticks: 2},
-			},
-			StepInfos: []core.StepInfo{
-				{Key: "mounting-iso", Name: "Mounting ISO", HasProgress: false},
-				{Key: "formatting", Name: "Formatting USB as FAT32", HasProgress: false},
-				{Key: "copying-files", Name: "Copying boot files", HasProgress: true},
-				{Key: "processing-wim", Name: "Processing install.wim", HasProgress: true},
-				{Key: "ejecting", Name: "Ejecting disk", HasProgress: false},
-			},
-		}, nil
+		info, err := os.Stat(req.Source.Local)
+		if err != nil {
+			return nil, fmt.Errorf("cannot access ISO: %w", err)
+		}
+		if info.IsDir() {
+			return nil, errors.New("ISO path is a directory, not a file")
+		}
 	}
 
 	if runtime.GOOS == "darwin" {
 		return w.planDarwin(ctx, req)
 	}
 
-	// Stub for other platforms
-	return &core.Plan{
-		ID:   "plan-windows-stub",
-		Name: "Windows USB (stub)",
-		Steps: []core.Step{
-			steps.NoOp{Label: "Windows USB creation (stub)", Delay: 500 * time.Millisecond},
-		},
-		StepInfos: []core.StepInfo{
-			{Key: "creating", Name: "Creating Windows USB", HasProgress: false},
-		},
-	}, nil
+	return nil, errors.New("Windows USB creation is only supported on macOS currently")
 }
 
 func (w Windows) planDarwin(ctx context.Context, req core.CreateRequest) (*core.Plan, error) {
-	// Validate drive ID
-	if req.DriveID == "" {
-		return nil, errors.New("DriveID is required")
-	}
-
-	// Guard against targeting the boot drive
-	if strings.HasSuffix(req.DriveID, "disk0") || req.DriveID == "/dev/disk0" {
-		return nil, errors.New("refusing to target /dev/disk0")
-	}
-
-	// Normalize device path
-	if !strings.HasPrefix(req.DriveID, "/dev/") {
-		req.DriveID = "/dev/" + req.DriveID
-	}
-
-	// Verify the drive is removable
-	removable, err := drives.ListRemovable(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list removable drives: %w", err)
-	}
-
-	found := false
-	for _, d := range removable {
-		if d.Device == req.DriveID {
-			found = true
-			break
-		}
-	}
-	if !found {
-		return nil, errors.New("DriveID not recognized as removable USB drive")
-	}
-
 	// Determine volume name from options or use default
 	volumeName := defaultVolumeName
 	if name, ok := req.Options["volumeName"].(string); ok && name != "" {
 		volumeName = name
 	}
 
-	// Initialize privileged service
-	svc := priv.NewService()
-	if err := svc.EnsureReady(ctx); err != nil {
-		return nil, fmt.Errorf("failed to initialize privileged service: %w", err)
-	}
-
-	// Build the pipeline with typed context
 	state := &winsteps.FlashContext{
-		ISOPath:     req.Source.Local,
-		TargetDisk:  req.DriveID,
-		VolumeName:  volumeName,
-		PrivService: svc,
+		ISOPath:    req.Source.Local,
+		TargetDisk: req.DriveID,
+		VolumeName: volumeName,
 	}
 
-	p := pipeline.New[winsteps.FlashContext](
+	// Skip validation and privileged service in dry-run mode
+	if !core.DryRun {
+		// Validate drive ID
+		if req.DriveID == "" {
+			return nil, errors.New("DriveID is required")
+		}
+
+		// Guard against targeting the boot drive
+		if strings.HasSuffix(req.DriveID, "disk0") || req.DriveID == "/dev/disk0" {
+			return nil, errors.New("refusing to target /dev/disk0")
+		}
+
+		// Normalize device path
+		if !strings.HasPrefix(req.DriveID, "/dev/") {
+			req.DriveID = "/dev/" + req.DriveID
+			state.TargetDisk = req.DriveID
+		}
+
+		// Verify the drive is removable
+		removable, err := drives.ListRemovable(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list removable drives: %w", err)
+		}
+
+		found := false
+		for _, d := range removable {
+			if d.Device == req.DriveID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, errors.New("DriveID not recognized as removable USB drive")
+		}
+
+		// Initialize privileged service
+		svc := priv.NewService()
+		if err := svc.EnsureReady(ctx); err != nil {
+			return nil, fmt.Errorf("failed to initialize privileged service: %w", err)
+		}
+		state.PrivService = svc
+	}
+
+	p := pipeline.New(
 		winsteps.MountISO{},
 		winsteps.FormatUSB{},
 		winsteps.AnalyzeWim{},

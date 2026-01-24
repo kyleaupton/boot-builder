@@ -5,8 +5,10 @@ package steps
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 	"boot-builder/internal/wim"
 )
 
@@ -19,6 +21,14 @@ func (CopyWim) Name() string        { return "Copying split WIM files" }
 func (CopyWim) HasProgress() bool   { return true }
 
 func (CopyWim) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		if !state.NeedsSplit {
+			e.Emit(core.Event{Type: "log", Message: "No split WIM to copy, skipping"})
+			return nil
+		}
+		return pipeline.Simulate(ctx, e, 5*time.Second, 15)
+	}
+
 	if !state.NeedsSplit {
 		e.Emit(core.Event{Type: "log", Message: "No split WIM to copy, skipping"})
 		return nil

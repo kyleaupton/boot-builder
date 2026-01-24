@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 )
 
 // Unmount unmounts all volumes on the target disk.
@@ -20,6 +22,10 @@ func (Unmount) Name() string        { return "Unmounting disk" }
 func (Unmount) HasProgress() bool   { return false }
 
 func (Unmount) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		return pipeline.Simulate(ctx, e, 500*time.Millisecond, 3)
+	}
+
 	e.Emit(core.Event{Type: "log", Message: "Unmounting disk..."})
 
 	cmd := exec.CommandContext(ctx, "/usr/sbin/diskutil", "unmountDisk", "force", state.TargetDisk)

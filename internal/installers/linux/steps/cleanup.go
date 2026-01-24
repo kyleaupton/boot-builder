@@ -5,8 +5,10 @@ package steps
 import (
 	"context"
 	"os"
+	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 )
 
 // Cleanup removes temporary files created during the pipeline.
@@ -18,6 +20,10 @@ func (Cleanup) Name() string        { return "Cleaning up" }
 func (Cleanup) HasProgress() bool   { return false }
 
 func (Cleanup) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		return pipeline.Simulate(ctx, e, 300*time.Millisecond, 2)
+	}
+
 	if state.TempISOPath != "" {
 		e.Emit(core.Event{Type: "log", Message: "Removing temporary ISO..."})
 		if err := os.Remove(state.TempISOPath); err != nil {

@@ -5,8 +5,10 @@ package steps
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/pipeline"
 )
 
 // Write writes the ISO to the target disk using the privileged service.
@@ -18,6 +20,10 @@ func (Write) Name() string        { return "Writing ISO to USB" }
 func (Write) HasProgress() bool   { return true }
 
 func (Write) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
+	if core.DryRun {
+		return pipeline.Simulate(ctx, e, 8*time.Second, 20)
+	}
+
 	e.Emit(core.Event{Type: "log", Message: "Starting ISO write (this may take several minutes)..."})
 
 	// Use the temp path if available (prepared by Prepare step), otherwise use original
