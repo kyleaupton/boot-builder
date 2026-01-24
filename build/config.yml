@@ -42,8 +42,6 @@ dev_mode:
       type: blocking
     - cmd: ./scripts/sign-dev-binary.sh bin/boot-builder
       type: blocking
-    - cmd: wails3 task darwin:copy:libwim:dev
-      type: blocking
     - cmd: wails3 task run
       type: primary
 

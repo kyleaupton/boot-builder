@@ -83,8 +83,7 @@ wails3 dev
 
 1. Wails builds your Go binary
 2. **Post-build hook signs the binary** with your dev certificate (`scripts/sign-dev-binary.sh`)
-3. libwim.dylib is copied
-4. App runs and connects to the already-running helper via XPC
+3. App runs and connects to the already-running helper via XPC
 
 **No sudo required!** (except for the one-time helper install)
 

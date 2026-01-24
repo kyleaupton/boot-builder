@@ -97,9 +97,9 @@ type Installer interface {
 - Linux/Windows privilege elevation
 - Windows installer (wimlib integration)
 
-## wimlib Integration
+## WIM File Handling
 
-Located in `internal/wim/`. Uses CGO to call wimlib directly for splitting Windows `.wim` files.
+Located in `internal/wim/`. Pure Go implementation for reading and splitting Windows `.wim` files for FAT32 compatibility (files >4GB must be split).
 
 ```go
 // Split a WIM file for FAT32 compatibility
@@ -108,8 +108,6 @@ wim.SplitWithProgress(ctx, srcWIM, dstPrefix, opts, progressFn)
 // Copy split SWM files to USB
 wim.CopySWMs(ctx, swmDir, usbRoot, progressFn)
 ```
-
-The precompiled wimlib library is in `internal/wim/deps/darwin-arm64/`.
 
 ## Event Schema
 

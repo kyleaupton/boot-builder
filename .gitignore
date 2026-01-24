@@ -10,4 +10,4 @@ build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 wim-test/
 wimlib*/
 wimlib-*
-test-drive.dmg
+*.dmg
