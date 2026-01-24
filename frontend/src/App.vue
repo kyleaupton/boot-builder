@@ -70,7 +70,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen bg-background text-foreground">
+  <div class="flex flex-col h-screen bg-background text-foreground">
     <header class="app-header p-4 text-center">
       <h1 class="text-xl font-semibold m-0">Boot Builder</h1>
     </header>
@@ -78,16 +78,16 @@ onMounted(() => {
     <Toaster position="bottom-center" />
 
     <!-- Selection View: Source + Drive panels -->
-    <main v-if="showSelectionView" class="flex-1 flex flex-col justify-between px-4 pb-4">
+    <main v-if="showSelectionView" class="flex-1 flex flex-col justify-between px-4 pb-4 min-h-0">
       <div
-        class="flex gap-4 w-full mx-auto transition-all duration-400 ease-out"
+        class="flex gap-4 w-full mx-auto transition-all duration-400 ease-out min-h-0"
         :class="sourceStore.hasSource ? 'max-w-[800px]' : 'max-w-[500px]'"
       >
-        <div class="flex-1 min-w-0 transition-all duration-400 ease-out">
+        <div class="flex-1 min-w-0 min-h-0 transition-all duration-400 ease-out">
           <SourceDropzone />
         </div>
         <Transition name="slide-in">
-          <div v-if="sourceStore.hasSource" class="flex-1 min-w-0">
+          <div v-if="sourceStore.hasSource" class="flex-1 min-w-0 min-h-0 flex flex-col">
             <DriveSelector />
           </div>
         </Transition>

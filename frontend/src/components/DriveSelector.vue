@@ -25,8 +25,8 @@ function formatSize(bytes: number): string {
 </script>
 
 <template>
-  <Card>
-    <CardHeader class="pb-2">
+  <Card class="flex flex-col min-h-0 h-full">
+    <CardHeader class="pb-2 shrink-0">
       <div class="flex items-center justify-between">
         <CardTitle class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Target Drive
@@ -34,7 +34,7 @@ function formatSize(bytes: number): string {
         <Loader2 v-if="isLoading" class="h-3 w-3 animate-spin text-muted-foreground" />
       </div>
     </CardHeader>
-    <CardContent>
+    <CardContent class="flex-1 min-h-0 overflow-y-auto">
       <!-- Drive List -->
       <RadioGroup v-if="hasDrives" v-model="selectedDriveId" class="flex flex-col gap-2">
         <label
