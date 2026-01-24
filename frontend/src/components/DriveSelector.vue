@@ -33,6 +33,10 @@ function formatSize(bytes: number): string {
         </CardTitle>
         <Loader2 v-if="isLoading" class="h-3 w-3 animate-spin text-muted-foreground" />
       </div>
+      <p v-if="hasDrives" class="flex items-center gap-1.5 text-xs text-destructive">
+        <TriangleAlert class="h-3.5 w-3.5" />
+        All data will be erased
+      </p>
     </CardHeader>
     <CardContent class="flex-1 min-h-0 overflow-y-auto">
       <!-- Drive List -->
@@ -59,12 +63,6 @@ function formatSize(bytes: number): string {
           </div>
         </label>
       </RadioGroup>
-
-      <!-- Warning text -->
-      <p v-if="hasDrives" class="mt-3 flex items-center gap-1.5 text-xs text-destructive">
-        <TriangleAlert class="h-3.5 w-3.5" />
-        All data will be erased
-      </p>
 
       <!-- Empty State -->
       <div v-if="!hasDrives" class="flex flex-col items-center py-8 text-center">
