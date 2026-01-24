@@ -21,6 +21,9 @@ export const useJobStore = defineStore('job', () => {
   // Event subscription handle
   let eventUnsubscribe: (() => void) | null = null
 
+  // Buffer for events that arrive before job ID is set
+  let pendingEvents: JobEvent[] = []
+
   // Getters
   const currentJob = computed(() =>
     currentJobId.value ? jobs.value.get(currentJobId.value) ?? null : null
@@ -37,8 +40,21 @@ export const useJobStore = defineStore('job', () => {
 
   // Actions
   function handleJobEvent(event: JobEvent): void {
+    // If we're starting a job but don't have the ID yet, buffer the event
+    if (isStarting.value && !currentJobId.value) {
+      pendingEvents.push(event)
+      return
+    }
+
     // Only process events for our current job
-    if (event.jobId !== currentJobId.value) return
+    if (event.jobId !== currentJobId.value) {
+      return
+    }
+
+    processJobEvent(event)
+  }
+
+  function processJobEvent(event: JobEvent): void {
 
     switch (event.type) {
       case 'state': {
@@ -53,6 +69,16 @@ export const useJobStore = defineStore('job', () => {
           }
           job.Status = stateMap[event.message] ?? job.Status
 
+          // Capture error from failed state
+          if (event.error) {
+            error.value = event.error
+            // Mark the running step as failed
+            const runningStep = steps.value.find((s) => s.status === 'running')
+            if (runningStep) {
+              runningStep.status = 'failed'
+            }
+          }
+
           // Show toast notifications on completion
           if (event.message === 'succeeded') {
             toast.success('Flash complete!', {
@@ -60,7 +86,7 @@ export const useJobStore = defineStore('job', () => {
             })
           } else if (event.message === 'failed') {
             toast.error('Flash failed', {
-              description: 'Check the error details for more information.',
+              description: event.error || 'Check the error details for more information.',
             })
           }
         }
@@ -142,6 +168,7 @@ export const useJobStore = defineStore('job', () => {
     currentStep.value = null
     currentMessage.value = null
     steps.value = []
+    pendingEvents = [] // Clear any stale buffered events
 
     try {
       // Ensure we're subscribed to events before starting
@@ -169,6 +196,13 @@ export const useJobStore = defineStore('job', () => {
         CreatedAt: null as any,
         UpdatedAt: null as any,
       })
+
+      // Replay any events that arrived before we had the job ID
+      const eventsToReplay = pendingEvents.filter((e) => e.jobId === response.jobId)
+      pendingEvents = []
+      for (const event of eventsToReplay) {
+        processJobEvent(event)
+      }
 
       return response.jobId
     } catch (e) {
@@ -209,6 +243,7 @@ export const useJobStore = defineStore('job', () => {
     error.value = null
     isStarting.value = false
     steps.value = []
+    pendingEvents = []
   }
 
   return {
