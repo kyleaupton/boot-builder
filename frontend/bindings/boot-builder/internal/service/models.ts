@@ -71,6 +71,37 @@ export class StartJobRequest {
     }
 }
 
+export class StartJobResponse {
+    "jobId": string;
+    "stepInfos": core$0.StepInfo[];
+
+    /** Creates a new StartJobResponse instance. */
+    constructor($$source: Partial<StartJobResponse> = {}) {
+        if (!("jobId" in $$source)) {
+            this["jobId"] = "";
+        }
+        if (!("stepInfos" in $$source)) {
+            this["stepInfos"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new StartJobResponse instance from a string or object.
+     */
+    static createFrom($$source: any = {}): StartJobResponse {
+        const $$createField1_0 = $$createType3;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("stepInfos" in $$parsedSource) {
+            $$parsedSource["stepInfos"] = $$createField1_0($$parsedSource["stepInfos"]);
+        }
+        return new StartJobResponse($$parsedSource as Partial<StartJobResponse>);
+    }
+}
+
 // Private type creation functions
 const $$createType0 = core$0.Target.createFrom;
 const $$createType1 = $Create.Array($$createType0);
+const $$createType2 = core$0.StepInfo.createFrom;
+const $$createType3 = $Create.Array($$createType2);

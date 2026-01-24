@@ -4,9 +4,6 @@
 export {
     OSFamily,
     Plan,
+    StepInfo,
     Target
-} from "./models.js";
-
-export type {
-    Step
 } from "./models.js";

@@ -17,24 +17,25 @@ export enum OSFamily {
 };
 
 export class Plan {
-    "ID": string;
-    "Name": string;
-    "Steps": Step[];
-    "Meta": { [_: string]: any };
+    "id": string;
+    "name": string;
+
+    /**
+     * UI metadata for steps
+     */
+    "stepInfos": StepInfo[];
+    "meta"?: { [_: string]: any };
 
     /** Creates a new Plan instance. */
     constructor($$source: Partial<Plan> = {}) {
-        if (!("ID" in $$source)) {
-            this["ID"] = "";
+        if (!("id" in $$source)) {
+            this["id"] = "";
         }
-        if (!("Name" in $$source)) {
-            this["Name"] = "";
+        if (!("name" in $$source)) {
+            this["name"] = "";
         }
-        if (!("Steps" in $$source)) {
-            this["Steps"] = [];
-        }
-        if (!("Meta" in $$source)) {
-            this["Meta"] = {};
+        if (!("stepInfos" in $$source)) {
+            this["stepInfos"] = [];
         }
 
         Object.assign(this, $$source);
@@ -44,20 +45,61 @@ export class Plan {
      * Creates a new Plan instance from a string or object.
      */
     static createFrom($$source: any = {}): Plan {
-        const $$createField2_0 = $$createType0;
-        const $$createField3_0 = $$createType1;
+        const $$createField2_0 = $$createType1;
+        const $$createField3_0 = $$createType2;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        if ("Steps" in $$parsedSource) {
-            $$parsedSource["Steps"] = $$createField2_0($$parsedSource["Steps"]);
+        if ("stepInfos" in $$parsedSource) {
+            $$parsedSource["stepInfos"] = $$createField2_0($$parsedSource["stepInfos"]);
         }
-        if ("Meta" in $$parsedSource) {
-            $$parsedSource["Meta"] = $$createField3_0($$parsedSource["Meta"]);
+        if ("meta" in $$parsedSource) {
+            $$parsedSource["meta"] = $$createField3_0($$parsedSource["meta"]);
         }
         return new Plan($$parsedSource as Partial<Plan>);
     }
 }
 
-export type Step = any;
+/**
+ * StepInfo provides metadata about a step for UI display
+ */
+export class StepInfo {
+    /**
+     * Unique key like "writing-iso", "unmounting-disk"
+     */
+    "key": string;
+
+    /**
+     * Human-readable name like "Writing ISO to USB"
+     */
+    "name": string;
+
+    /**
+     * true for long operations with progress tracking
+     */
+    "hasProgress": boolean;
+
+    /** Creates a new StepInfo instance. */
+    constructor($$source: Partial<StepInfo> = {}) {
+        if (!("key" in $$source)) {
+            this["key"] = "";
+        }
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("hasProgress" in $$source)) {
+            this["hasProgress"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new StepInfo instance from a string or object.
+     */
+    static createFrom($$source: any = {}): StepInfo {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new StepInfo($$parsedSource as Partial<StepInfo>);
+    }
+}
 
 export class Target {
     "Family": OSFamily;
@@ -89,5 +131,6 @@ export class Target {
 }
 
 // Private type creation functions
-const $$createType0 = $Create.Array($Create.Any);
-const $$createType1 = $Create.Map($Create.Any, $Create.Any);
+const $$createType0 = StepInfo.createFrom;
+const $$createType1 = $Create.Array($$createType0);
+const $$createType2 = $Create.Map($Create.Any, $Create.Any);

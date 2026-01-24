@@ -2,8 +2,8 @@
 export type { Drive } from '@bindings/boot-builder/internal/drives/models'
 export type { Job } from '@bindings/boot-builder/internal/jobs/models'
 export { Status } from '@bindings/boot-builder/internal/jobs/models'
-export type { InstallerMeta, StartJobRequest } from '@bindings/boot-builder/internal/service/models'
-export type { Plan, Target, OSFamily, Step } from '@bindings/boot-builder/internal/core/models'
+export type { InstallerMeta, StartJobRequest, StartJobResponse } from '@bindings/boot-builder/internal/service/models'
+export type { Plan, Target, OSFamily, StepInfo } from '@bindings/boot-builder/internal/core/models'
 
 // Import Target for local use in this file
 import type { Target } from '@bindings/boot-builder/internal/core/models'
@@ -12,12 +12,25 @@ import type { Target } from '@bindings/boot-builder/internal/core/models'
 
 /** Event payload from backend job:event emissions */
 export interface JobEvent {
-  JobID: string
-  Type: 'state' | 'step-start' | 'step-end' | 'progress' | 'log' | 'error'
-  Message: string
-  Step: string
-  Percent: number
-  Error: string
+  jobId: string
+  type: 'state' | 'step-start' | 'step-end' | 'progress' | 'log' | 'error'
+  message: string
+  step: string
+  percent: number
+  error: string
+}
+
+/** Step status for UI display */
+export type StepStatus = 'pending' | 'running' | 'completed' | 'failed'
+
+/** Step state for tracking in the frontend */
+export interface StepState {
+  key: string
+  name: string
+  hasProgress: boolean
+  status: StepStatus
+  progress: number
+  message: string | null
 }
 
 /** Application UI states */

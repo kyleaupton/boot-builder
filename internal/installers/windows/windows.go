@@ -1,9 +1,6 @@
 package windows
 
 import (
-	"boot-builder/internal/core"
-	"boot-builder/internal/drives"
-	"boot-builder/internal/steps"
 	"context"
 	"errors"
 	"fmt"
@@ -12,6 +9,13 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"boot-builder/internal/core"
+	"boot-builder/internal/drives"
+	winsteps "boot-builder/internal/installers/windows/steps"
+	"boot-builder/internal/pipeline"
+	"boot-builder/internal/priv"
+	"boot-builder/internal/steps"
 )
 
 const (
@@ -75,6 +79,13 @@ func (w Windows) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, 
 				steps.NoOp{Label: "Processing install.wim...", Delay: 10 * time.Second, Ticks: 30},
 				steps.NoOp{Label: "Ejecting disk...", Delay: 500 * time.Millisecond, Ticks: 2},
 			},
+			StepInfos: []core.StepInfo{
+				{Key: "mounting-iso", Name: "Mounting ISO", HasProgress: false},
+				{Key: "formatting", Name: "Formatting USB as FAT32", HasProgress: false},
+				{Key: "copying-files", Name: "Copying boot files", HasProgress: true},
+				{Key: "processing-wim", Name: "Processing install.wim", HasProgress: true},
+				{Key: "ejecting", Name: "Ejecting disk", HasProgress: false},
+			},
 		}, nil
 	}
 
@@ -88,6 +99,9 @@ func (w Windows) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, 
 		Name: "Windows USB (stub)",
 		Steps: []core.Step{
 			steps.NoOp{Label: "Windows USB creation (stub)", Delay: 500 * time.Millisecond},
+		},
+		StepInfos: []core.StepInfo{
+			{Key: "creating", Name: "Creating Windows USB", HasProgress: false},
 		},
 	}, nil
 }
@@ -125,26 +139,43 @@ func (w Windows) planDarwin(ctx context.Context, req core.CreateRequest) (*core.
 		return nil, errors.New("DriveID not recognized as removable USB drive")
 	}
 
-	// Check if install.wim needs splitting by mounting ISO first and checking size
-	// For now, we'll do this check at runtime in the step itself
-	// This allows the plan to be created quickly without mounting
-
 	// Determine volume name from options or use default
 	volumeName := defaultVolumeName
 	if name, ok := req.Options["volumeName"].(string); ok && name != "" {
 		volumeName = name
 	}
 
+	// Initialize privileged service
+	svc := priv.NewService()
+	if err := svc.EnsureReady(ctx); err != nil {
+		return nil, fmt.Errorf("failed to initialize privileged service: %w", err)
+	}
+
+	// Build the pipeline with typed context
+	state := &winsteps.FlashContext{
+		ISOPath:     req.Source.Local,
+		TargetDisk:  req.DriveID,
+		VolumeName:  volumeName,
+		PrivService: svc,
+	}
+
+	p := pipeline.New[winsteps.FlashContext](
+		winsteps.MountISO{},
+		winsteps.FormatUSB{},
+		winsteps.AnalyzeWim{},
+		winsteps.CopyFiles{},
+		winsteps.SplitWim{},
+		winsteps.CopyWim{},
+		winsteps.Finalize{},
+	)
+
+	runnable := pipeline.Bind(p, state)
+
 	return &core.Plan{
-		ID:   "plan-windows-darwin",
-		Name: "Windows USB (darwin)",
-		Steps: []core.Step{
-			steps.DarwinWriteWindowsISO{
-				ISOPath:    req.Source.Local,
-				Device:     req.DriveID,
-				VolumeName: volumeName,
-			},
-		},
+		ID:        "plan-windows-darwin",
+		Name:      "Windows USB (darwin)",
+		Runnable:  runnable,
+		StepInfos: runnable.StepInfos(),
 	}, nil
 }
 

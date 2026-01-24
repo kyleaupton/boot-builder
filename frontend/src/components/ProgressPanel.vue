@@ -3,12 +3,10 @@ import { computed } from 'vue'
 import { useJobStore } from '@/stores'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { Check, Circle, Loader2, X } from 'lucide-vue-next'
 
 const jobStore = useJobStore()
-
-const progress = computed(() => jobStore.progress)
-const currentStep = computed(() => jobStore.currentStep)
-const currentMessage = computed(() => jobStore.currentMessage)
+const steps = computed(() => jobStore.steps)
 const isActive = computed(() => jobStore.isRunning || jobStore.isPending)
 </script>
 
@@ -16,28 +14,44 @@ const isActive = computed(() => jobStore.isRunning || jobStore.isPending)
   <Card class="progress-card">
     <CardHeader class="progress-header">
       <div class="progress-header-row">
-        <CardTitle class="progress-title">Progress</CardTitle>
+        <CardTitle class="progress-title">Creating Bootable USB</CardTitle>
         <div v-if="isActive" class="active-indicator">
           <div class="pulse-dot" />
         </div>
       </div>
     </CardHeader>
     <CardContent class="progress-content">
-      <!-- Step info -->
-      <div v-if="currentStep" class="step-info">
-        <span class="step-label">{{ currentStep }}</span>
-      </div>
+      <div class="steps-list">
+        <div
+          v-for="step in steps"
+          :key="step.key"
+          class="step-item"
+          :class="step.status"
+        >
+          <!-- Step header row -->
+          <div class="step-header">
+            <span class="step-icon">
+              <Check v-if="step.status === 'completed'" class="icon-completed" />
+              <Loader2 v-else-if="step.status === 'running'" class="icon-running" />
+              <X v-else-if="step.status === 'failed'" class="icon-failed" />
+              <Circle v-else class="icon-pending" />
+            </span>
+            <span class="step-name">{{ step.name }}</span>
+          </div>
 
-      <!-- Progress bar -->
-      <div class="progress-bar-wrapper">
-        <Progress :model-value="progress" class="progress-bar" />
-        <span class="progress-percent">{{ progress.toFixed(1) }}%</span>
+          <!-- Expanded details for running step with progress -->
+          <div
+            v-if="step.status === 'running' && step.hasProgress"
+            class="step-details"
+          >
+            <div class="step-progress-row">
+              <Progress :model-value="step.progress" class="step-progress-bar" />
+              <span class="step-percent">{{ step.progress.toFixed(1) }}%</span>
+            </div>
+            <p v-if="step.message" class="step-message">{{ step.message }}</p>
+          </div>
+        </div>
       </div>
-
-      <!-- Status message -->
-      <p v-if="currentMessage" class="status-message">
-        {{ currentMessage }}
-      </p>
     </CardContent>
   </Card>
 </template>
@@ -95,38 +109,110 @@ const isActive = computed(() => jobStore.isRunning || jobStore.isPending)
   gap: 0.75rem;
 }
 
-.step-info {
+/* Step list styles */
+.steps-list {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.step-label {
-  font-weight: 500;
-  font-size: 0.875rem;
+.step-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.progress-bar-wrapper {
+.step-header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.progress-bar {
-  flex: 1;
-  height: 8px;
+.step-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
 }
 
-.progress-percent {
+.step-icon :deep(svg) {
+  width: 1rem;
+  height: 1rem;
+}
+
+.icon-completed {
+  color: hsl(var(--primary));
+}
+
+.icon-running {
+  color: hsl(var(--primary));
+  animation: spin 1s linear infinite;
+}
+
+.icon-failed {
+  color: hsl(var(--destructive));
+}
+
+.icon-pending {
+  color: hsl(var(--muted-foreground));
+}
+
+.step-name {
   font-size: 0.875rem;
+}
+
+.step-item.completed .step-name {
+  color: hsl(var(--muted-foreground));
+}
+
+.step-item.pending .step-name {
+  color: hsl(var(--muted-foreground));
+}
+
+.step-item.running .step-name {
   font-weight: 500;
-  color: var(--muted-foreground);
+}
+
+.step-details {
+  margin-left: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.step-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.step-progress-bar {
+  flex: 1;
+  height: 6px;
+}
+
+.step-percent {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
   min-width: 3rem;
   text-align: right;
+  color: hsl(var(--muted-foreground));
 }
 
-.status-message {
-  font-size: 0.875rem;
-  color: var(--muted-foreground);
+.step-message {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
   margin: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

@@ -1,16 +1,20 @@
 package linux
 
 import (
-	"boot-builder/internal/core"
-	"boot-builder/internal/drives"
-	"boot-builder/internal/iso"
-	"boot-builder/internal/steps"
 	"context"
 	"errors"
 	"fmt"
 	"runtime"
 	"strings"
 	"time"
+
+	"boot-builder/internal/core"
+	"boot-builder/internal/drives"
+	linuxsteps "boot-builder/internal/installers/linux/steps"
+	"boot-builder/internal/iso"
+	"boot-builder/internal/pipeline"
+	"boot-builder/internal/priv"
+	"boot-builder/internal/steps"
 )
 
 // Linux is a generic installer for any hybrid ISO Linux distribution.
@@ -59,6 +63,12 @@ func (l Linux) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, er
 				steps.NoOp{Label: "Verifying write...", Delay: 2 * time.Second, Ticks: 10},
 				steps.NoOp{Label: "Ejecting disk...", Delay: 500 * time.Millisecond, Ticks: 2},
 			},
+			StepInfos: []core.StepInfo{
+				{Key: "unmounting", Name: "Unmounting disk", HasProgress: false},
+				{Key: "writing-iso", Name: "Writing ISO to USB", HasProgress: true},
+				{Key: "verifying", Name: "Verifying write", HasProgress: true},
+				{Key: "ejecting", Name: "Ejecting disk", HasProgress: false},
+			},
 		}, nil
 	}
 
@@ -72,6 +82,9 @@ func (l Linux) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, er
 		Name: "Linux USB (stub)",
 		Steps: []core.Step{
 			steps.NoOp{Label: "Write Image (stub)", Delay: 500 * time.Millisecond},
+		},
+		StepInfos: []core.StepInfo{
+			{Key: "writing", Name: "Writing image", HasProgress: false},
 		},
 	}, nil
 }
@@ -109,11 +122,33 @@ func (l Linux) planDarwin(ctx context.Context, req core.CreateRequest) (*core.Pl
 		return nil, errors.New("DriveID not recognized as removable USB drive")
 	}
 
+	// Initialize privileged service
+	svc := priv.NewService()
+	if err := svc.EnsureReady(ctx); err != nil {
+		return nil, fmt.Errorf("failed to initialize privileged service: %w", err)
+	}
+
+	// Build the pipeline with typed context
+	state := &linuxsteps.FlashContext{
+		ISOPath:     req.Source.Local,
+		TargetDisk:  req.DriveID,
+		PrivService: svc,
+	}
+
+	p := pipeline.New[linuxsteps.FlashContext](
+		linuxsteps.Prepare{},
+		linuxsteps.Unmount{},
+		linuxsteps.Write{},
+		linuxsteps.Eject{},
+		linuxsteps.Cleanup{},
+	)
+
+	runnable := pipeline.Bind(p, state)
+
 	return &core.Plan{
-		ID:   "plan-linux-darwin",
-		Name: "Linux USB (darwin)",
-		Steps: []core.Step{
-			steps.DarwinWriteLinuxISO{ISOPath: req.Source.Local, Device: req.DriveID},
-		},
+		ID:        "plan-linux-darwin",
+		Name:      "Linux USB (darwin)",
+		Runnable:  runnable,
+		StepInfos: runnable.StepInfos(),
 	}, nil
 }

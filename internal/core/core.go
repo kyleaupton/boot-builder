@@ -57,17 +57,36 @@ type CreateRequest struct {
 	Source  SourceSpec
 }
 
+// StepInfo provides metadata about a step for UI display
+type StepInfo struct {
+	Key         string `json:"key"`         // Unique key like "writing-iso", "unmounting-disk"
+	Name        string `json:"name"`        // Human-readable name like "Writing ISO to USB"
+	HasProgress bool   `json:"hasProgress"` // true for long operations with progress tracking
+}
+
 type Plan struct {
-	ID    string
-	Name  string
-	Steps []Step
-	Meta  map[string]any
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	Steps     []Step         `json:"-"`               // Backend only - not serialized (deprecated: use Runnable)
+	Runnable  Runnable       `json:"-"`               // Pipeline with typed context (preferred)
+	StepInfos []StepInfo     `json:"stepInfos"`       // UI metadata for steps
+	Meta      map[string]any `json:"meta,omitempty"`
 }
 
 type Step interface {
 	Name() string
 	Run(ctx context.Context, e Executor) error
 	Estimate() time.Duration
+}
+
+// Runnable is a type-erased interface for executing typed pipelines.
+// Pipelines with typed context implement this interface to allow
+// the job manager to run them without knowing the context type.
+type Runnable interface {
+	// StepInfos returns metadata about steps for UI display.
+	StepInfos() []StepInfo
+	// Run executes the pipeline.
+	Run(ctx context.Context, e Executor) error
 }
 
 type Installer interface {
@@ -80,12 +99,12 @@ type Installer interface {
 }
 
 type Event struct {
-	JobID   string
-	Type    string
-	Message string
-	Step    string
-	Percent float64
-	Error   string
+	JobID   string  `json:"jobId"`
+	Type    string  `json:"type"`
+	Message string  `json:"message,omitempty"`
+	Step    string  `json:"step,omitempty"`    // Uses step key from StepInfos
+	Percent float64 `json:"percent,omitempty"`
+	Error   string  `json:"error,omitempty"`
 }
 
 type Executor interface {

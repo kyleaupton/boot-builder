@@ -25,8 +25,10 @@ export function ListJobs(): $CancellablePromise<jobs$0.Job[]> {
     });
 }
 
-export function StartJob(req: $models.StartJobRequest): $CancellablePromise<string> {
-    return $Call.ByID(3029209185, req);
+export function StartJob(req: $models.StartJobRequest): $CancellablePromise<$models.StartJobResponse> {
+    return $Call.ByID(3029209185, req).then(($result: any) => {
+        return $$createType4($result);
+    });
 }
 
 // Private type creation functions
@@ -34,3 +36,4 @@ const $$createType0 = $models.InstallerMeta.createFrom;
 const $$createType1 = $Create.Array($$createType0);
 const $$createType2 = jobs$0.Job.createFrom;
 const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = $models.StartJobResponse.createFrom;

@@ -10,5 +10,6 @@ export {
 
 export {
     InstallerMeta,
-    StartJobRequest
+    StartJobRequest,
+    StartJobResponse
 } from "./models.js";

@@ -23,6 +23,11 @@ type StartJobRequest struct {
 	DriveID     string
 }
 
+type StartJobResponse struct {
+	JobID     string          `json:"jobId"`
+	StepInfos []core.StepInfo `json:"stepInfos"`
+}
+
 type JobsService struct {
 	mgr        *jobs.Manager
 	installers map[string]core.Installer
@@ -54,24 +59,31 @@ func (s *JobsService) ListInstallers() []InstallerMeta {
 	return out
 }
 
-func (s *JobsService) StartJob(ctx context.Context, req StartJobRequest) (string, error) {
+func (s *JobsService) StartJob(ctx context.Context, req StartJobRequest) (StartJobResponse, error) {
 	inst, ok := s.installers[req.InstallerID]
 	if !ok {
-		return "", nil
+		return StartJobResponse{}, errors.New("installer not found")
 	}
 	if req.SourceLocal == "" {
-		return "", errors.New("source local path is required")
+		return StartJobResponse{}, errors.New("source local path is required")
 	}
 	if _, err := os.Stat(req.SourceLocal); err != nil {
-		return "", err
+		return StartJobResponse{}, err
 	}
 	plan, err := inst.Plan(ctx, core.CreateRequest{Source: core.SourceSpec{Local: req.SourceLocal}, DriveID: req.DriveID})
 	if err != nil {
-		return "", err
+		return StartJobResponse{}, err
 	}
 	// Use background context for the job - the request context gets cancelled
 	// when the RPC call returns, but the job runs asynchronously
-	return s.mgr.Enqueue(context.Background(), plan)
+	jobID, err := s.mgr.Enqueue(context.Background(), plan)
+	if err != nil {
+		return StartJobResponse{}, err
+	}
+	return StartJobResponse{
+		JobID:     jobID,
+		StepInfos: plan.StepInfos,
+	}, nil
 }
 
 func (s *JobsService) ListJobs() []jobs.Job { return s.mgr.List() }
