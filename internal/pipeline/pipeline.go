@@ -5,10 +5,13 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"boot-builder/internal/core"
 	"boot-builder/internal/logger"
 )
+
+const cleanupTimeout = 30 * time.Second
 
 // Step is a pipeline step with typed context.
 // Steps share a context struct C that can be modified during execution.
@@ -79,11 +82,15 @@ func (p *Pipeline[C]) Run(ctx context.Context, state *C, e core.Executor) error 
 }
 
 // runCleanup runs cleanup for steps from index downTo 0 (reverse order).
-func (p *Pipeline[C]) runCleanup(ctx context.Context, state *C, e core.Executor, downTo int) {
+func (p *Pipeline[C]) runCleanup(_ context.Context, state *C, e core.Executor, downTo int) {
+	// Use fresh context - original may be cancelled
+	cleanupCtx, cancel := context.WithTimeout(context.Background(), cleanupTimeout)
+	defer cancel()
+
 	for i := downTo; i >= 0; i-- {
 		if cs, ok := p.steps[i].(CleanupStep[C]); ok {
 			logger.Debug("running cleanup", "step", cs.Name(), "key", cs.Key())
-			if err := cs.Cleanup(ctx, state, e); err != nil {
+			if err := cs.Cleanup(cleanupCtx, state, e); err != nil {
 				logger.Warn("cleanup failed", "step", cs.Name(), "key", cs.Key(), "error", err)
 				// Continue cleanup even if one fails
 			}

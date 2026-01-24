@@ -9,9 +9,53 @@ import (
 	"strings"
 	"time"
 
+	"howett.net/plist"
+
 	"boot-builder/internal/core"
 	"boot-builder/internal/pipeline"
 )
+
+type hdiutilInfo struct {
+	Images []hdiutilImage `plist:"images"`
+}
+
+type hdiutilImage struct {
+	ImagePath      string                `plist:"image-path"`
+	SystemEntities []hdiutilSystemEntity `plist:"system-entities"`
+}
+
+type hdiutilSystemEntity struct {
+	DevEntry   string `plist:"dev-entry"`
+	MountPoint string `plist:"mount-point"`
+}
+
+// detachExistingMount checks if the ISO is already mounted and detaches it.
+func detachExistingMount(ctx context.Context, isoPath string) string {
+	cmd := exec.CommandContext(ctx, "/usr/bin/hdiutil", "info", "-plist")
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+
+	var info hdiutilInfo
+	if _, err := plist.Unmarshal(out, &info); err != nil {
+		return ""
+	}
+
+	for _, img := range info.Images {
+		if img.ImagePath == isoPath {
+			for _, entity := range img.SystemEntities {
+				if entity.DevEntry != "" {
+					detachCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+					defer cancel()
+					exec.CommandContext(detachCtx, "/usr/bin/hdiutil", "detach", entity.DevEntry, "-force").Run()
+					return entity.DevEntry
+				}
+			}
+		}
+	}
+	return ""
+}
 
 // MountISO mounts the Windows ISO file.
 type MountISO struct{}
@@ -23,6 +67,11 @@ func (MountISO) HasProgress() bool   { return false }
 func (MountISO) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
 	if core.DryRun {
 		return pipeline.Simulate(ctx, e, 1*time.Second, 3)
+	}
+
+	// Detach any existing mount of this ISO first
+	if devEntry := detachExistingMount(ctx, state.ISOPath); devEntry != "" {
+		e.Emit(core.Event{Type: "log", Message: fmt.Sprintf("Detached stale mount at %s", devEntry)})
 	}
 
 	e.Emit(core.Event{Type: "log", Message: "Mounting Windows ISO..."})
@@ -45,10 +94,12 @@ func (MountISO) Run(ctx context.Context, state *FlashContext, e core.Executor) e
 }
 
 // Cleanup unmounts the ISO.
-func (MountISO) Cleanup(ctx context.Context, state *FlashContext, e core.Executor) error {
+func (MountISO) Cleanup(_ context.Context, state *FlashContext, e core.Executor) error {
 	if state.ISOMountPath != "" {
 		e.Emit(core.Event{Type: "log", Message: "Unmounting ISO..."})
-		exec.CommandContext(ctx, "/usr/bin/hdiutil", "detach", state.ISOMountPath, "-force").Run()
+		detachCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		exec.CommandContext(detachCtx, "/usr/bin/hdiutil", "detach", state.ISOMountPath, "-force").Run()
 		state.ISOMountPath = ""
 	}
 	return nil

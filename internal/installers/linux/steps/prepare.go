@@ -5,6 +5,7 @@ package steps
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -42,11 +43,13 @@ func (Prepare) Run(ctx context.Context, state *FlashContext, e core.Executor) er
 }
 
 // Cleanup removes the cloned ISO file.
-func (Prepare) Cleanup(ctx context.Context, state *FlashContext, e core.Executor) error {
+func (Prepare) Cleanup(_ context.Context, state *FlashContext, e core.Executor) error {
 	if state.TempISOPath != "" {
 		e.Emit(core.Event{Type: "log", Message: "Cleaning up temporary ISO..."})
-		// Use os.Remove directly - fs package doesn't have a Remove function
-		return nil // Will be removed by Cleanup step
+		if err := os.Remove(state.TempISOPath); err != nil && !os.IsNotExist(err) {
+			e.Emit(core.Event{Type: "log", Message: "Warning: failed to remove temp ISO: " + err.Error()})
+		}
+		state.TempISOPath = ""
 	}
 	return nil
 }
