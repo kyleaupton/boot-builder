@@ -16,7 +16,7 @@
 
     <key>SMAuthorizedClients</key>
     <array>
-        <string>identifier "dev.kyleupton.boot-builder"</string>
+        <string>identifier "dev.kyleupton.boot-builder" and anchor apple generic and certificate leaf[subject.OU] = "${APPLE_TEAM_ID}"</string>
     </array>
 </dict>
 </plist>

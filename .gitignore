@@ -2,6 +2,8 @@
 .task
 bin
 build/helpers
+build/darwin/Info.plist
+cmd/privileged-helper/Info.plist
 frontend/dist
 frontend/node_modules
 build/linux/appimage/build
@@ -11,3 +13,4 @@ wim-test/
 wimlib*/
 wimlib-*
 *.dmg
+.DS_Store

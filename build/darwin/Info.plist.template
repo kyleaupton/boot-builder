@@ -26,7 +26,7 @@
         <key>SMPrivilegedExecutables</key>
             <dict>
               <key>dev.kyleupton.boot-builder.helper</key>
-              <string>identifier "dev.kyleupton.boot-builder.helper" and anchor apple generic and certificate leaf[subject.OU] = "TEAMID12345"</string>
+              <string>identifier "dev.kyleupton.boot-builder.helper" and anchor apple generic and certificate leaf[subject.OU] = "${APPLE_TEAM_ID}"</string>
             </dict>
     </dict>
 </plist>

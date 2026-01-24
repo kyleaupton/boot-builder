@@ -68,8 +68,18 @@ tasks:
     cmds:
       - task: create:app:bundle
 
+  generate:info:plist:
+    summary: Generates Info.plist from template with Team ID substitution
+    preconditions:
+      - sh: '[ -n "$APPLE_TEAM_ID" ]'
+        msg: "APPLE_TEAM_ID environment variable must be set"
+    cmds:
+      - sed 's/${APPLE_TEAM_ID}/'"$APPLE_TEAM_ID"'/g' build/darwin/Info.plist.template > build/darwin/Info.plist
+
   create:app:bundle:
     summary: Creates an `.app` bundle
+    deps:
+      - task: generate:info:plist
     cmds:
       - mkdir -p {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/{MacOS,Resources,Library/LaunchServices}
       - cp build/darwin/icons.icns {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Resources
@@ -78,8 +88,11 @@ tasks:
       # Copy privileged helper into app bundle (required for SMJobBless)
       - cp -r build/helpers/dev.kyleupton.boot-builder.helper {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Library/LaunchServices/
       # Sign in correct order: helper first, then app bundle
-      - codesign --force --deep --sign - {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Library/LaunchServices/dev.kyleupton.boot-builder.helper
-      - codesign --force --deep --sign - {{.BIN_DIR}}/{{.APP_NAME}}.app
+      # Uses APPLE_SIGNING_IDENTITY env var, or falls back to ad-hoc signing
+      - codesign --force --options runtime --sign "{{.SIGNING_IDENTITY}}" {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Library/LaunchServices/dev.kyleupton.boot-builder.helper
+      - codesign --force --options runtime --sign "{{.SIGNING_IDENTITY}}" {{.BIN_DIR}}/{{.APP_NAME}}.app
+    vars:
+      SIGNING_IDENTITY: '{{.APPLE_SIGNING_IDENTITY | default "-"}}'
 
   run:
     cmds:
