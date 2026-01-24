@@ -49,9 +49,11 @@ type duInfo struct {
 	Size      uint64 `plist:"Size"`      // fallback on older versions
 
 	// Best-effort identity fields (often empty depending on device)
-	DeviceModel  string `plist:"DeviceModel"`
-	DeviceVendor string `plist:"DeviceVendor"`
-	DeviceSerial string `plist:"DeviceSerial"`
+	DeviceModel         string `plist:"DeviceModel"`
+	DeviceVendor        string `plist:"DeviceVendor"`
+	DeviceSerial        string `plist:"DeviceSerial"`
+	IORegistryEntryName string `plist:"IORegistryEntryName"` // e.g. "PNY USB 3.0 FD Media"
+	MediaName           string `plist:"MediaName"`           // e.g. "USB 3.0 FD"
 }
 
 // ---------- public API ----------
@@ -101,7 +103,7 @@ func (p *darwinProvider) ListRemovable(ctx context.Context) ([]Drive, error) {
 			Device:      preferDevPath(inf.DeviceNode, inf.DeviceIdentifier),
 			BSDName:     inf.DeviceIdentifier,
 			SizeBytes:   size,
-			Model:       inf.DeviceModel,
+			Model:       firstNonEmpty(inf.DeviceModel, inf.IORegistryEntryName, inf.MediaName),
 			Vendor:      inf.DeviceVendor,
 			Serial:      inf.DeviceSerial,
 			Protocol:    proto,
