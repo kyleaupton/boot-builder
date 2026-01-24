@@ -129,7 +129,7 @@ func (d DarwinWriteWindowsISO) Run(ctx context.Context, e core.Executor) error {
 	// Step 4: Copy files (skipping any > FAT32 limit, which will be handled via WIM split)
 	logger.Info("copying files", "src", mountPoint, "dst", usbMountPoint)
 	e.Emit(core.Event{Type: "log", Message: "Copying files..."})
-	copyOpts := fs.CopyOptions{
+	copyOpts := fs.CopyDirOptions{
 		Filter: func(relPath string, info os.FileInfo) bool {
 			if info.Size() > fat32MaxFileSize {
 				e.Emit(core.Event{Type: "log", Message: fmt.Sprintf("Skipping large file %s (%.2f GB)", relPath, float64(info.Size())/1e9)})
@@ -137,16 +137,19 @@ func (d DarwinWriteWindowsISO) Run(ctx context.Context, e core.Executor) error {
 			}
 			return true
 		},
+		SyncAfter:        true,
+		ProgressInterval: 250 * time.Millisecond,
 	}
-	if err := fs.CopyDir(ctx, mountPoint, usbMountPoint, copyOpts, func(wrote, total int64) {
-		if total > 0 {
-			percent := float64(wrote) * 100.0 / float64(total)
+	if err := fs.CopyDir(ctx, mountPoint, usbMountPoint, copyOpts, func(p fs.CopyProgress) bool {
+		if p.Total > 0 {
+			percent := float64(p.Written) * 100.0 / float64(p.Total)
 			e.Emit(core.Event{
 				Type:    "progress",
 				Percent: percent,
-				Message: fmt.Sprintf("Copying: %.1f / %.1f GB", float64(wrote)/1e9, float64(total)/1e9),
+				Message: fmt.Sprintf("Copying: %.1f / %.1f GB", float64(p.Written)/1e9, float64(p.Total)/1e9),
 			})
 		}
+		return true
 	}); err != nil {
 		logger.Error("failed to copy files", "error", err)
 		return fmt.Errorf("failed to copy files: %w", err)

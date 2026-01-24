@@ -10,6 +10,9 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
+
+	"boot-builder/internal/fs"
 )
 
 // Progress contains information about the current split/copy operation.
@@ -462,56 +465,26 @@ func CopySWMs(ctx context.Context, swmDir string, usbRoot string, cb func(done, 
 		base := filepath.Base(s)
 		dst := filepath.Join(dstDir, base)
 
-		if err := copyFileWithProgress(ctx, s, dst, func(n int64) {
-			done += n
-			if cb != nil && !cb(done, total) {
-				// Cancellation handled in next loop iteration
-			}
-		}); err != nil {
+		fileInfo, err := os.Stat(s)
+		if err != nil {
 			return err
 		}
+		fileSize := fileInfo.Size()
+
+		err = fs.CopyFile(ctx, s, dst, fs.CopyFileOptions{
+			SyncAfter:        true,
+			ProgressInterval: 250 * time.Millisecond,
+		}, func(p fs.CopyProgress) bool {
+			if cb != nil {
+				return cb(done+p.Written, total)
+			}
+			return true
+		})
+		if err != nil {
+			return err
+		}
+		done += fileSize
 	}
 	return nil
 }
 
-func copyFileWithProgress(ctx context.Context, src, dst string, onChunk func(wrote int64)) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = out.Close()
-	}()
-
-	buf := make([]byte, 2<<20) // 2 MiB chunks
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		n, rerr := in.Read(buf)
-		if n > 0 {
-			if _, werr := out.Write(buf[:n]); werr != nil {
-				return werr
-			}
-			if onChunk != nil {
-				onChunk(int64(n))
-			}
-		}
-		if rerr == io.EOF {
-			break
-		}
-		if rerr != nil {
-			return rerr
-		}
-	}
-	return out.Sync()
-}
