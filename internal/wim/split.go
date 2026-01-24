@@ -326,21 +326,22 @@ func writeSWMPart(
 		// Record new offset
 		blob.newOffset = currentOffset
 
-		// Copy blob data from source
+		// Copy blob data from source with chunk-level progress
 		srcOffset := blob.stream.Offset
 		blobSize := blob.stream.CompressedSize()
 
-		copied, err := copyBlobData(srcFile, dstFile, srcOffset, blobSize, buf)
+		copied, err := copyBlobData(ctx, srcFile, dstFile, srcOffset, blobSize, buf, func(n int64) bool {
+			currentOffset += n
+			totalCopied += n
+			if onProgress != nil {
+				return onProgress(n)
+			}
+			return true
+		})
 		if err != nil {
 			return totalCopied, fmt.Errorf("failed to copy blob: %w", err)
 		}
-
-		currentOffset += copied
-		totalCopied += copied
-
-		if onProgress != nil && !onProgress(copied) {
-			return totalCopied, context.Canceled
-		}
+		_ = copied
 	}
 
 	// Write offset table for this part
@@ -364,11 +365,11 @@ func writeSWMPart(
 	}
 	currentOffset += int64(offsetTableBuf.Len())
 
-	// Copy XML data (same for all parts)
+	// Copy XML data (same for all parts) - no progress needed for small XML
 	xmlStart := currentOffset
 	xmlSize := srcHeader.XMLData.CompressedSize()
 	if xmlSize > 0 {
-		if _, err := copyBlobData(srcFile, dstFile, srcHeader.XMLData.Offset, xmlSize, buf); err != nil {
+		if _, err := copyBlobData(ctx, srcFile, dstFile, srcHeader.XMLData.Offset, xmlSize, buf, nil); err != nil {
 			return totalCopied, fmt.Errorf("failed to copy XML data: %w", err)
 		}
 		currentOffset += xmlSize
@@ -403,10 +404,19 @@ func writeSWMPart(
 	return totalCopied, dstFile.Sync()
 }
 
-// copyBlobData copies raw blob data from source to destination.
-func copyBlobData(src *os.File, dst *os.File, srcOffset int64, size int64, buf []byte) (int64, error) {
+// copyBlobData copies raw blob data from source to destination with chunk-level progress.
+// onChunk is called after each chunk is written with the number of bytes just written.
+// Return false from onChunk to cancel the operation.
+func copyBlobData(ctx context.Context, src *os.File, dst *os.File, srcOffset int64, size int64, buf []byte, onChunk func(int64) bool) (int64, error) {
 	var copied int64
 	for copied < size {
+		// Check for cancellation
+		select {
+		case <-ctx.Done():
+			return copied, ctx.Err()
+		default:
+		}
+
 		toRead := int64(len(buf))
 		if size-copied < toRead {
 			toRead = size - copied
@@ -424,6 +434,11 @@ func copyBlobData(src *os.File, dst *os.File, srcOffset int64, size int64, buf [
 			return copied, err
 		}
 		copied += int64(n)
+
+		// Report chunk progress
+		if onChunk != nil && !onChunk(int64(n)) {
+			return copied, context.Canceled
+		}
 	}
 	return copied, nil
 }
