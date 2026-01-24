@@ -87,15 +87,20 @@ static void setError(NSString *msg, char **errmsg) {
 
 int helper_ensure_ready(char **errmsg) {
     NSLog(@"[helper_ensure_ready] start");
-    // If already present, consider it ready.
+
+    // Check if helper is already installed
     CFStringRef label = CFStringCreateWithCString(NULL, kHelperLabel, kCFStringEncodingUTF8);
     NSDictionary *job = (__bridge_transfer NSDictionary *)SMJobCopyDictionary(kSMDomainSystemLaunchd, label);
     if (label) CFRelease(label);
+
     if (job) {
         NSLog(@"[helper_ensure_ready] job present: %@", job);
-        return 0;
+        // Don't return early - still call SMJobBless to check for version updates
+    } else {
+        NSLog(@"[helper_ensure_ready] job not present");
     }
-    NSLog(@"[helper_ensure_ready] job not present; requesting authorization and blessing");
+
+    NSLog(@"[helper_ensure_ready] calling SMJobBless (will upgrade if newer version available)");
 
     // Request authorization to bless the helper
     AuthorizationItem right = {kSMRightBlessPrivilegedHelper, 0, NULL, 0};

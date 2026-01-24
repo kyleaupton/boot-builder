@@ -22,12 +22,19 @@ tasks:
       - rm -f Info.plist
 
   generate:info:plist:
-    summary: Generates Info.plist from template with Team ID substitution
+    summary: Generates Info.plist from template with Team ID and version substitution
     preconditions:
       - sh: '[ -n "$APPLE_TEAM_ID" ]'
         msg: "APPLE_TEAM_ID environment variable must be set"
+    vars:
+      # Build version as timestamp (YYYYMMDD.HHMMSS) - ensures updates always install
+      BUILD_VERSION:
+        sh: date +%Y%m%d.%H%M%S
     cmds:
-      - sed 's/${APPLE_TEAM_ID}/'"$APPLE_TEAM_ID"'/g' Info.plist.template > Info.plist
+      - |
+        sed -e 's/${APPLE_TEAM_ID}/'"$APPLE_TEAM_ID"'/g' \
+            -e 's/${HELPER_BUILD_VERSION}/{{.BUILD_VERSION}}/g' \
+            Info.plist.template > Info.plist
 
   compile:
     summary: Compile the helper binary

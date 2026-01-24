@@ -6,7 +6,7 @@
     <string>dev.kyleupton.boot-builder.helper</string>
 
     <key>CFBundleVersion</key>
-    <string>1.0</string>
+    <string>${HELPER_BUILD_VERSION}</string>
 
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
