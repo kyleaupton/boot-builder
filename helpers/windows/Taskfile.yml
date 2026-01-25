@@ -14,7 +14,9 @@ tasks:
   clean:
     summary: Remove old build artifacts
     cmds:
-      - cmd: powershell -Command "Remove-Item -Force -ErrorAction SilentlyContinue '{{.BUILD_DIR}}/{{.HELPER_NAME}}.exe'"
+      - cmd: powershell -Command "Stop-Process -Name '{{.HELPER_NAME}}' -Force -ErrorAction SilentlyContinue; exit 0"
+        platforms: [windows]
+      - cmd: powershell -Command "Remove-Item -Force -ErrorAction SilentlyContinue '{{.BUILD_DIR}}/{{.HELPER_NAME}}.exe'; exit 0"
         platforms: [windows]
       - cmd: rm -f {{.BUILD_DIR}}/{{.HELPER_NAME}}.exe
         platforms: [linux, darwin]
@@ -22,7 +24,7 @@ tasks:
   compile:
     summary: Compile the helper binary with gcc (MinGW)
     cmds:
-      - cmd: powershell -Command "New-Item -ItemType Directory -Force -Path '{{.BUILD_DIR}}' | Out-Null"
+      - cmd: powershell -Command "New-Item -ItemType Directory -Force -Path '{{.BUILD_DIR}}' | Out-Null; exit 0"
         platforms: [windows]
       - cmd: mkdir -p {{.BUILD_DIR}}
         platforms: [linux, darwin]

@@ -2,8 +2,16 @@ version: '3'
 
 includes:
   common: ../Taskfile.yml
+  helper:
+    taskfile: ../../helpers/windows/Taskfile.yml
+    dir: ../../helpers/windows
 
 tasks:
+  build:helper:
+    summary: Build the privileged helper
+    cmds:
+      - task: helper:build
+
   build:
     summary: Builds the application for Windows
     deps:
