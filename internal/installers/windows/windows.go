@@ -12,6 +12,7 @@ import (
 	"boot-builder/internal/core"
 	"boot-builder/internal/drives"
 	winsteps "boot-builder/internal/installers/windows/steps"
+	"boot-builder/internal/iso"
 	"boot-builder/internal/pipeline"
 	"boot-builder/internal/priv"
 )
@@ -23,7 +24,7 @@ const (
 	defaultVolumeName = "YOURNAME"
 )
 
-// Windows is an installer for Windows ISOs on macOS.
+// Windows is an installer for Windows ISOs.
 // Windows ISOs are not hybrid images, so they cannot be written directly to USB.
 // Instead, we format the USB as FAT32 and copy the files, splitting large WIM
 // files if necessary (FAT32 has a 4GB file size limit).
@@ -41,17 +42,25 @@ func (w Windows) AllowedSources() core.SourceMode {
 }
 
 func (w Windows) ValidateHost(ctx context.Context, host core.HostInfo) core.Capability {
-	// Windows USB creation is currently only supported on macOS
-	if runtime.GOOS != "darwin" {
-		return core.Capability{
-			Supported: false,
-			Reasons:   []string{"Windows USB creation is currently only supported on macOS"},
-		}
+	var reasons []string
+	if !iso.IsMountSupported() {
+		reasons = append(reasons, "ISO mounting not supported on this platform")
+	}
+	if !drives.IsSupported() {
+		reasons = append(reasons, "Drive operations not supported on this platform")
+	}
+	if len(reasons) > 0 {
+		return core.Capability{Supported: false, Reasons: reasons}
 	}
 	return core.Capability{Supported: true}
 }
 
 func (w Windows) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, error) {
+	// Check platform support
+	if !iso.IsMountSupported() || !drives.IsSupported() {
+		return nil, errors.New("Windows USB creation is not supported on this platform")
+	}
+
 	// Skip validation in dry-run mode (file may not exist)
 	if !core.DryRun {
 		// Validate the ISO exists
@@ -68,14 +77,6 @@ func (w Windows) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, 
 		}
 	}
 
-	if runtime.GOOS == "darwin" {
-		return w.planDarwin(ctx, req)
-	}
-
-	return nil, errors.New("Windows USB creation is only supported on macOS currently")
-}
-
-func (w Windows) planDarwin(ctx context.Context, req core.CreateRequest) (*core.Plan, error) {
 	// Determine volume name from options or use default
 	volumeName := defaultVolumeName
 	if name, ok := req.Options["volumeName"].(string); ok && name != "" {
@@ -95,13 +96,13 @@ func (w Windows) planDarwin(ctx context.Context, req core.CreateRequest) (*core.
 			return nil, errors.New("DriveID is required")
 		}
 
-		// Guard against targeting the boot drive
+		// Guard against targeting the boot drive (macOS specific, but safe to check everywhere)
 		if strings.HasSuffix(req.DriveID, "disk0") || req.DriveID == "/dev/disk0" {
 			return nil, errors.New("refusing to target /dev/disk0")
 		}
 
-		// Normalize device path
-		if !strings.HasPrefix(req.DriveID, "/dev/") {
+		// Normalize device path for macOS
+		if runtime.GOOS == "darwin" && !strings.HasPrefix(req.DriveID, "/dev/") {
 			req.DriveID = "/dev/" + req.DriveID
 			state.TargetDisk = req.DriveID
 		}
@@ -144,8 +145,8 @@ func (w Windows) planDarwin(ctx context.Context, req core.CreateRequest) (*core.
 	runnable := pipeline.Bind(p, state)
 
 	return &core.Plan{
-		ID:        "plan-windows-darwin",
-		Name:      "Windows USB (darwin)",
+		ID:        "plan-windows",
+		Name:      "Windows USB",
 		Runnable:  runnable,
 		StepInfos: runnable.StepInfos(),
 	}, nil

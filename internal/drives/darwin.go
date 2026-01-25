@@ -54,9 +54,12 @@ type duInfo struct {
 	DeviceSerial        string `plist:"DeviceSerial"`
 	IORegistryEntryName string `plist:"IORegistryEntryName"` // e.g. "PNY USB 3.0 FD Media"
 	MediaName           string `plist:"MediaName"`           // e.g. "USB 3.0 FD"
+	MountPoint          string `plist:"MountPoint"`          // volume mount point (if mounted)
 }
 
 // ---------- public API ----------
+
+func (p *darwinProvider) IsSupported() bool { return true }
 
 func (p *darwinProvider) ListRemovable(ctx context.Context) ([]Drive, error) {
 	// Always bound the external commands with a timeout if none provided.
@@ -115,6 +118,68 @@ func (p *darwinProvider) ListRemovable(ctx context.Context) ([]Drive, error) {
 	}
 
 	return out, nil
+}
+
+func (p *darwinProvider) Unmount(ctx context.Context, device string) error {
+	cmd := exec.CommandContext(ctx, "/usr/sbin/diskutil", "unmountDisk", "force", device)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		outStr := strings.TrimSpace(string(out))
+		outLower := strings.ToLower(outStr)
+		// Already unmounted is not an error
+		if strings.Contains(outLower, "not mounted") || strings.Contains(outLower, "already unmounted") {
+			return nil
+		}
+		return fmt.Errorf("failed to unmount %s: %w (%s)", device, err, outStr)
+	}
+	return nil
+}
+
+func (p *darwinProvider) Eject(ctx context.Context, device string) error {
+	cmd := exec.CommandContext(ctx, "/usr/sbin/diskutil", "eject", device)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to eject %s: %w (%s)", device, err, strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+func (p *darwinProvider) FindMountPoint(ctx context.Context, device string) (string, error) {
+	// Try with s1 suffix first (first partition)
+	candidates := []string{device + "s1", device}
+
+	for _, dev := range candidates {
+		inf, err := p.diskutilInfo(ctx, dev)
+		if err != nil {
+			continue
+		}
+		if inf.MountPoint != "" {
+			return inf.MountPoint, nil
+		}
+	}
+
+	return "", fmt.Errorf("no mount point found for %s", device)
+}
+
+func (p *darwinProvider) WaitForMount(ctx context.Context, device string, timeout time.Duration) (string, error) {
+	deadline := time.Now().Add(timeout)
+	pollInterval := 500 * time.Millisecond
+
+	for time.Now().Before(deadline) {
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		default:
+		}
+
+		if mp, err := p.FindMountPoint(ctx, device); err == nil && mp != "" {
+			return mp, nil
+		}
+
+		time.Sleep(pollInterval)
+	}
+
+	return "", fmt.Errorf("timeout waiting for %s to mount", device)
 }
 
 // ---------- helpers ----------

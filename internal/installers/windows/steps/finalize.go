@@ -1,24 +1,22 @@
-//go:build darwin
-
 package steps
 
 import (
 	"context"
 	"os"
-	"os/exec"
-	"strings"
 	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/drives"
+	"boot-builder/internal/iso"
 	"boot-builder/internal/pipeline"
 )
 
 // Finalize unmounts the ISO, ejects the USB, and cleans up temp files.
 type Finalize struct{}
 
-func (Finalize) Key() string         { return "finalizing" }
-func (Finalize) Name() string        { return "Finalizing" }
-func (Finalize) HasProgress() bool   { return false }
+func (Finalize) Key() string       { return "finalizing" }
+func (Finalize) Name() string      { return "Finalizing" }
+func (Finalize) HasProgress() bool { return false }
 
 func (Finalize) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
 	if core.DryRun {
@@ -26,9 +24,10 @@ func (Finalize) Run(ctx context.Context, state *FlashContext, e core.Executor) e
 	}
 
 	// Unmount ISO
-	if state.ISOMountPath != "" {
+	if state.ISOMountResult != nil {
 		e.Emit(core.Event{Type: "log", Message: "Unmounting ISO..."})
-		exec.CommandContext(ctx, "/usr/bin/hdiutil", "detach", state.ISOMountPath, "-force").Run()
+		iso.Unmount(ctx, state.ISOMountResult)
+		state.ISOMountResult = nil
 		state.ISOMountPath = ""
 	}
 
@@ -41,10 +40,8 @@ func (Finalize) Run(ctx context.Context, state *FlashContext, e core.Executor) e
 
 	// Eject USB
 	e.Emit(core.Event{Type: "log", Message: "Ejecting USB..."})
-	cmd := exec.CommandContext(ctx, "/usr/sbin/diskutil", "eject", state.TargetDisk)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		outStr := strings.TrimSpace(string(out))
-		e.Emit(core.Event{Type: "log", Message: "Warning: eject failed: " + outStr})
+	if err := drives.Eject(ctx, state.TargetDisk); err != nil {
+		e.Emit(core.Event{Type: "log", Message: "Warning: eject failed: " + err.Error()})
 		// Don't fail for eject errors
 	}
 

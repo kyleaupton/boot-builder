@@ -1,25 +1,21 @@
-//go:build darwin
-
 package steps
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os/exec"
-	"strings"
 	"time"
 
 	"boot-builder/internal/core"
+	"boot-builder/internal/drives"
 	"boot-builder/internal/pipeline"
 )
 
 // FormatUSB formats the target disk as FAT32.
 type FormatUSB struct{}
 
-func (FormatUSB) Key() string         { return "formatting" }
-func (FormatUSB) Name() string        { return "Formatting USB as FAT32" }
-func (FormatUSB) HasProgress() bool   { return false }
+func (FormatUSB) Key() string       { return "formatting" }
+func (FormatUSB) Name() string      { return "Formatting USB as FAT32" }
+func (FormatUSB) HasProgress() bool { return false }
 
 func (FormatUSB) Run(ctx context.Context, state *FlashContext, e core.Executor) error {
 	if core.DryRun {
@@ -34,11 +30,8 @@ func (FormatUSB) Run(ctx context.Context, state *FlashContext, e core.Executor) 
 
 	e.Emit(core.Event{Type: "log", Message: "USB formatted successfully"})
 
-	// Give the system time to mount the newly formatted volume
-	time.Sleep(2 * time.Second)
-
-	// Find the mount point of the formatted USB
-	mountPoint, err := findUSBMountPoint(ctx, state.TargetDisk)
+	// Wait for the system to mount the newly formatted volume
+	mountPoint, err := drives.WaitForMount(ctx, state.TargetDisk, 10*time.Second)
 	if err != nil {
 		return fmt.Errorf("failed to find USB mount point: %w", err)
 	}
@@ -46,33 +39,4 @@ func (FormatUSB) Run(ctx context.Context, state *FlashContext, e core.Executor) 
 	state.USBMountPath = mountPoint
 	e.Emit(core.Event{Type: "log", Message: fmt.Sprintf("USB mounted at %s", mountPoint)})
 	return nil
-}
-
-// findUSBMountPoint finds where the USB is mounted after formatting.
-func findUSBMountPoint(ctx context.Context, device string) (string, error) {
-	// diskutil info gives us the mount point
-	cmd := exec.CommandContext(ctx, "/usr/sbin/diskutil", "info", "-plist", device+"s1")
-	out, err := cmd.Output()
-	if err != nil {
-		// Try without partition suffix
-		cmd = exec.CommandContext(ctx, "/usr/sbin/diskutil", "info", "-plist", device)
-		out, err = cmd.Output()
-		if err != nil {
-			return "", fmt.Errorf("diskutil info failed: %w", err)
-		}
-	}
-
-	// Simple plist parsing for MountPoint
-	outStr := string(out)
-	if idx := strings.Index(outStr, "<key>MountPoint</key>"); idx != -1 {
-		rest := outStr[idx:]
-		if startIdx := strings.Index(rest, "<string>"); startIdx != -1 {
-			rest = rest[startIdx+8:]
-			if endIdx := strings.Index(rest, "</string>"); endIdx != -1 {
-				return rest[:endIdx], nil
-			}
-		}
-	}
-
-	return "", errors.New("could not find USB mount point")
 }

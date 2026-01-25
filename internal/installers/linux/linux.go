@@ -32,10 +32,22 @@ func (l Linux) AllowedSources() core.SourceMode {
 }
 
 func (l Linux) ValidateHost(ctx context.Context, host core.HostInfo) core.Capability {
+	var reasons []string
+	if !drives.IsSupported() {
+		reasons = append(reasons, "Drive operations not supported on this platform")
+	}
+	if len(reasons) > 0 {
+		return core.Capability{Supported: false, Reasons: reasons}
+	}
 	return core.Capability{Supported: true}
 }
 
 func (l Linux) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, error) {
+	// Check platform support
+	if !drives.IsSupported() {
+		return nil, errors.New("Linux USB creation is not supported on this platform")
+	}
+
 	// Skip ISO validation in dry-run mode (file may not exist)
 	if !core.DryRun {
 		// Validate that the ISO is a hybrid image
@@ -53,14 +65,6 @@ func (l Linux) Plan(ctx context.Context, req core.CreateRequest) (*core.Plan, er
 		}
 	}
 
-	if runtime.GOOS == "darwin" {
-		return l.planDarwin(ctx, req)
-	}
-
-	return nil, errors.New("Linux USB creation is only supported on macOS currently")
-}
-
-func (l Linux) planDarwin(ctx context.Context, req core.CreateRequest) (*core.Plan, error) {
 	state := &linuxsteps.FlashContext{
 		ISOPath:    req.Source.Local,
 		TargetDisk: req.DriveID,
@@ -73,13 +77,13 @@ func (l Linux) planDarwin(ctx context.Context, req core.CreateRequest) (*core.Pl
 			return nil, errors.New("DriveID is required")
 		}
 
-		// Guard against targeting the boot drive
+		// Guard against targeting the boot drive (macOS specific, but safe to check everywhere)
 		if strings.HasSuffix(req.DriveID, "disk0") || req.DriveID == "/dev/disk0" {
 			return nil, errors.New("refusing to target /dev/disk0")
 		}
 
-		// Normalize device path
-		if !strings.HasPrefix(req.DriveID, "/dev/") {
+		// Normalize device path for macOS
+		if runtime.GOOS == "darwin" && !strings.HasPrefix(req.DriveID, "/dev/") {
 			req.DriveID = "/dev/" + req.DriveID
 			state.TargetDisk = req.DriveID
 		}
@@ -120,8 +124,8 @@ func (l Linux) planDarwin(ctx context.Context, req core.CreateRequest) (*core.Pl
 	runnable := pipeline.Bind(p, state)
 
 	return &core.Plan{
-		ID:        "plan-linux-darwin",
-		Name:      "Linux USB (darwin)",
+		ID:        "plan-linux",
+		Name:      "Linux USB",
 		Runnable:  runnable,
 		StepInfos: runnable.StepInfos(),
 	}, nil
