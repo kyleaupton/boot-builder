@@ -10,15 +10,15 @@
     <Installer
         Path="flashit"
         Arguments=""
-        InstallLocation="C:\Program Files\My Company\My Product">
+        InstallLocation="C:\Program Files\Kyle Upton\FlashIt">
     </Installer>
     <PackageInformation
-        PackageName="My Product"
-        PackageDisplayName="My Product"
-        PublisherName="CN=My Company"
-        PublisherDisplayName="My Company"
+        PackageName="FlashIt"
+        PackageDisplayName="FlashIt"
+        PublisherName="CN=Kyle Upton"
+        PublisherDisplayName="Kyle Upton"
         Version="0.1.0.0"
-        PackageDescription="My Product Description">
+        PackageDescription="A program that helps you flash your USB drives">
         <Capabilities>
             <Capability Name="runFullTrust" />
             
@@ -26,8 +26,8 @@
         <Applications>
             <Application
                 Id="com.wails.flashit"
-                Description="My Product Description"
-                DisplayName="My Product"
+                Description="A program that helps you flash your USB drives"
+                DisplayName="FlashIt"
                 ExecutableName="flashit"
                 EntryPoint="Windows.FullTrustApplication">
                 
@@ -41,9 +41,9 @@
         </Dependencies>
         <Properties>
             <Framework>false</Framework>
-            <DisplayName>My Product</DisplayName>
-            <PublisherDisplayName>My Company</PublisherDisplayName>
-            <Description>My Product Description</Description>
+            <DisplayName>FlashIt</DisplayName>
+            <PublisherDisplayName>Kyle Upton</PublisherDisplayName>
+            <Description>A program that helps you flash your USB drives</Description>
             <Logo>Assets\AppIcon.png</Logo>
         </Properties>
     </PackageInformation>

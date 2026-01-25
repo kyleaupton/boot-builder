@@ -1,15 +1,15 @@
 {
-	"fixed": {
-		"file_version": "0.1.0"
-	},
-	"info": {
-		"0000": {
-			"ProductVersion": "0.1.0",
-			"CompanyName": "My Company",
-			"FileDescription": "My Product Description",
-			"LegalCopyright": "© now, My Company",
-			"ProductName": "My Product",
-			"Comments": "This is a comment"
-		}
-	}
+  "fixed": {
+    "file_version": "0.1.0"
+  },
+  "info": {
+    "0000": {
+      "ProductVersion": "0.1.0",
+      "CompanyName": "Kyle Upton",
+      "FileDescription": "A program that helps you flash your USB drives",
+      "LegalCopyright": "© 2026, Kyle Upton",
+      "ProductName": "FlashIt",
+      "Comments": "A program that helps you flash your USB drives"
+    }
+  }
 }

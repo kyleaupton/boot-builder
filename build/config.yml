@@ -5,12 +5,12 @@ version: '3'
 
 # This information is used to generate the build assets.
 info:
-  companyName: "My Company" # The name of the company
-  productName: "My Product" # The name of the application
-  productIdentifier: "com.mycompany.myproduct" # The unique product identifier
-  description: "A program that does X" # The application description
-  copyright: "(c) 2025, My Company" # Copyright text
-  comments: "Some Product Comments" # Comments
+  companyName: "Kyle Upton" # The name of the company
+  productName: "FlashIt" # The name of the application
+  productIdentifier: "dev.kyleupton.flashit" # The unique product identifier
+  description: "A program that helps you flash your USB drives" # The application description
+  copyright: "(c) 2025, Kyle Upton" # Copyright text
+  comments: "A program that helps you flash your USB drives" # Comments
   version: "0.0.1" # The application version
 
 # Dev mode configuration
@@ -61,5 +61,5 @@ fileAssociations:
 #    mimeType: image/jpeg  # (optional)
 
 # Other data
-other:
-  - name: My Other Data
+# other:
+#   - name: My Other Data
