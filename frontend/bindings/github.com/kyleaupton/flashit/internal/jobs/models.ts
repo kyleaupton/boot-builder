@@ -10,7 +10,7 @@ import { Create as $Create } from "@wailsio/runtime";
 import * as core$0 from "../core/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as time$0 from "../../../time/models.js";
+import * as time$0 from "../../../../../time/models.js";
 
 export class Job {
     "ID": string;

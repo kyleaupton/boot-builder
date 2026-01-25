@@ -18,23 +18,23 @@ import * as $models from "./models.js";
  * Returns true if the job was found and cancelled, false if not found or already completed.
  */
 export function CancelJob(jobID: string): $CancellablePromise<boolean> {
-    return $Call.ByID(770981431, jobID);
+    return $Call.ByID(3452811188, jobID);
 }
 
 export function ListInstallers(): $CancellablePromise<$models.InstallerMeta[]> {
-    return $Call.ByID(3026363171).then(($result: any) => {
+    return $Call.ByID(849630866).then(($result: any) => {
         return $$createType1($result);
     });
 }
 
 export function ListJobs(): $CancellablePromise<jobs$0.Job[]> {
-    return $Call.ByID(3613485978).then(($result: any) => {
+    return $Call.ByID(1465115179).then(($result: any) => {
         return $$createType3($result);
     });
 }
 
 export function StartJob(req: $models.StartJobRequest): $CancellablePromise<$models.StartJobResponse> {
-    return $Call.ByID(3029209185, req).then(($result: any) => {
+    return $Call.ByID(2679174400, req).then(($result: any) => {
         return $$createType4($result);
     });
 }

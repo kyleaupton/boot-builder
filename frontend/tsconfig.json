@@ -5,8 +5,8 @@
       "@/*": [
         "./src/*"
       ],
-      "@bindings/*": [
-        "./bindings/*"
+      "@flashit/*": [
+        "./bindings/github.com/kyleaupton/flashit/internal/*"
       ]
     },
     "target": "ESNext",

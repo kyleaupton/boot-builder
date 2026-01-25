@@ -12,7 +12,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(dirname, './src'),
-      '@bindings': path.resolve(dirname, './bindings'),
+      '@flashit': path.resolve(dirname, './bindings/github.com/kyleaupton/flashit/internal'),
     },
   },
 })

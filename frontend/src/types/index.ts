@@ -1,12 +1,12 @@
 // Re-export Wails bindings types for convenience
-export type { Drive } from '@bindings/flashit/internal/drives/models'
-export type { Job } from '@bindings/flashit/internal/jobs/models'
-export { Status } from '@bindings/flashit/internal/jobs/models'
-export type { InstallerMeta, StartJobRequest, StartJobResponse } from '@bindings/flashit/internal/service/models'
-export type { Plan, Target, OSFamily, StepInfo } from '@bindings/flashit/internal/core/models'
+export type { Drive } from '@flashit/drives/models'
+export type { Job } from '@flashit/jobs/models'
+export { Status } from '@flashit/jobs/models'
+export type { InstallerMeta, StartJobRequest, StartJobResponse } from '@flashit/service/models'
+export type { Plan, Target, OSFamily, StepInfo } from '@flashit/core/models'
 
 // Import Target for local use in this file
-import type { Target } from '@bindings/flashit/internal/core/models'
+import type { Target } from '@flashit/core/models'
 
 // Frontend-specific types
 
