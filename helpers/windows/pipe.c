@@ -10,17 +10,33 @@
 
 HANDLE create_pipe_server(const char *pipe_name) {
     /*
-     * TODO: Create named pipe with:
+     * Create named pipe with:
      * - PIPE_ACCESS_DUPLEX for bidirectional communication
      * - PIPE_TYPE_BYTE | PIPE_READMODE_BYTE for byte-mode I/O
      * - PIPE_WAIT for blocking operations
-     * - Appropriate security attributes (allow client connection)
+     * - Security attributes that allow non-elevated clients to connect
      */
 
     if (pipe_name == NULL || pipe_name[0] == '\0') {
         SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
     }
+
+    /* Create a security descriptor that allows Everyone to connect */
+    SECURITY_DESCRIPTOR sd;
+    if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION)) {
+        return INVALID_HANDLE_VALUE;
+    }
+
+    /* Set a NULL DACL = allow all access (needed for non-elevated client) */
+    if (!SetSecurityDescriptorDacl(&sd, TRUE, NULL, FALSE)) {
+        return INVALID_HANDLE_VALUE;
+    }
+
+    SECURITY_ATTRIBUTES sa;
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.lpSecurityDescriptor = &sd;
+    sa.bInheritHandle = FALSE;
 
     HANDLE pipe = CreateNamedPipeA(
         pipe_name,
@@ -30,7 +46,7 @@ HANDLE create_pipe_server(const char *pipe_name) {
         PIPE_BUFFER_SIZE,       /* Out buffer size */
         PIPE_BUFFER_SIZE,       /* In buffer size */
         PIPE_TIMEOUT_MS,        /* Default timeout */
-        NULL                    /* Default security */
+        &sa                     /* Security allowing non-elevated access */
     );
 
     return pipe;
