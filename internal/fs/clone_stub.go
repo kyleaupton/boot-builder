@@ -9,7 +9,7 @@ import (
 )
 
 // TempISODir is where cloned ISOs are stored
-const TempISODir = "/tmp/flashit"
+var TempISODir = filepath.Join(os.TempDir(), "flashit")
 
 // CloneFile copies src to dst (no APFS clone on non-darwin)
 func CloneFile(src, dst string) error {
