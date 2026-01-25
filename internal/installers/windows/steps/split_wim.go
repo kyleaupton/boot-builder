@@ -46,8 +46,8 @@ func (SplitWim) Run(ctx context.Context, state *FlashContext, e core.Executor) e
 
 	state.SWMTempDir = tempDir
 
-	// Split the WIM file
-	splitPrefix := filepath.Join(tempDir, "install.swm")
+	// Split the WIM file (prefix only - SplitWithProgress appends .swm, 2.swm, etc.)
+	splitPrefix := filepath.Join(tempDir, "install")
 	opts := wim.SplitOptions{
 		PartSizeMiB: 3800, // 3800 MiB parts for safety margin under FAT32's 4GB limit
 	}
