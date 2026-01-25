@@ -2,6 +2,9 @@ version: "3"
 
 includes:
   common: ../Taskfile.yml
+  helper:
+    taskfile: ../../cmd/privileged-helper/Taskfile.yml
+    dir: ../../cmd/privileged-helper
 
 tasks:
   build:
@@ -16,7 +19,7 @@ tasks:
             ref: .PRODUCTION
       - task: common:generate:icons
     cmds:
-      - go build {{.BUILD_FLAGS}} -tags osinstallxpc -o {{.OUTPUT}}
+      - go build {{.BUILD_FLAGS}} -tags flashitxpc -o {{.OUTPUT}}
     vars:
       BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
       DEFAULT_OUTPUT: "{{.BIN_DIR}}/{{.APP_NAME}}"
@@ -32,9 +35,8 @@ tasks:
 
   build:helper:
     summary: Build the privileged helper
-    dir: ../../cmd/privileged-helper
     cmds:
-      - task: build
+      - task: helper:build
 
   build:universal:
     summary: Builds darwin universal binary (arm64 + amd64)

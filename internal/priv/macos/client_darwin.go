@@ -1,11 +1,12 @@
-//go:build darwin && cgo && osinstallxpc
+//go:build darwin && cgo && flashitxpc
 
 package macos
 
 import (
-	"github.com/kyleaupton/flashit/internal/priv/macos/xpc"
 	"context"
 	"errors"
+
+	"github.com/kyleaupton/flashit/internal/priv/macos/xpc"
 )
 
 // xpcClientWrapper wraps the xpc.Client to implement the macos.Client interface.

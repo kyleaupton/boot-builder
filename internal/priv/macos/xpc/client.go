@@ -1,4 +1,4 @@
-//go:build darwin && cgo && osinstallxpc
+//go:build darwin && cgo && flashitxpc
 
 package xpc
 
