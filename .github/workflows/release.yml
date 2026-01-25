@@ -1,0 +1,237 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  GO_VERSION: '1.23'
+  NODE_VERSION: '20'
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [arm64, amd64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Import Code Signing Certificate
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          # Decode certificate
+          echo "$MACOS_CERTIFICATE" | base64 --decode > $RUNNER_TEMP/certificate.p12
+
+          # Create and configure keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Import certificate
+          security import $RUNNER_TEMP/certificate.p12 -k $KEYCHAIN_PATH \
+            -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+
+          # Set key partition list
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Add to keychain search list
+          security list-keychains -d user -s $KEYCHAIN_PATH login.keychain
+
+          # Clean up certificate file
+          rm $RUNNER_TEMP/certificate.p12
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build application
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          GOARCH: ${{ matrix.arch }}
+        run: |
+          task darwin:package VERSION=${{ steps.version.outputs.VERSION }} PRODUCTION=true ARCH=${{ matrix.arch }}
+
+      - name: Verify code signature
+        run: |
+          codesign --verify --deep --strict bin/flashit.app
+          codesign -dv --verbose=4 bin/flashit.app
+
+      - name: Notarize application
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Create zip for notarization
+          ditto -c -k --keepParent bin/flashit.app $RUNNER_TEMP/flashit-notarize.zip
+
+          # Submit for notarization and wait
+          xcrun notarytool submit $RUNNER_TEMP/flashit-notarize.zip \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+          # Staple the notarization ticket
+          xcrun stapler staple bin/flashit.app
+
+      - name: Verify notarization
+        run: |
+          spctl --assess --type execute --verbose=4 bin/flashit.app
+
+      - name: Create DMG
+        run: |
+          # Create DMG for distribution
+          mkdir -p $RUNNER_TEMP/dmg-contents
+          cp -R bin/flashit.app $RUNNER_TEMP/dmg-contents/
+          ln -s /Applications $RUNNER_TEMP/dmg-contents/Applications
+
+          hdiutil create -volname "FlashIt" \
+            -srcfolder $RUNNER_TEMP/dmg-contents \
+            -ov -format UDZO \
+            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.dmg
+
+          # Sign the DMG
+          codesign --force --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" \
+            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.dmg
+
+      - name: Create tar.gz for updater
+        run: |
+          cd bin
+          tar -czvf flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.tar.gz flashit.app
+
+      - name: Calculate checksums
+        id: checksums
+        run: |
+          cd bin
+          DMG_SHA256=$(shasum -a 256 flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.dmg | cut -d ' ' -f 1)
+          TAR_SHA256=$(shasum -a 256 flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.tar.gz | cut -d ' ' -f 1)
+          TAR_SIZE=$(stat -f%z flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.tar.gz)
+
+          echo "dmg_sha256=$DMG_SHA256" >> $GITHUB_OUTPUT
+          echo "tar_sha256=$TAR_SHA256" >> $GITHUB_OUTPUT
+          echo "tar_size=$TAR_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: |
+            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.dmg
+            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.tar.gz
+          retention-days: 1
+
+      - name: Save checksums
+        run: |
+          mkdir -p checksums
+          echo "${{ steps.checksums.outputs.dmg_sha256 }}" > checksums/dmg-${{ matrix.arch }}.sha256
+          echo "${{ steps.checksums.outputs.tar_sha256 }}" > checksums/tar-${{ matrix.arch }}.sha256
+          echo "${{ steps.checksums.outputs.tar_size }}" > checksums/tar-${{ matrix.arch }}.size
+
+      - name: Upload checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksums-${{ matrix.arch }}
+          path: checksums/
+          retention-days: 1
+
+  create-release:
+    needs: build-macos
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate update.json
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Read checksums and sizes
+          ARM64_TAR_SHA256=$(cat artifacts/checksums-arm64/tar-arm64.sha256)
+          ARM64_TAR_SIZE=$(cat artifacts/checksums-arm64/tar-arm64.size)
+          AMD64_TAR_SHA256=$(cat artifacts/checksums-amd64/tar-amd64.sha256)
+          AMD64_TAR_SIZE=$(cat artifacts/checksums-amd64/tar-amd64.size)
+
+          cat > artifacts/update.json << EOF
+          {
+            "version": "${VERSION}",
+            "release_date": "${RELEASE_DATE}",
+            "release_notes": "See release notes at https://github.com/kyleaupton/flashit/releases/tag/v${VERSION}",
+            "platforms": {
+              "darwin-arm64": {
+                "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-macos-arm64.tar.gz",
+                "size": ${ARM64_TAR_SIZE},
+                "checksum": "sha256:${ARM64_TAR_SHA256}"
+              },
+              "darwin-amd64": {
+                "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-macos-amd64.tar.gz",
+                "size": ${AMD64_TAR_SIZE},
+                "checksum": "sha256:${AMD64_TAR_SHA256}"
+              }
+            }
+          }
+          EOF
+
+          cat artifacts/update.json
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: FlashIt v${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/macos-arm64/flashit-${{ steps.version.outputs.VERSION }}-macos-arm64.dmg
+            artifacts/macos-arm64/flashit-${{ steps.version.outputs.VERSION }}-macos-arm64.tar.gz
+            artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-amd64.dmg
+            artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-amd64.tar.gz
+            artifacts/update.json

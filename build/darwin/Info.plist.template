@@ -10,11 +10,11 @@
         <key>CFBundleIdentifier</key>
             <string>dev.kyleupton.flashit</string>
         <key>CFBundleVersion</key>
-            <string>0.1.0</string>
+            <string>${VERSION}</string>
         <key>CFBundleGetInfoString</key>
-            <string>This is a comment</string>
+            <string>FlashIt - Create bootable USB installers</string>
         <key>CFBundleShortVersionString</key>
-            <string>0.1.0</string>
+            <string>${VERSION}</string>
         <key>CFBundleIconFile</key>
             <string>icons</string>
         <key>LSMinimumSystemVersion</key>

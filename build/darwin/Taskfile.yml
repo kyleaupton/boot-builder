@@ -21,7 +21,8 @@ tasks:
     cmds:
       - go build {{.BUILD_FLAGS}} -tags flashitxpc -o {{.OUTPUT}}
     vars:
-      BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
+      VERSION: '{{.VERSION | default "dev"}}'
+      BUILD_FLAGS: '{{if eq .PRODUCTION "true"}}-tags production -trimpath -buildvcs=false -ldflags="-w -s -X main.Version={{.VERSION}}"{{else}}-buildvcs=false -gcflags=all="-l"{{end}}'
       DEFAULT_OUTPUT: "{{.BIN_DIR}}/{{.APP_NAME}}"
       OUTPUT: "{{ .OUTPUT | default .DEFAULT_OUTPUT }}"
     env:
@@ -71,12 +72,15 @@ tasks:
       - task: create:app:bundle
 
   generate:info:plist:
-    summary: Generates Info.plist from template with Team ID substitution
+    summary: Generates Info.plist from template with Team ID and version substitution
     preconditions:
       - sh: '[ -n "$APPLE_TEAM_ID" ]'
         msg: "APPLE_TEAM_ID environment variable must be set"
     cmds:
-      - sed 's/${APPLE_TEAM_ID}/'"$APPLE_TEAM_ID"'/g' build/darwin/Info.plist.template > build/darwin/Info.plist
+      - |
+        sed -e 's/${APPLE_TEAM_ID}/'"$APPLE_TEAM_ID"'/g' \
+            -e 's/${VERSION}/{{.VERSION | default "0.1.0"}}/g' \
+            build/darwin/Info.plist.template > build/darwin/Info.plist
 
   create:app:bundle:
     summary: Creates an `.app` bundle
@@ -91,8 +95,9 @@ tasks:
       - cp -r build/helpers/dev.kyleupton.flashit.helper {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Library/LaunchServices/
       # Sign in correct order: helper first, then app bundle
       # Uses APPLE_SIGNING_IDENTITY env var, or falls back to ad-hoc signing
-      - codesign --force --options runtime --sign "{{.SIGNING_IDENTITY}}" {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Library/LaunchServices/dev.kyleupton.flashit.helper
-      - codesign --force --options runtime --sign "{{.SIGNING_IDENTITY}}" {{.BIN_DIR}}/{{.APP_NAME}}.app
+      # Entitlements required for hardened runtime + notarization
+      - codesign --force --options runtime --entitlements build/darwin/entitlements.plist --sign "{{.SIGNING_IDENTITY}}" {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Library/LaunchServices/dev.kyleupton.flashit.helper
+      - codesign --force --options runtime --entitlements build/darwin/entitlements.plist --sign "{{.SIGNING_IDENTITY}}" {{.BIN_DIR}}/{{.APP_NAME}}.app
     vars:
       SIGNING_IDENTITY: '{{.APPLE_SIGNING_IDENTITY | default "-"}}'
 
