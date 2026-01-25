@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/pipeline"
-	"boot-builder/internal/wim"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/wim"
 )
 
 // CopyWim copies the split WIM files to the USB.

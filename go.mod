@@ -1,4 +1,4 @@
-module boot-builder
+module github.com/kyleaupton/flashit
 
 go 1.25
 

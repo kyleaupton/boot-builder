@@ -3,8 +3,8 @@
 package priv
 
 import (
-	"boot-builder/internal/logger"
-	macosclient "boot-builder/internal/priv/macos"
+	"github.com/kyleaupton/flashit/internal/logger"
+	macosclient "github.com/kyleaupton/flashit/internal/priv/macos"
 	"context"
 	"errors"
 	"sync"

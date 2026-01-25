@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { ListInstallers } from '@bindings/boot-builder/internal/service/jobsservice'
+import { ListInstallers } from '@bindings/flashit/internal/service/jobsservice'
 import type { InstallerMeta, Target, SourceInfo } from '@/types'
 
 export const useSourceStore = defineStore('source', () => {

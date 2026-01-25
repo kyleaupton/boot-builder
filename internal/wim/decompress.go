@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 
-	"boot-builder/internal/wim/lzx"
+	"github.com/kyleaupton/flashit/internal/wim/lzx"
 )
 
 const chunkSize = 32768 // Compressed resource chunk size

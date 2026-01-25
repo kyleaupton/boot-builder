@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/fs"
-	"boot-builder/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/fs"
+	"github.com/kyleaupton/flashit/internal/pipeline"
 )
 
 // Prepare clones the ISO to a neutral location to bypass TCC restrictions.

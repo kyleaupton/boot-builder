@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"boot-builder/internal/core"
+	"github.com/kyleaupton/flashit/internal/core"
 )
 
 // testContext is a simple context for testing.

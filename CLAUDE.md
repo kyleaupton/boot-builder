@@ -9,7 +9,7 @@ Wails3 - /websites/v3alpha_wails_io
 
 ## Project Overview
 
-**OS Install Maker** is a cross-platform desktop app built with Wails v3 that creates bootable USB OS installers. The primary motivation: making Windows USB installers on macOS requires splitting large `.wim` files (>4GB) for FAT32 compatibility using wimlib.
+**FlashIt** is a cross-platform desktop app built with Wails v3 that creates bootable USB OS installers. The primary motivation: making Windows USB installers on macOS requires splitting large `.wim` files (>4GB) for FAT32 compatibility using wimlib.
 
 **Branch:** `go-rewrite` (active development branch)
 

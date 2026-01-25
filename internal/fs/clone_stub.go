@@ -9,7 +9,7 @@ import (
 )
 
 // TempISODir is where cloned ISOs are stored
-const TempISODir = "/tmp/bootbuilder"
+const TempISODir = "/tmp/flashit"
 
 // CloneFile copies src to dst (no APFS clone on non-darwin)
 func CloneFile(src, dst string) error {

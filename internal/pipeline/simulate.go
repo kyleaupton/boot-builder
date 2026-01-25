@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"boot-builder/internal/core"
+	"github.com/kyleaupton/flashit/internal/core"
 )
 
 // Simulate simulates a step for dry-run mode with delay and progress events.

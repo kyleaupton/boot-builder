@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/logger"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/logger"
 )
 
 const cleanupTimeout = 30 * time.Second

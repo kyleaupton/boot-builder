@@ -3,7 +3,7 @@
 # Called automatically by Wails build hooks
 
 BINARY_PATH="$1"
-CERT_NAME="Boot Builder Dev Code Signing"
+CERT_NAME="FlashIt Dev Code Signing"
 KC=~/Library/Keychains/login.keychain-db
 
 if [ -z "${BINARY_PATH}" ]; then
@@ -26,7 +26,7 @@ fi
 
 echo "Signing ${BINARY_PATH} with ${CERT_NAME}..."
 codesign --force --sign "${CERT_NAME}" \
-    --identifier "dev.kyleupton.boot-builder" \
+    --identifier "dev.kyleupton.flashit" \
     --options runtime \
     "${BINARY_PATH}"
 

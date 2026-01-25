@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/iso"
-	"boot-builder/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/iso"
+	"github.com/kyleaupton/flashit/internal/pipeline"
 )
 
 // MountISO mounts the Windows ISO file.

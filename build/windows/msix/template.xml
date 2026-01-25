@@ -8,7 +8,7 @@
         AllowPromptForPassword="false">
     </Settings>
     <Installer
-        Path="boot-builder"
+        Path="flashit"
         Arguments=""
         InstallLocation="C:\Program Files\My Company\My Product">
     </Installer>
@@ -25,10 +25,10 @@
         </Capabilities>
         <Applications>
             <Application
-                Id="com.wails.boot-builder"
+                Id="com.wails.flashit"
                 Description="My Product Description"
                 DisplayName="My Product"
-                ExecutableName="boot-builder"
+                ExecutableName="flashit"
                 EntryPoint="Windows.FullTrustApplication">
                 
             </Application>
@@ -47,7 +47,7 @@
             <Logo>Assets\AppIcon.png</Logo>
         </Properties>
     </PackageInformation>
-    <SaveLocation PackagePath="boot-builder.msix" />
+    <SaveLocation PackagePath="flashit.msix" />
     <PackageIntegrity>
         <CertificatePath></CertificatePath>
     </PackageIntegrity>

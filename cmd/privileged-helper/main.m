@@ -1,6 +1,6 @@
 //
 //  main.m
-//  Boot Builder Privileged Helper
+//  FlashIt Privileged Helper
 //
 //  XPC service main entry point.
 //
@@ -21,7 +21,7 @@ int main(int argc, const char *argv[]) {
 
         // Create XPC listener with our Mach service name
         NSXPCListener *listener = [[NSXPCListener alloc]
-            initWithMachServiceName:@"dev.kyleupton.boot-builder.helper"];
+            initWithMachServiceName:@"dev.kyleupton.flashit.helper"];
 
         // Create and set our service delegate
         BBPrivilegedHelperService *delegate = [[BBPrivilegedHelperService alloc] init];

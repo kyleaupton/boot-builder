@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { ListDrives } from '@bindings/boot-builder/internal/service/drivesservice'
+import { ListDrives } from '@bindings/flashit/internal/service/drivesservice'
 import type { Drive } from '@/types'
 
 export const useDrivesStore = defineStore('drives', () => {

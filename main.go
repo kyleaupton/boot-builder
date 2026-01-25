@@ -1,11 +1,11 @@
 package main
 
 import (
-	"boot-builder/internal/core"
-	"boot-builder/internal/drives"
-	"boot-builder/internal/eventbus"
-	"boot-builder/internal/logger"
-	"boot-builder/internal/service"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/drives"
+	"github.com/kyleaupton/flashit/internal/eventbus"
+	"github.com/kyleaupton/flashit/internal/logger"
+	"github.com/kyleaupton/flashit/internal/service"
 	"embed"
 	_ "embed"
 	"log"
@@ -41,7 +41,7 @@ func main() {
 	// 'Bind' is a list of Go struct instances. The frontend has access to the methods of these instances.
 	// 'Mac' options tailor the application when running an macOS.
 	app := application.New(application.Options{
-		Name:        "boot-builder",
+		Name:        "flashit",
 		Description: "A demo of using raw HTML & CSS",
 		LogLevel:    slog.LevelInfo,
 		Assets: application.AssetOptions{
@@ -69,7 +69,7 @@ func main() {
 	// 'BackgroundColour' is the background colour of the window.
 	// 'URL' is the URL that will be loaded into the webview.
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:         "Boot Builder",
+		Title:         "FlashIt",
 		Width:         800,
 		Height:        500,
 		DisableResize: true,

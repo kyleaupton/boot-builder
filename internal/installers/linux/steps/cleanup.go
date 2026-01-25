@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/pipeline"
 )
 
 // Cleanup removes temporary files created during the pipeline.

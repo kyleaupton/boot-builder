@@ -3,7 +3,7 @@
 #
 # The lines below are called `modelines`. See `:help modeline`
 
-name: "boot-builder"
+name: "flashit"
 arch: ${GOARCH}
 platform: "linux"
 version: "0.1.0"
@@ -17,12 +17,12 @@ license: "MIT"
 release: "1"
 
 contents:
-  - src: "./bin/boot-builder"
-    dst: "/usr/local/bin/boot-builder"
+  - src: "./bin/flashit"
+    dst: "/usr/local/bin/flashit"
   - src: "./build/appicon.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/boot-builder.png"
-  - src: "./build/linux/boot-builder.desktop"
-    dst: "/usr/share/applications/boot-builder.desktop"
+    dst: "/usr/share/icons/hicolor/128x128/apps/flashit.png"
+  - src: "./build/linux/flashit.desktop"
+    dst: "/usr/share/applications/flashit.desktop"
 
 # Default dependencies for Debian 12/Ubuntu 22.04+ with WebKit 4.1
 depends:

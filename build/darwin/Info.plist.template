@@ -6,9 +6,9 @@
         <key>CFBundleName</key>
             <string>My Product</string>
         <key>CFBundleExecutable</key>
-            <string>boot-builder</string>
+            <string>flashit</string>
         <key>CFBundleIdentifier</key>
-            <string>dev.kyleupton.boot-builder</string>
+            <string>dev.kyleupton.flashit</string>
         <key>CFBundleVersion</key>
             <string>0.1.0</string>
         <key>CFBundleGetInfoString</key>
@@ -25,8 +25,8 @@
             <string>© now, My Company</string>
         <key>SMPrivilegedExecutables</key>
             <dict>
-              <key>dev.kyleupton.boot-builder.helper</key>
-              <string>identifier "dev.kyleupton.boot-builder.helper" and anchor apple generic and certificate leaf[subject.OU] = "${APPLE_TEAM_ID}"</string>
+              <key>dev.kyleupton.flashit.helper</key>
+              <string>identifier "dev.kyleupton.flashit.helper" and anchor apple generic and certificate leaf[subject.OU] = "${APPLE_TEAM_ID}"</string>
             </dict>
     </dict>
 </plist>

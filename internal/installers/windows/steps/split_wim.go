@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/pipeline"
-	"boot-builder/internal/wim"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/wim"
 )
 
 // SplitWim splits install.wim into smaller chunks for FAT32 compatibility.
@@ -39,7 +39,7 @@ func (SplitWim) Run(ctx context.Context, state *FlashContext, e core.Executor) e
 	e.Emit(core.Event{Type: "log", Message: "Splitting install.wim for FAT32 compatibility..."})
 
 	// Create temp directory for split files
-	tempDir := filepath.Join(os.TempDir(), "bootbuilder-wim-"+uuid.New().String())
+	tempDir := filepath.Join(os.TempDir(), "flashit-wim-"+uuid.New().String())
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}

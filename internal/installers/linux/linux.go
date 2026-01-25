@@ -7,12 +7,12 @@ import (
 	"runtime"
 	"strings"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/drives"
-	linuxsteps "boot-builder/internal/installers/linux/steps"
-	"boot-builder/internal/iso"
-	"boot-builder/internal/pipeline"
-	"boot-builder/internal/priv"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/drives"
+	linuxsteps "github.com/kyleaupton/flashit/internal/installers/linux/steps"
+	"github.com/kyleaupton/flashit/internal/iso"
+	"github.com/kyleaupton/flashit/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/priv"
 )
 
 // Linux is a generic installer for any hybrid ISO Linux distribution.

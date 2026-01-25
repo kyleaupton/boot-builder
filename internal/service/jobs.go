@@ -1,11 +1,11 @@
 package service
 
 import (
-	"boot-builder/internal/core"
-	"boot-builder/internal/eventbus"
-	"boot-builder/internal/installers/linux"
-	"boot-builder/internal/installers/windows"
-	"boot-builder/internal/jobs"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/eventbus"
+	"github.com/kyleaupton/flashit/internal/installers/linux"
+	"github.com/kyleaupton/flashit/internal/installers/windows"
+	"github.com/kyleaupton/flashit/internal/jobs"
 	"context"
 	"errors"
 	"os"

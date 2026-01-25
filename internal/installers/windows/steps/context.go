@@ -1,8 +1,8 @@
 package steps
 
 import (
-	"boot-builder/internal/iso"
-	"boot-builder/internal/priv"
+	"github.com/kyleaupton/flashit/internal/iso"
+	"github.com/kyleaupton/flashit/internal/priv"
 )
 
 // FlashContext holds state shared between Windows flash pipeline steps.

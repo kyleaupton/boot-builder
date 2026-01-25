@@ -3,17 +3,17 @@
     <dict>
         <key>SMPrivilegedExecutables</key>
             <dict>
-              <key>dev.kyleupton.boot-builder.helper</key>
-              <string>identifier "dev.kyleupton.boot-builder.helper"</string>
+              <key>dev.kyleupton.flashit.helper</key>
+              <string>identifier "dev.kyleupton.flashit.helper"</string>
             </dict>
         <key>CFBundlePackageType</key>
             <string>APPL</string>
         <key>CFBundleName</key>
             <string>My Product</string>
         <key>CFBundleExecutable</key>
-            <string>boot-builder</string>
+            <string>flashit</string>
         <key>CFBundleIdentifier</key>
-            <string>dev.kyleupton.boot-builder</string>
+            <string>dev.kyleupton.flashit</string>
         <key>CFBundleVersion</key>
             <string>0.1.0</string>
         <key>CFBundleGetInfoString</key>

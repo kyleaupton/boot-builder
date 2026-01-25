@@ -1,8 +1,8 @@
 package jobs
 
 import (
-	"boot-builder/internal/core"
-	"boot-builder/internal/logger"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/logger"
 	"context"
 	"sync"
 	"time"

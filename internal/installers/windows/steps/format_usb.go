@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/drives"
-	"boot-builder/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/drives"
+	"github.com/kyleaupton/flashit/internal/pipeline"
 )
 
 // FormatUSB formats the target disk as FAT32.

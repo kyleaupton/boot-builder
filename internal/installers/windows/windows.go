@@ -9,12 +9,12 @@ import (
 	"runtime"
 	"strings"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/drives"
-	winsteps "boot-builder/internal/installers/windows/steps"
-	"boot-builder/internal/iso"
-	"boot-builder/internal/pipeline"
-	"boot-builder/internal/priv"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/drives"
+	winsteps "github.com/kyleaupton/flashit/internal/installers/windows/steps"
+	"github.com/kyleaupton/flashit/internal/iso"
+	"github.com/kyleaupton/flashit/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/priv"
 )
 
 const (

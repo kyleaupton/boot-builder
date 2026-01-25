@@ -12,7 +12,7 @@ import (
 	"sort"
 	"time"
 
-	"boot-builder/internal/fs"
+	"github.com/kyleaupton/flashit/internal/fs"
 )
 
 // Progress contains information about the current split/copy operation.

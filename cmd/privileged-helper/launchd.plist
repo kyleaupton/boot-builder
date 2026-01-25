@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>dev.kyleupton.boot-builder.helper</string>
+    <string>dev.kyleupton.flashit.helper</string>
 
     <key>MachServices</key>
     <dict>
-        <key>dev.kyleupton.boot-builder.helper</key>
+        <key>dev.kyleupton.flashit.helper</key>
         <true/>
     </dict>
 </dict>

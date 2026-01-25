@@ -1,6 +1,6 @@
 //
 //  BBPrivilegedHelper.m
-//  Boot Builder Privileged Helper
+//  FlashIt Privileged Helper
 //
 //  XPC service implementation for privileged disk operations.
 //

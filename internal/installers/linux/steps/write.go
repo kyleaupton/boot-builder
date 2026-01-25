@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/pipeline"
 )
 
 // Write writes the ISO to the target disk using the privileged service.

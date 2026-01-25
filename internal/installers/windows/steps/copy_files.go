@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/fs"
-	"boot-builder/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/fs"
+	"github.com/kyleaupton/flashit/internal/pipeline"
 )
 
 // CopyFiles copies all files from the ISO to USB, skipping files > FAT32 limit.

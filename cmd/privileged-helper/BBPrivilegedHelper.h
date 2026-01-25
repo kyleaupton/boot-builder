@@ -1,6 +1,6 @@
 //
 //  BBPrivilegedHelper.h
-//  Boot Builder Privileged Helper
+//  FlashIt Privileged Helper
 //
 //  XPC protocol definition for privileged disk operations.
 //

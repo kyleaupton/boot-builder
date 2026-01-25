@@ -19,7 +19,7 @@ You need to manually create a code signing certificate using Keychain Access:
 1. Open **Keychain Access** (Applications → Utilities → Keychain Access)
 2. From the menu: **Keychain Access** → **Certificate Assistant** → **Create a Certificate...**
 3. Fill in the form:
-   - **Name**: `Boot Builder Dev Code Signing` (exactly this name)
+   - **Name**: `FlashIt Dev Code Signing` (exactly this name)
    - **Identity Type**: Self Signed Root
    - **Certificate Type**: Code Signing ⚠️ **Make sure this says "Code Signing" not "Root Certificate"**
    - Click **Create**
@@ -33,7 +33,7 @@ The certificate will be added to your login keychain and is valid for 1 year by 
 **Verify it worked:**
 
 ```bash
-security find-certificate -c "Boot Builder Dev Code Signing" -a ~/Library/Keychains/login.keychain-db
+security find-certificate -c "FlashIt Dev Code Signing" -a ~/Library/Keychains/login.keychain-db
 ```
 
 You should see output showing the certificate details. If the command returns without error, the certificate was created successfully.
@@ -55,7 +55,7 @@ This:
 **Verify it's running:**
 
 ```bash
-sudo launchctl list | grep dev.kyleupton.boot-builder.helper
+sudo launchctl list | grep dev.kyleupton.flashit.helper
 ```
 
 You should see it listed with a PID.
@@ -67,7 +67,7 @@ The helper's `SMAuthorizedClients` is already configured to accept binaries sign
 ```xml
 <key>SMAuthorizedClients</key>
 <array>
-    <string>identifier "dev.kyleupton.boot-builder"</string>
+    <string>identifier "dev.kyleupton.flashit"</string>
 </array>
 ```
 
@@ -102,32 +102,32 @@ For changes to the main app, the auto-signing hook handles it.
 ### View Helper Logs
 
 ```bash
-log stream --predicate 'process == "dev.kyleupton.boot-builder.helper"' --level debug
+log stream --predicate 'process == "dev.kyleupton.flashit.helper"' --level debug
 ```
 
 ### Check Helper Status
 
 ```bash
-sudo launchctl list | grep dev.kyleupton.boot-builder.helper
+sudo launchctl list | grep dev.kyleupton.flashit.helper
 ```
 
 ### Restart Helper
 
 ```bash
-sudo launchctl unload /Library/LaunchDaemons/dev.kyleupton.boot-builder.helper.plist
-sudo launchctl load /Library/LaunchDaemons/dev.kyleupton.boot-builder.helper.plist
+sudo launchctl unload /Library/LaunchDaemons/dev.kyleupton.flashit.helper.plist
+sudo launchctl load /Library/LaunchDaemons/dev.kyleupton.flashit.helper.plist
 ```
 
 ### Verify Binary Signature
 
 ```bash
-codesign -vvv bin/boot-builder
+codesign -vvv bin/flashit
 ```
 
 Should show:
 
 ```
-identifier=dev.kyleupton.boot-builder
+identifier=dev.kyleupton.flashit
 ...
 valid on disk
 satisfies its Designated Requirement
@@ -138,9 +138,9 @@ satisfies its Designated Requirement
 To clean up:
 
 ```bash
-sudo launchctl unload /Library/LaunchDaemons/dev.kyleupton.boot-builder.helper.plist
-sudo rm /Library/PrivilegedHelperTools/dev.kyleupton.boot-builder.helper
-sudo rm /Library/LaunchDaemons/dev.kyleupton.boot-builder.helper.plist
+sudo launchctl unload /Library/LaunchDaemons/dev.kyleupton.flashit.helper.plist
+sudo rm /Library/PrivilegedHelperTools/dev.kyleupton.flashit.helper
+sudo rm /Library/LaunchDaemons/dev.kyleupton.flashit.helper.plist
 ```
 
 ## Testing Disk Operations
@@ -168,9 +168,9 @@ hdiutil detach /dev/diskN
 
 ### Certificate not showing as signing identity
 
-If you created the certificate but `security find-certificate -c "Boot Builder Dev Code Signing" -a ~/Library/Keychains/login.keychain-db` fails:
+If you created the certificate but `security find-certificate -c "FlashIt Dev Code Signing" -a ~/Library/Keychains/login.keychain-db` fails:
 
-1. Open Keychain Access and find "Boot Builder Dev Code Signing"
+1. Open Keychain Access and find "FlashIt Dev Code Signing"
 2. Double-click it and check if it says "Self-signed root certificate" in the title
 3. If so, delete it (also delete the associated private key)
 4. Create it again, making absolutely sure you select **"Code Signing"** from the Certificate Type dropdown
@@ -182,16 +182,16 @@ This means the helper isn't installed or the signatures don't match.
 
 **Fix:**
 
-1. Verify dev certificate exists: `security find-certificate -c "Boot Builder Dev Code Signing" -a ~/Library/Keychains/login.keychain-db`
+1. Verify dev certificate exists: `security find-certificate -c "FlashIt Dev Code Signing" -a ~/Library/Keychains/login.keychain-db`
 2. Reinstall helper: `./scripts/install-helper-dev.sh`
-3. Verify binary is signed: `codesign -vvv bin/boot-builder`
+3. Verify binary is signed: `codesign -vvv bin/flashit`
 
 ### "XPC connection failed"
 
 Check if helper is running:
 
 ```bash
-sudo launchctl list | grep dev.kyleupton.boot-builder.helper
+sudo launchctl list | grep dev.kyleupton.flashit.helper
 ```
 
 If not listed, reinstall with `./scripts/install-helper-dev.sh`.
@@ -203,7 +203,7 @@ Check Console.app for XPC errors.
 The hook runs after every build. If it's not working:
 
 1. Check `build/config.yml` has the signing step
-2. Run manually: `./scripts/sign-dev-binary.sh bin/boot-builder`
+2. Run manually: `./scripts/sign-dev-binary.sh bin/flashit`
 3. Check script has execute permission: `ls -la scripts/sign-dev-binary.sh`
 
 ## Production Builds

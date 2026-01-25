@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/drives"
-	"boot-builder/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/drives"
+	"github.com/kyleaupton/flashit/internal/pipeline"
 )
 
 // Eject ejects the target disk after writing is complete.

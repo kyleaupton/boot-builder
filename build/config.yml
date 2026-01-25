@@ -40,7 +40,7 @@ dev_mode:
       type: blocking
     - cmd: wails3 task build
       type: blocking
-    - cmd: ./scripts/sign-dev-binary.sh bin/boot-builder
+    - cmd: ./scripts/sign-dev-binary.sh bin/flashit
       type: blocking
     - cmd: wails3 task run
       type: primary

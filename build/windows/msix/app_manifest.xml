@@ -6,7 +6,7 @@
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10">
   
   <Identity 
-    Name="com.wails.boot-builder"
+    Name="com.wails.flashit"
     Publisher="CN=My Company"
     Version="0.1.0.0" 
     ProcessorArchitecture="x64" />
@@ -27,7 +27,7 @@
   </Resources>
   
   <Applications>
-    <Application Id="com.wails.boot-builder" Executable="boot-builder" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="com.wails.flashit" Executable="flashit" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="My Product"
         Description="My Product Description"
@@ -39,7 +39,7 @@
       </uap:VisualElements>
       
       <Extensions>
-        <desktop:Extension Category="windows.fullTrustProcess" Executable="boot-builder" />
+        <desktop:Extension Category="windows.fullTrustProcess" Executable="flashit" />
         
       </Extensions>
     </Application>

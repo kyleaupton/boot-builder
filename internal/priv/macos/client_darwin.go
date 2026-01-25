@@ -3,7 +3,7 @@
 package macos
 
 import (
-	"boot-builder/internal/priv/macos/xpc"
+	"github.com/kyleaupton/flashit/internal/priv/macos/xpc"
 	"context"
 	"errors"
 )

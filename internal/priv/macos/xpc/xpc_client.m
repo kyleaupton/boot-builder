@@ -1,6 +1,6 @@
 //
 //  xpc_client.m
-//  Boot Builder XPC Client
+//  FlashIt XPC Client
 //
 //  Client-side XPC calls to the privileged helper.
 //
@@ -11,8 +11,8 @@
 #import <Security/Security.h>
 #import <dispatch/dispatch.h>
 
-static const char *kHelperLabel = "dev.kyleupton.boot-builder.helper";
-static const char *kHelperBundleID = "dev.kyleupton.boot-builder.helper";
+static const char *kHelperLabel = "dev.kyleupton.flashit.helper";
+static const char *kHelperBundleID = "dev.kyleupton.flashit.helper";
 
 // Active XPC connection for the current operation.
 // Used to send cancel requests over the same connection as the operation.

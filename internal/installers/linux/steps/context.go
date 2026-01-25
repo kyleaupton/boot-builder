@@ -1,6 +1,6 @@
 package steps
 
-import "boot-builder/internal/priv"
+import "github.com/kyleaupton/flashit/internal/priv"
 
 // FlashContext holds state shared between Linux flash pipeline steps.
 type FlashContext struct {

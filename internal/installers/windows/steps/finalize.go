@@ -5,10 +5,10 @@ import (
 	"os"
 	"time"
 
-	"boot-builder/internal/core"
-	"boot-builder/internal/drives"
-	"boot-builder/internal/iso"
-	"boot-builder/internal/pipeline"
+	"github.com/kyleaupton/flashit/internal/core"
+	"github.com/kyleaupton/flashit/internal/drives"
+	"github.com/kyleaupton/flashit/internal/iso"
+	"github.com/kyleaupton/flashit/internal/pipeline"
 )
 
 // Finalize unmounts the ISO, ejects the USB, and cleans up temp files.

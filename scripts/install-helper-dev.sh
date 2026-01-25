@@ -4,9 +4,9 @@
 
 set -e
 
-CERT_NAME="Boot Builder Dev Code Signing"
+CERT_NAME="FlashIt Dev Code Signing"
 KC=~/Library/Keychains/login.keychain-db
-HELPER_NAME="dev.kyleupton.boot-builder.helper"
+HELPER_NAME="dev.kyleupton.flashit.helper"
 HELPER_SRC="build/helpers/${HELPER_NAME}"
 HELPER_DEST="/Library/PrivilegedHelperTools/${HELPER_NAME}"
 PLIST_DEST="/Library/LaunchDaemons/${HELPER_NAME}.plist"

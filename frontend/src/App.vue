@@ -73,7 +73,7 @@ onMounted(() => {
 <template>
   <div class="flex flex-col h-screen bg-background text-foreground">
     <header class="app-header p-4 text-center">
-      <h1 class="text-xl font-semibold m-0">Boot Builder</h1>
+      <h1 class="text-xl font-semibold m-0">FlashIt</h1>
     </header>
 
     <Toaster position="bottom-center" />

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"boot-builder/internal/wim"
+	"github.com/kyleaupton/flashit/internal/wim"
 )
 
 func main() {

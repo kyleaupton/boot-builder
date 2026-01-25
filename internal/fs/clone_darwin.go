@@ -12,7 +12,7 @@ import (
 )
 
 // TempISODir is where cloned ISOs are stored to bypass TCC restrictions
-const TempISODir = "/private/var/tmp/bootbuilder"
+const TempISODir = "/private/var/tmp/flashit"
 
 // CloneFile creates an APFS clone of src at dst.
 // Falls back to regular copy if cloning is not supported.

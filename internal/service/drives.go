@@ -1,7 +1,7 @@
 package service
 
 import (
-	"boot-builder/internal/drives"
+	"github.com/kyleaupton/flashit/internal/drives"
 	"context"
 )
 
