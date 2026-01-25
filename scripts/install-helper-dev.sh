@@ -7,7 +7,7 @@ set -e
 CERT_NAME="FlashIt Dev Code Signing"
 KC=~/Library/Keychains/login.keychain-db
 HELPER_NAME="dev.kyleupton.flashit.helper"
-HELPER_SRC="build/helpers/${HELPER_NAME}"
+HELPER_SRC="bin/helpers/${HELPER_NAME}"
 HELPER_DEST="/Library/PrivilegedHelperTools/${HELPER_NAME}"
 PLIST_DEST="/Library/LaunchDaemons/${HELPER_NAME}.plist"
 
@@ -28,7 +28,7 @@ echo ""
 
 # Build helper
 echo "Building helper..."
-cd cmd/privileged-helper
+cd helpers/darwin
 task clean >/dev/null 2>&1 || true
 task compile
 # REMOVED: task create:bundle  ← Don't create a bundle!

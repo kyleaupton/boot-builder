@@ -1,9 +1,8 @@
 .env
 .task
 bin
-build/helpers
 build/darwin/Info.plist
-cmd/privileged-helper/Info.plist
+helpers/darwin/Info.plist
 frontend/dist
 frontend/node_modules
 build/linux/appimage/build

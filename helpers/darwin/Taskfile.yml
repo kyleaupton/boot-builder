@@ -2,7 +2,7 @@ version: "3"
 
 vars:
   HELPER_NAME: "dev.kyleupton.flashit.helper"
-  BUILD_DIR: "../../build/helpers"
+  BUILD_DIR: "../../bin/helpers"
   BUNDLE_DIR: "{{.BUILD_DIR}}/{{.HELPER_NAME}}"
 
 tasks:

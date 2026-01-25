@@ -91,7 +91,7 @@ wails3 dev
 
 You only need to run `./scripts/install-helper-dev.sh` again if:
 
-- You modify helper code (`cmd/privileged-helper/*.m`)
+- You modify helper code (`helpers/darwin/*.m`)
 - You update the helper's Info.plist
 - You update the launchd.plist
 
