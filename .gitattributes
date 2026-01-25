@@ -1,2 +1,4 @@
+* text=auto
+
 build/** linguist-generated
 frontend/src/components/ui/** linguist-generated
