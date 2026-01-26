@@ -32,7 +32,7 @@ func main() {
 	// Check for dry-run mode via environment variable
 	if os.Getenv("DRY_RUN") == "1" || os.Getenv("DRY_RUN") == "true" {
 		core.DryRun = true
-		log.Println("🧪 DRY-RUN MODE: Using mock drives, no real disk operations")
+		log.Println("DRY-RUN MODE: Using mock drives, no real disk operations")
 		drives.SetProvider(drives.MockProvider{Drives: drives.DefaultMockDrives()})
 	}
 
@@ -42,8 +42,8 @@ func main() {
 	// 'Bind' is a list of Go struct instances. The frontend has access to the methods of these instances.
 	// 'Mac' options tailor the application when running an macOS.
 	app := application.New(application.Options{
-		Name:        "flashit",
-		Description: "A demo of using raw HTML & CSS",
+		Name:        "FlashIt",
+		Description: "Create bootable USB OS installers",
 		LogLevel:    slog.LevelInfo,
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),

@@ -9,7 +9,7 @@ info:
   productName: "FlashIt" # The name of the application
   productIdentifier: "dev.kyleupton.flashit" # The unique product identifier
   description: "A program that helps you flash your USB drives" # The application description
-  copyright: "(c) 2025, Kyle Upton" # Copyright text
+  copyright: "(c) 2026, Kyle Upton" # Copyright text
   comments: "A program that helps you flash your USB drives" # Comments
   version: "0.1.0" # The application version
 

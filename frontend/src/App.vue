@@ -10,6 +10,7 @@ import ProgressPanel from '@/components/ProgressPanel.vue'
 import StatusAlert from '@/components/StatusAlert.vue'
 import FlashButton from '@/components/FlashButton.vue'
 import { Toaster } from '@/components/ui/sonner'
+import { toast } from 'vue-sonner'
 import 'vue-sonner/style.css'
 
 
@@ -37,8 +38,7 @@ const showSelectionView = computed(() => {
 // Start job handler
 async function handleStartJob() {
   if (!sourceStore.source || !drivesStore.selectedDrive || !sourceStore.detectedInstaller) {
-    // TODO: Communicate this to the user
-    console.warn('Please select a source and drive', sourceStore.source, drivesStore.selectedDrive, sourceStore.detectedInstaller)
+    toast.warning('Please select a source and drive')
     return
   }
 
@@ -49,7 +49,9 @@ async function handleStartJob() {
       DriveID: drivesStore.selectedDrive.Device,
     })
   } catch (e) {
-    console.error('Failed to start job:', e)
+    toast.error('Failed to start job', {
+      description: e instanceof Error ? e.message : String(e),
+    })
   }
 }
 

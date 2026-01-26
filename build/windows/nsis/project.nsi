@@ -88,6 +88,11 @@ Section
     
     !insertmacro wails.files
 
+    # Install the privileged helper executable if provided
+    !ifdef ARG_HELPER_BINARY
+        File "/oname=flashit-helper.exe" "${ARG_HELPER_BINARY}"
+    !endif
+
     CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
     CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
 
@@ -96,10 +101,13 @@ Section
     !insertmacro wails.writeUninstaller
 SectionEnd
 
-Section "uninstall" 
+Section "uninstall"
     !insertmacro wails.setShellContext
 
     RMDir /r "$AppData\${PRODUCT_EXECUTABLE}" # Remove the WebView2 DataPath
+
+    # Delete the helper executable
+    Delete "$INSTDIR\flashit-helper.exe"
 
     RMDir /r $INSTDIR
 

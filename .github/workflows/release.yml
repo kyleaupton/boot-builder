@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 env:
-  GO_VERSION: '1.23'
-  NODE_VERSION: '20'
+  GO_VERSION: '1.25'
+  NODE_VERSION: '22'
 
 jobs:
   build-macos:
@@ -172,8 +172,107 @@ jobs:
           path: checksums/
           retention-days: 1
 
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Get version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v',''
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Build helper
+        run: task windows:build:helper
+
+      - name: Build application
+        run: task windows:build PRODUCTION=true VERSION=${{ steps.version.outputs.VERSION }}
+
+      - name: Create NSIS installer
+        shell: pwsh
+        run: |
+          wails3 generate webview2bootstrapper -dir build/windows/nsis
+          $helperPath = "${{ github.workspace }}\bin\helpers\flashit-helper.exe"
+          $appPath = "${{ github.workspace }}\bin\flashit.exe"
+          makensis -DARG_WAILS_AMD64_BINARY="$appPath" -DARG_HELPER_BINARY="$helperPath" build\windows\nsis\project.nsi
+
+      - name: Rename installer
+        shell: pwsh
+        run: |
+          Move-Item -Path bin\flashit-amd64-installer.exe -Destination bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64-installer.exe
+
+      - name: Create zip for updater
+        shell: pwsh
+        run: |
+          Compress-Archive -Path bin\flashit.exe,bin\helpers\flashit-helper.exe -DestinationPath bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip
+
+      - name: Calculate checksums
+        id: checksums
+        shell: pwsh
+        run: |
+          $installerHash = (Get-FileHash -Path bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64-installer.exe -Algorithm SHA256).Hash.ToLower()
+          $zipHash = (Get-FileHash -Path bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip -Algorithm SHA256).Hash.ToLower()
+          $zipSize = (Get-Item bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip).Length
+
+          echo "installer_sha256=$installerHash" >> $env:GITHUB_OUTPUT
+          echo "zip_sha256=$zipHash" >> $env:GITHUB_OUTPUT
+          echo "zip_size=$zipSize" >> $env:GITHUB_OUTPUT
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-amd64
+          path: |
+            bin/flashit-${{ steps.version.outputs.VERSION }}-windows-amd64-installer.exe
+            bin/flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip
+          retention-days: 1
+
+      - name: Save checksums
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path checksums
+          Set-Content -Path checksums/installer-amd64.sha256 -Value "${{ steps.checksums.outputs.installer_sha256 }}"
+          Set-Content -Path checksums/zip-amd64.sha256 -Value "${{ steps.checksums.outputs.zip_sha256 }}"
+          Set-Content -Path checksums/zip-amd64.size -Value "${{ steps.checksums.outputs.zip_size }}"
+
+      - name: Upload checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksums-windows-amd64
+          path: checksums/
+          retention-days: 1
+
   create-release:
-    needs: build-macos
+    needs: [build-macos, build-windows]
     runs-on: ubuntu-latest
 
     steps:
@@ -194,11 +293,15 @@ jobs:
           VERSION="${{ steps.version.outputs.VERSION }}"
           RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Read checksums and sizes
+          # Read macOS checksums and sizes
           ARM64_TAR_SHA256=$(cat artifacts/checksums-arm64/tar-arm64.sha256)
           ARM64_TAR_SIZE=$(cat artifacts/checksums-arm64/tar-arm64.size)
           AMD64_TAR_SHA256=$(cat artifacts/checksums-amd64/tar-amd64.sha256)
           AMD64_TAR_SIZE=$(cat artifacts/checksums-amd64/tar-amd64.size)
+
+          # Read Windows checksums and sizes
+          WINDOWS_ZIP_SHA256=$(cat artifacts/checksums-windows-amd64/zip-amd64.sha256)
+          WINDOWS_ZIP_SIZE=$(cat artifacts/checksums-windows-amd64/zip-amd64.size)
 
           cat > artifacts/update.json << EOF
           {
@@ -215,6 +318,11 @@ jobs:
                 "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-macos-amd64.tar.gz",
                 "size": ${AMD64_TAR_SIZE},
                 "checksum": "sha256:${AMD64_TAR_SHA256}"
+              },
+              "windows-amd64": {
+                "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-windows-amd64.zip",
+                "size": ${WINDOWS_ZIP_SIZE},
+                "checksum": "sha256:${WINDOWS_ZIP_SHA256}"
               }
             }
           }
@@ -234,4 +342,6 @@ jobs:
             artifacts/macos-arm64/flashit-${{ steps.version.outputs.VERSION }}-macos-arm64.tar.gz
             artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-amd64.dmg
             artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-amd64.tar.gz
+            artifacts/windows-amd64/flashit-${{ steps.version.outputs.VERSION }}-windows-amd64-installer.exe
+            artifacts/windows-amd64/flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip
             artifacts/update.json

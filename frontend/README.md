@@ -1,18 +1,30 @@
-# Vue 3 + TypeScript + Vite
+# FlashIt Frontend
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+The Vue 3 frontend for FlashIt, a cross-platform desktop app for creating bootable USB OS installers.
 
-## Recommended IDE Setup
+## Tech Stack
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+- **Vue 3**
+- **Pinia** for state management
+- **Tailwind CSS v4** for styling
+- **shadcn-vue** for UI components (built on Reka UI)
+- **Wails v3** runtime for Go backend communication
 
-## Type Support For `.vue` Imports in TS
+## Key Concepts
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+### Stores
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+- **drives** - Polls the Go backend for available USB drives, handles drive selection
+- **source** - Manages the selected ISO file and detected installer type
+- **job** - Tracks flash job lifecycle (pending → running → complete/error)
 
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+### Backend Communication
+
+The frontend communicates with Go services via auto-generated bindings in `bindings/`. These are regenerated when running `task dev` or `wails3 generate bindings`.
+
+Events from the backend (job progress, drive updates) are received via the Wails event system.
+
+### UI Components
+
+Base UI components from shadcn-vue are in `components/ui/`. App-specific components are in the `components/` root.
+
