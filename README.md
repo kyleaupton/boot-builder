@@ -1,59 +1,84 @@
-# Welcome to Your New Wails3 Project!
+<!-- <p align="center">
+  <img src="assets/logo.png" alt="FlashIt Logo" width="128" height="128">
+</p> -->
 
-Congratulations on generating your Wails3 application! This README will guide you through the next steps to get your project up and running.
+<h1 align="center">FlashIt</h1>
 
-## Getting Started
+<p align="center">
+  <strong>Create bootable USB installers for any OS, from any OS.</strong>
+</p>
 
-1. Navigate to your project directory in the terminal.
+<p align="center">
+  <a href="https://github.com/kyleaupton/flashit/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Latest%20Release-blue?style=for-the-badge" alt="Download">
+  </a>
+</p>
 
-2. To run your application in development mode, use the following command:
+---
 
-   ```
-   wails3 dev
-   ```
+FlashIt is a cross-platform desktop application that creates bootable USB drives for Windows, Linux, and other operating systems.
 
-   This will start your application and enable hot-reloading for both frontend and backend changes.
+## Features
 
-3. To build your application for production, use:
+- **Windows USB Creation** - Create bootable Windows 10/11 installers with automatic WIM splitting for FAT32 compatibility
+- **Linux USB Creation** - Create bootable Linux installers for Ubuntu, Fedora, Debian, and other distributions
+- **Cross-Platform** - Native app for macOS, Windows, and ~~Linux~~ *(coming soon)*
 
-   ```
-   wails3 build
-   ```
+## Platform Support
 
-   This will create a production-ready executable in the `build` directory.
+| Host OS | Windows USB | Linux USB |
+|---------|-------------|-----------|
+| macOS   | Yes         | Yes       |
+| Windows | Yes         | Yes       |
+| ~~Linux~~   | ~~Yes~~         | ~~Yes~~       |
 
-## Exploring Wails3 Features
+*Linux host support coming soon*
 
-Now that you have your project set up, it's time to explore the features that Wails3 offers:
+## Screenshots
 
-1. **Check out the examples**: The best way to learn is by example. Visit the `examples` directory in the `v3/examples` directory to see various sample applications.
+*Screenshots coming soon*
 
-2. **Run an example**: To run any of the examples, navigate to the example's directory and use:
+<!--
+<p align="center">
+  <img src="assets/screenshot-1.png" alt="FlashIt Screenshot" width="600">
+</p>
+-->
 
-   ```
-   go run .
-   ```
+## Usage
 
-   Note: Some examples may be under development during the alpha phase.
+1. **Choose your ISO** - Select the ISO file you want to flash
+2. **Select target USB** - Pick the USB drive (only removable drives are shown)
+3. **Flash** - Click start and wait for completion
 
-3. **Explore the documentation**: Visit the [Wails3 documentation](https://v3.wails.io/) for in-depth guides and API references.
+## Safety
 
-4. **Join the community**: Have questions or want to share your progress? Join the [Wails Discord](https://discord.gg/JDdSxwjhGf) or visit the [Wails discussions on GitHub](https://github.com/wailsapp/wails/discussions).
+FlashIt includes multiple safety mechanisms:
 
-## Project Structure
+- **Boot drive protection** - Refuses to write to system drives
+- **Removable-only filtering** - Only shows removable USB drives as targets
+- **Privilege verification** - Uses platform-native elevation (launchd on macOS, UAC on Windows)
 
-Take a moment to familiarize yourself with your project structure:
+## Pure Go WIM Implementation
 
-- `frontend/`: Contains your frontend code (HTML, CSS, JavaScript/TypeScript)
-- `main.go`: The entry point of your Go backend
-- `app.go`: Define your application structure and methods here
-- `wails.json`: Configuration file for your Wails project
+Creating Windows bootable USBs requires splitting large `install.wim` files to fit within FAT32's 4GB file size limit. Most tools rely on [wimlib](https://wimlib.net/), a C library that can be difficult to build and distribute across platforms.
 
-## Next Steps
+FlashIt includes a **pure Go implementation** of WIM file reading and splitting. This means:
 
-1. Modify the frontend in the `frontend/` directory to create your desired UI.
-2. Add backend functionality in `main.go`.
-3. Use `wails3 dev` to see your changes in real-time.
-4. When ready, build your application with `wails3 build`.
+- **No external dependencies** - Everything is bundled in the app
+- **No native libraries** - No need to install wimlib or any other tools
+- **Truly cross-platform** - The same code runs on macOS, Windows, and Linux
 
-Happy coding with Wails3! If you encounter any issues or have questions, don't hesitate to consult the documentation or reach out to the Wails community.
+## Roadmap
+
+- [ ] **Linux Host Support** - Native Linux build of the application
+- [ ] **Write Verification** - Verify USB contents after flashing to ensure a successful write
+- [ ] **ISO Downloads** - Download popular Linux distributions directly from the app
+
+## Acknowledgments
+
+- WIM format documentation from [Microsoft](https://docs.microsoft.com/en-us/windows-hardware/manufacture/desktop/wim-vs-ffu-image-file-formats)
+- WIM reader based on [Microsoft/go-winio](https://github.com/Microsoft/go-winio) (MIT License), modified for cross-platform support
+
+## License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
