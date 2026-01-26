@@ -1,6 +1,6 @@
-<!-- <p align="center">
-  <img src="assets/logo.png" alt="FlashIt Logo" width="128" height="128">
-</p> -->
+<p align="center">
+  <img src="build/appicon.png" alt="FlashIt Logo" width="128" height="128">
+</p>
 
 <h1 align="center">FlashIt</h1>
 
