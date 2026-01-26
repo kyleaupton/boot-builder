@@ -28,6 +28,9 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: Configure Git for GitHub auth
+        run: git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -183,6 +186,9 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+
+      - name: Configure Git for GitHub auth
+        run: git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
