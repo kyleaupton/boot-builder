@@ -93,10 +93,11 @@ tasks:
       - cp build/darwin/Info.plist {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents
       # Copy privileged helper into app bundle (required for SMJobBless)
       - cp -r bin/helpers/dev.kyleupton.flashit.helper {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Library/LaunchServices/
-      # Sign in correct order: helper first, then app bundle
+      # Sign in correct order: helper first, then main binary, then app bundle
       # Uses APPLE_SIGNING_IDENTITY env var, or falls back to ad-hoc signing
       # Entitlements required for hardened runtime + notarization
       - codesign --force --options runtime --entitlements build/darwin/entitlements.plist --sign "{{.SIGNING_IDENTITY}}" {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Library/LaunchServices/dev.kyleupton.flashit.helper
+      - codesign --force --options runtime --entitlements build/darwin/entitlements.plist --sign "{{.SIGNING_IDENTITY}}" {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/MacOS/{{.APP_NAME}}
       - codesign --force --options runtime --entitlements build/darwin/entitlements.plist --sign "{{.SIGNING_IDENTITY}}" {{.BIN_DIR}}/{{.APP_NAME}}.app
     vars:
       SIGNING_IDENTITY: '{{.APPLE_SIGNING_IDENTITY | default "-"}}'
