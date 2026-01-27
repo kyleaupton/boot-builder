@@ -228,7 +228,7 @@ jobs:
           wails3 generate webview2bootstrapper -dir build/windows/nsis
           $helperPath = "${{ github.workspace }}\bin\helpers\flashit-helper.exe"
           $appPath = "${{ github.workspace }}\bin\flashit.exe"
-          makensis -DARG_WAILS_AMD64_BINARY="$appPath" -DARG_HELPER_BINARY="$helperPath" build\windows\nsis\project.nsi
+          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" -DARG_WAILS_AMD64_BINARY="$appPath" -DARG_HELPER_BINARY="$helperPath" build\windows\nsis\project.nsi
 
       - name: Rename installer
         shell: pwsh
