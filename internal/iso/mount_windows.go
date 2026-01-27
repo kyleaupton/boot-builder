@@ -26,15 +26,16 @@ func (m *windowsMounter) Mount(ctx context.Context, isoPath string) (*MountResul
 	}
 
 	// PowerShell script to mount ISO and return drive letter
+	// Use single-quoted string to prevent command injection
 	script := fmt.Sprintf(`
 $ErrorActionPreference = "Stop"
-$img = Mount-DiskImage -ImagePath "%s" -PassThru
+$img = Mount-DiskImage -ImagePath '%s' -PassThru
 $vol = $img | Get-Volume
 if (-not $vol.DriveLetter) {
     throw "ISO mounted but no drive letter assigned"
 }
 $vol.DriveLetter
-`, isoPath)
+`, escapePSString(isoPath))
 
 	out, err := m.runPS(ctx, script)
 	if err != nil {
@@ -65,19 +66,20 @@ func (m *windowsMounter) Unmount(ctx context.Context, result *MountResult) error
 	unmountCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	script := fmt.Sprintf(`Dismount-DiskImage -ImagePath "%s" -ErrorAction SilentlyContinue`, isoPath)
+	script := fmt.Sprintf(`Dismount-DiskImage -ImagePath '%s' -ErrorAction SilentlyContinue`, escapePSString(isoPath))
 	m.runPS(unmountCtx, script) // Best-effort, ignore errors
 	return nil
 }
 
 func (m *windowsMounter) DetachExisting(ctx context.Context, isoPath string) string {
+	escaped := escapePSString(isoPath)
 	script := fmt.Sprintf(`
-$img = Get-DiskImage -ImagePath "%s" -ErrorAction SilentlyContinue
+$img = Get-DiskImage -ImagePath '%s' -ErrorAction SilentlyContinue
 if ($img -and $img.Attached) {
-    Dismount-DiskImage -ImagePath "%s" -ErrorAction SilentlyContinue | Out-Null
+    Dismount-DiskImage -ImagePath '%s' -ErrorAction SilentlyContinue | Out-Null
     "detached"
 }
-`, isoPath, isoPath)
+`, escaped, escaped)
 
 	out, err := m.runPS(ctx, script)
 	if err != nil {
@@ -117,4 +119,10 @@ func wrapExecErr(what string, err error, output []byte) error {
 		}
 	}
 	return fmt.Errorf("%s error: %w", what, err)
+}
+
+// escapePSString escapes a string for use in a PowerShell single-quoted literal.
+// Single quotes are the only characters that need escaping (doubled).
+func escapePSString(s string) string {
+	return strings.ReplaceAll(s, "'", "''")
 }
