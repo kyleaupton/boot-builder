@@ -91,8 +91,8 @@ jobs:
 
       - name: Verify code signature
         run: |
-          codesign --verify --deep --strict bin/flashit.app
-          codesign -dv --verbose=4 bin/flashit.app
+          codesign --verify --deep --strict bin/FlashIt.app
+          codesign -dv --verbose=4 bin/FlashIt.app
 
       - name: Notarize application
         env:
@@ -101,7 +101,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           # Create zip for notarization
-          ditto -c -k --keepParent bin/flashit.app $RUNNER_TEMP/flashit-notarize.zip
+          ditto -c -k --keepParent bin/FlashIt.app $RUNNER_TEMP/flashit-notarize.zip
 
           # Submit for notarization and wait
           xcrun notarytool submit $RUNNER_TEMP/flashit-notarize.zip \
@@ -111,11 +111,11 @@ jobs:
             --wait
 
           # Staple the notarization ticket
-          xcrun stapler staple bin/flashit.app
+          xcrun stapler staple bin/FlashIt.app
 
       - name: Verify notarization
         run: |
-          spctl --assess --type execute --verbose=4 bin/flashit.app
+          spctl --assess --type execute --verbose=4 bin/FlashIt.app
 
       - name: Set arch label
         id: arch_label
@@ -130,7 +130,7 @@ jobs:
         run: |
           # Create DMG for distribution
           mkdir -p $RUNNER_TEMP/dmg-contents
-          cp -R bin/flashit.app $RUNNER_TEMP/dmg-contents/
+          cp -R bin/FlashIt.app $RUNNER_TEMP/dmg-contents/
           ln -s /Applications $RUNNER_TEMP/dmg-contents/Applications
 
           hdiutil create -volname "FlashIt" \
@@ -236,7 +236,7 @@ jobs:
         run: |
           wails3 generate webview2bootstrapper -dir build/windows/nsis
           $helperPath = "${{ github.workspace }}\bin\helpers\flashit-helper.exe"
-          $appPath = "${{ github.workspace }}\bin\flashit.exe"
+          $appPath = "${{ github.workspace }}\bin\FlashIt.exe"
           & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" -DARG_WAILS_AMD64_BINARY="$appPath" -DARG_HELPER_BINARY="$helperPath" build\windows\nsis\project.nsi
 
       - name: Rename installer
@@ -247,7 +247,7 @@ jobs:
       - name: Create zip for updater
         shell: pwsh
         run: |
-          Compress-Archive -Path bin\flashit.exe,bin\helpers\flashit-helper.exe -DestinationPath bin\flashit-${{ steps.version.outputs.VERSION }}-windows-x64.zip
+          Compress-Archive -Path bin\FlashIt.exe,bin\helpers\flashit-helper.exe -DestinationPath bin\flashit-${{ steps.version.outputs.VERSION }}-windows-x64.zip
 
       - name: Calculate checksums
         id: checksums
