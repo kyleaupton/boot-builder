@@ -23,6 +23,7 @@ FlashIt is a cross-platform desktop application that creates bootable USB drives
 - **Windows USB Creation** - Create bootable Windows 10/11 installers with automatic WIM splitting for FAT32 compatibility
 - **Linux USB Creation** - Create bootable Linux installers for Ubuntu, Fedora, Debian, and other distributions
 - **Cross-Platform** - Native app for macOS, Windows, and ~~Linux~~ *(coming soon)*
+- **Secure Privilege Elevation** - Uses a proper signed privileged helper on macOS and UAC on Windows for safe, system-native permission handling
 
 ## Platform Support
 
