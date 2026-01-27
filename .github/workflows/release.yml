@@ -213,6 +213,9 @@ jobs:
         run: npm ci
         working-directory: frontend
 
+      - name: Exclude node_modules from Go
+        run: echo "module node_modules" > frontend/node_modules/go.mod
+
       - name: Build helper
         run: task windows:build:helper
 
