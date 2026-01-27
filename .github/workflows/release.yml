@@ -117,6 +117,15 @@ jobs:
         run: |
           spctl --assess --type execute --verbose=4 bin/flashit.app
 
+      - name: Set arch label
+        id: arch_label
+        run: |
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            echo "LABEL=apple-silicon" >> $GITHUB_OUTPUT
+          else
+            echo "LABEL=intel" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create DMG
         run: |
           # Create DMG for distribution
@@ -127,24 +136,24 @@ jobs:
           hdiutil create -volname "FlashIt" \
             -srcfolder $RUNNER_TEMP/dmg-contents \
             -ov -format UDZO \
-            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.dmg
+            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ steps.arch_label.outputs.LABEL }}.dmg
 
           # Sign the DMG
           codesign --force --sign "${{ secrets.APPLE_SIGNING_IDENTITY }}" \
-            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.dmg
+            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ steps.arch_label.outputs.LABEL }}.dmg
 
       - name: Create tar.gz for updater
         run: |
           cd bin
-          tar -czvf flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.tar.gz flashit.app
+          tar -czvf flashit-${{ steps.version.outputs.VERSION }}-macos-${{ steps.arch_label.outputs.LABEL }}.tar.gz flashit.app
 
       - name: Calculate checksums
         id: checksums
         run: |
           cd bin
-          DMG_SHA256=$(shasum -a 256 flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.dmg | cut -d ' ' -f 1)
-          TAR_SHA256=$(shasum -a 256 flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.tar.gz | cut -d ' ' -f 1)
-          TAR_SIZE=$(stat -f%z flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.tar.gz)
+          DMG_SHA256=$(shasum -a 256 flashit-${{ steps.version.outputs.VERSION }}-macos-${{ steps.arch_label.outputs.LABEL }}.dmg | cut -d ' ' -f 1)
+          TAR_SHA256=$(shasum -a 256 flashit-${{ steps.version.outputs.VERSION }}-macos-${{ steps.arch_label.outputs.LABEL }}.tar.gz | cut -d ' ' -f 1)
+          TAR_SIZE=$(stat -f%z flashit-${{ steps.version.outputs.VERSION }}-macos-${{ steps.arch_label.outputs.LABEL }}.tar.gz)
 
           echo "dmg_sha256=$DMG_SHA256" >> $GITHUB_OUTPUT
           echo "tar_sha256=$TAR_SHA256" >> $GITHUB_OUTPUT
@@ -155,8 +164,8 @@ jobs:
         with:
           name: macos-${{ matrix.arch }}
           path: |
-            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.dmg
-            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ matrix.arch }}.tar.gz
+            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ steps.arch_label.outputs.LABEL }}.dmg
+            bin/flashit-${{ steps.version.outputs.VERSION }}-macos-${{ steps.arch_label.outputs.LABEL }}.tar.gz
           retention-days: 1
 
       - name: Save checksums
@@ -233,20 +242,20 @@ jobs:
       - name: Rename installer
         shell: pwsh
         run: |
-          Move-Item -Path bin\flashit-amd64-installer.exe -Destination bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64-installer.exe
+          Move-Item -Path bin\flashit-amd64-installer.exe -Destination bin\flashit-${{ steps.version.outputs.VERSION }}-windows-x64-installer.exe
 
       - name: Create zip for updater
         shell: pwsh
         run: |
-          Compress-Archive -Path bin\flashit.exe,bin\helpers\flashit-helper.exe -DestinationPath bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip
+          Compress-Archive -Path bin\flashit.exe,bin\helpers\flashit-helper.exe -DestinationPath bin\flashit-${{ steps.version.outputs.VERSION }}-windows-x64.zip
 
       - name: Calculate checksums
         id: checksums
         shell: pwsh
         run: |
-          $installerHash = (Get-FileHash -Path bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64-installer.exe -Algorithm SHA256).Hash.ToLower()
-          $zipHash = (Get-FileHash -Path bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip -Algorithm SHA256).Hash.ToLower()
-          $zipSize = (Get-Item bin\flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip).Length
+          $installerHash = (Get-FileHash -Path bin\flashit-${{ steps.version.outputs.VERSION }}-windows-x64-installer.exe -Algorithm SHA256).Hash.ToLower()
+          $zipHash = (Get-FileHash -Path bin\flashit-${{ steps.version.outputs.VERSION }}-windows-x64.zip -Algorithm SHA256).Hash.ToLower()
+          $zipSize = (Get-Item bin\flashit-${{ steps.version.outputs.VERSION }}-windows-x64.zip).Length
 
           echo "installer_sha256=$installerHash" >> $env:GITHUB_OUTPUT
           echo "zip_sha256=$zipHash" >> $env:GITHUB_OUTPUT
@@ -255,10 +264,10 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-amd64
+          name: windows-x64
           path: |
-            bin/flashit-${{ steps.version.outputs.VERSION }}-windows-amd64-installer.exe
-            bin/flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip
+            bin/flashit-${{ steps.version.outputs.VERSION }}-windows-x64-installer.exe
+            bin/flashit-${{ steps.version.outputs.VERSION }}-windows-x64.zip
           retention-days: 1
 
       - name: Save checksums
@@ -272,7 +281,7 @@ jobs:
       - name: Upload checksums
         uses: actions/upload-artifact@v4
         with:
-          name: checksums-windows-amd64
+          name: checksums-windows-x64
           path: checksums/
           retention-days: 1
 
@@ -305,8 +314,8 @@ jobs:
           AMD64_TAR_SIZE=$(cat artifacts/checksums-amd64/tar-amd64.size)
 
           # Read Windows checksums and sizes
-          WINDOWS_ZIP_SHA256=$(cat artifacts/checksums-windows-amd64/zip-amd64.sha256)
-          WINDOWS_ZIP_SIZE=$(cat artifacts/checksums-windows-amd64/zip-amd64.size)
+          WINDOWS_ZIP_SHA256=$(cat artifacts/checksums-windows-x64/zip-amd64.sha256)
+          WINDOWS_ZIP_SIZE=$(cat artifacts/checksums-windows-x64/zip-amd64.size)
 
           cat > artifacts/update.json << EOF
           {
@@ -315,17 +324,17 @@ jobs:
             "release_notes": "See release notes at https://github.com/kyleaupton/flashit/releases/tag/v${VERSION}",
             "platforms": {
               "darwin-arm64": {
-                "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-macos-arm64.tar.gz",
+                "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-macos-apple-silicon.tar.gz",
                 "size": ${ARM64_TAR_SIZE},
                 "checksum": "sha256:${ARM64_TAR_SHA256}"
               },
               "darwin-amd64": {
-                "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-macos-amd64.tar.gz",
+                "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-macos-intel.tar.gz",
                 "size": ${AMD64_TAR_SIZE},
                 "checksum": "sha256:${AMD64_TAR_SHA256}"
               },
               "windows-amd64": {
-                "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-windows-amd64.zip",
+                "url": "https://github.com/kyleaupton/flashit/releases/download/v${VERSION}/flashit-${VERSION}-windows-x64.zip",
                 "size": ${WINDOWS_ZIP_SIZE},
                 "checksum": "sha256:${WINDOWS_ZIP_SHA256}"
               }
@@ -347,6 +356,6 @@ jobs:
             artifacts/macos-arm64/flashit-${{ steps.version.outputs.VERSION }}-macos-apple-silicon.tar.gz
             artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-intel.dmg
             artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-intel.tar.gz
-            artifacts/windows-amd64/flashit-${{ steps.version.outputs.VERSION }}-windows-x64-installer.exe
-            artifacts/windows-amd64/flashit-${{ steps.version.outputs.VERSION }}-windows-x64.zip
+            artifacts/windows-x64/flashit-${{ steps.version.outputs.VERSION }}-windows-x64-installer.exe
+            artifacts/windows-x64/flashit-${{ steps.version.outputs.VERSION }}-windows-x64.zip
             artifacts/update.json
