@@ -20,8 +20,8 @@ import (
 const (
 	// FAT32 max file size is 4GB - 1 byte
 	fat32MaxFileSize = 4*1024*1024*1024 - 1
-	// Volume name for the USB drive
-	defaultVolumeName = "YOURNAME"
+	// Volume name for the USB drive (matches Microsoft's Media Creation Tool)
+	defaultVolumeName = "ESD-USB"
 )
 
 // Windows is an installer for Windows ISOs.
