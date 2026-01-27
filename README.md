@@ -73,6 +73,10 @@ FlashIt includes a **pure Go implementation** of WIM file reading and splitting.
 - [ ] **Linux Host Support** - Native Linux build of the application
 - [ ] **Write Verification** - Verify USB contents after flashing to ensure a successful write
 - [ ] **ISO Downloads** - Download popular Linux distributions directly from the app
+- [ ] **Support More Install Options**
+  - [ ] memtest86+
+  - [ ] FreeDOS
+  - [ ] macOS (will only work on macOS hosts)
 
 ## Acknowledgments
 
