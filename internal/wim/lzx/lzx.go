@@ -357,7 +357,7 @@ func (f *decompressor) readBlockHeader() (byte, uint16, error) {
 		// The caller will read the huffman trees.
 	case uncompressedBlock:
 		if f.nbits > 16 {
-			panic("impossible: more than one 16-bit word remains")
+			return 0, 0, errCorrupt
 		}
 
 		// Drop the remaining bits in the current 16-bit word

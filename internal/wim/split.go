@@ -121,13 +121,9 @@ func SplitWithProgress(
 
 	// Generate a new GUID for this split set
 	var newGUID guid
-	if _, err := rand.Read(newGUID.Data4[:]); err != nil {
+	if err := binary.Read(rand.Reader, binary.LittleEndian, &newGUID); err != nil {
 		return fmt.Errorf("failed to generate GUID: %w", err)
 	}
-	// Also randomize the other parts
-	binary.Read(rand.Reader, binary.LittleEndian, &newGUID.Data1)
-	binary.Read(rand.Reader, binary.LittleEndian, &newGUID.Data2)
-	binary.Read(rand.Reader, binary.LittleEndian, &newGUID.Data3)
 
 	// Write each part
 	var totalWritten int64
