@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -100,6 +101,9 @@ func (m *windowsMounter) runPS(ctx context.Context, script string) ([]byte, erro
 		"-ExecutionPolicy", "Bypass",
 		"-Command", script,
 	)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		CreationFlags: 0x08000000, // CREATE_NO_WINDOW
+	}
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, wrapExecErr("powershell", err, out)

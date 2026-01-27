@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -209,6 +210,9 @@ func (p *windowsProvider) runPS(ctx context.Context, script string) ([]byte, err
 		"-ExecutionPolicy", "Bypass",
 		"-Command", script,
 	)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		CreationFlags: 0x08000000, // CREATE_NO_WINDOW
+	}
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, wrapExecErr("powershell", err, out)
