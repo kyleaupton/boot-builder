@@ -338,15 +338,15 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: FlashIt v${{ steps.version.outputs.VERSION }}
+          name: v${{ steps.version.outputs.VERSION }}
           draft: false
           prerelease: false
           generate_release_notes: true
           files: |
-            artifacts/macos-arm64/flashit-${{ steps.version.outputs.VERSION }}-macos-arm64.dmg
-            artifacts/macos-arm64/flashit-${{ steps.version.outputs.VERSION }}-macos-arm64.tar.gz
-            artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-amd64.dmg
-            artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-amd64.tar.gz
-            artifacts/windows-amd64/flashit-${{ steps.version.outputs.VERSION }}-windows-amd64-installer.exe
-            artifacts/windows-amd64/flashit-${{ steps.version.outputs.VERSION }}-windows-amd64.zip
+            artifacts/macos-arm64/flashit-${{ steps.version.outputs.VERSION }}-macos-apple-silicon.dmg
+            artifacts/macos-arm64/flashit-${{ steps.version.outputs.VERSION }}-macos-apple-silicon.tar.gz
+            artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-intel.dmg
+            artifacts/macos-amd64/flashit-${{ steps.version.outputs.VERSION }}-macos-intel.tar.gz
+            artifacts/windows-amd64/flashit-${{ steps.version.outputs.VERSION }}-windows-x64-installer.exe
+            artifacts/windows-amd64/flashit-${{ steps.version.outputs.VERSION }}-windows-x64.zip
             artifacts/update.json
