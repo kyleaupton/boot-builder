@@ -2,6 +2,11 @@
 
 package linux
 
+// Protocol version for client-helper communication.
+// IMPORTANT: This file is intentionally duplicated in helpers/linux/protocol.go
+// because the helper is a separate Go module. Any changes here MUST be mirrored there.
+const ProtocolVersion = 1
+
 // Request represents a command sent to the privileged helper.
 type Request struct {
 	// ID is a unique identifier for this request, used to correlate responses.
