@@ -232,7 +232,7 @@ func writeISO(sess *session, req *Request) {
 	totalBytes := uint64(stat.Size())
 
 	// Open the target device for raw writing
-	dst, err := os.OpenFile(device, os.O_WRONLY|syscall.O_SYNC, 0)
+	dst, err := os.OpenFile(device, os.O_WRONLY, 0)
 	if err != nil {
 		sess.sendError(req.ID, fmt.Sprintf("failed to open device %s: %v", device, err))
 		return
