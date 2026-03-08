@@ -20,4 +20,4 @@ tasks:
     summary: Compile the helper binary
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -o {{.BUILD_DIR}}/{{.HELPER_NAME}} .
+      - go build {{.BUILD_FLAGS}} -o {{.BUILD_DIR}}/{{.HELPER_NAME}} .
