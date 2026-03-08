@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -101,6 +102,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error: invalid socket path format\n")
 		os.Exit(1)
 	}
+
+	// Ensure the cleaned path still resolves to /tmp/ (prevent path traversal via "..")
+	cleaned := filepath.Clean(socketPath)
+	if !strings.HasPrefix(cleaned, socketPathPrefix) {
+		fmt.Fprintf(os.Stderr, "Error: socket path escapes /tmp/ after cleaning\n")
+		os.Exit(1)
+	}
+	socketPath = cleaned
 
 	// Clean up stale socket file if it exists
 	os.Remove(socketPath)
