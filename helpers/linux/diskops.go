@@ -105,8 +105,8 @@ func isSystemDisk(device string) bool {
 	sysDisk, err := getSystemDisk()
 	if err != nil {
 		// If we can't determine the system disk, err on the side of caution
-		log.Printf("WARNING: could not determine system disk: %v", err)
-		return false
+		log.Printf("WARNING: could not determine system disk: %v — blocking operation for safety", err)
+		return true
 	}
 
 	// Resolve symlinks on the target device too
