@@ -32,6 +32,7 @@ type socketClient struct {
 	conn       net.Conn
 
 	mu        sync.Mutex
+	writeMu   sync.Mutex // serializes writes to the socket
 	ready     bool
 	requestID atomic.Uint64
 
@@ -435,6 +436,7 @@ func (c *socketClient) sendRequestWithProgress(ctx context.Context, req Request,
 }
 
 // writeRequest encodes and writes a request to the socket.
+// Thread-safe: acquires writeMu to serialize all socket writes.
 func (c *socketClient) writeRequest(req Request) error {
 	data, err := json.Marshal(req)
 	if err != nil {
@@ -442,7 +444,10 @@ func (c *socketClient) writeRequest(req Request) error {
 	}
 	data = append(data, '\n')
 
+	c.writeMu.Lock()
 	n, err := c.conn.Write(data)
+	c.writeMu.Unlock()
+
 	if err != nil {
 		return fmt.Errorf("write failed: %w", err)
 	}
