@@ -37,6 +37,9 @@ type socketClient struct {
 
 	reader *bufio.Reader
 
+	// helperDone receives the result of helperCmd.Wait() — used to avoid calling Wait() twice
+	helperDone chan error
+
 	// cancelMu protects the current operation's cancel channel
 	cancelMu     sync.Mutex
 	cancelChan   chan struct{}
@@ -146,14 +149,14 @@ func (c *socketClient) spawnViaPkexec(ctx context.Context) error {
 	}
 
 	// Monitor for early exit (auth denied = exit code 126, dismissed = 126)
-	earlyExit := make(chan error, 1)
+	c.helperDone = make(chan error, 1)
 	go func() {
-		earlyExit <- c.helperCmd.Wait()
+		c.helperDone <- c.helperCmd.Wait()
 	}()
 
 	// Give it a brief moment to catch immediate failures (auth denied)
 	select {
-	case err := <-earlyExit:
+	case err := <-c.helperDone:
 		if err != nil {
 			var exitErr *exec.ExitError
 			if errors.As(err, &exitErr) && exitErr.ExitCode() == 126 {
@@ -484,22 +487,18 @@ func (c *socketClient) killHelper() {
 
 // waitForHelperExit waits for the helper process to exit with a timeout.
 func (c *socketClient) waitForHelperExit(timeout time.Duration) {
-	if c.helperCmd == nil || c.helperCmd.Process == nil {
+	if c.helperDone == nil {
 		return
 	}
 
-	done := make(chan struct{})
-	go func() {
-		c.helperCmd.Wait()
-		close(done)
-	}()
-
 	select {
-	case <-done:
+	case <-c.helperDone:
 		// Exited cleanly
 	case <-time.After(timeout):
 		// Force kill
-		c.helperCmd.Process.Kill()
+		if c.helperCmd != nil && c.helperCmd.Process != nil {
+			c.helperCmd.Process.Kill()
+		}
 	}
 }
 
