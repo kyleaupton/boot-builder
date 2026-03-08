@@ -11,35 +11,36 @@ import (
 )
 
 type linuxService struct {
+	mu     sync.Mutex
 	client linuxclient.Client
-	once   sync.Once
-	ready  error
 }
 
 func platformService() PrivilegedService { return &linuxService{} }
 
 func (s *linuxService) EnsureReady(ctx context.Context) error {
-	s.once.Do(func() {
-		logger.Debug("checking privileged helper status")
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-		c := linuxclient.NewClient()
-		if c == nil {
-			logger.Warn("Linux helper client not available")
-			s.ready = nil
-			return
-		}
+	if s.client != nil {
+		return nil
+	}
 
-		if err := c.EnsureReady(ctx); err != nil {
-			logger.Warn("Linux helper not ready", "error", err)
-			s.ready = err
-			return
-		}
+	logger.Debug("checking privileged helper status")
 
-		logger.Debug("privileged helper ready via unix socket")
-		s.client = c
-		s.ready = nil
-	})
-	return s.ready
+	c := linuxclient.NewClient()
+	if c == nil {
+		logger.Warn("Linux helper client not available")
+		return nil
+	}
+
+	if err := c.EnsureReady(ctx); err != nil {
+		logger.Warn("Linux helper not ready", "error", err)
+		return err
+	}
+
+	logger.Debug("privileged helper ready via unix socket")
+	s.client = c
+	return nil
 }
 
 func (s *linuxService) Disk() DiskOps {
